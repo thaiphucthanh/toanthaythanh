@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cập nhật môn học</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #374151;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-load {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-update {
+      background: #16a34a;
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .hint {
+      margin-top: 24px;
+      background: #eff6ff;
+      padding: 14px;
+      border-radius: 10px;
+      color: #1e40af;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cập nhật bảng subject</h1>
+
+    <div class="form-group">
+      <label for="subjectId">Subject ID</label>
+      <input type="number" id="subjectId" placeholder="Nhập subject_id" />
+    </div>
+
+    <div class="form-group">
+      <label for="subjectName">Tên môn học</label>
+      <input type="text" id="subjectName" placeholder="Tên môn học sẽ hiện ở đây" />
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-load" onclick="loadSubject()">Tải dữ liệu</button>
+      <button class="btn-update" onclick="updateSubject()">Cập nhật</button>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="hint">
+      <b>Trước khi dùng:</b><br>
+      1. Thay SUPABASE_URL và SUPABASE_ANON_KEY bằng thông tin dự án của bạn.<br>
+      2. Bảng subject cần có 2 cột: <code>subject_id</code> và <code>name</code>.<br>
+      3. Nếu bật Row Level Security, cần tạo policy cho phép SELECT và UPDATE.
+    </div>
+  </div>
+
+  <script>
+    // Thay bằng thông tin Supabase của bạn
+    const SUPABASE_URL = 'https://kisogvsqpimhlqidkekf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_nDW5RCRQYvaZ0-oEQci9jQ_fuwA3i2A';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const messageBox = document.getElementById('message');
+
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = `message ${type}`;
+      messageBox.style.display = 'block';
+    }
+
+    async function loadSubject() {
+      const subjectId = document.getElementById('subjectId').value.trim();
+
+      if (!subjectId) {
+        showMessage('Vui lòng nhập subject_id.', 'error');
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('subject')
+        .select('subject_id, name')
+        .eq('subject_id', subjectId)
+        .single();
+
+      if (error) {
+        showMessage('Không tìm thấy môn học hoặc lỗi: ' + error.message, 'error');
+        return;
+      }
+
+      document.getElementById('subjectName').value = data.name;
+      showMessage('Đã tải dữ liệu môn học.', 'success');
+    }
+
+    async function updateSubject() {
+      const subjectId = document.getElementById('subjectId').value.trim();
+      const subjectName = document.getElementById('subjectName').value.trim();
+
+      if (!subjectId || !subjectName) {
+        showMessage('Vui lòng nhập đầy đủ subject_id và tên môn học.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('subject')
+        .update({
+          name: subjectName
+        })
+        .eq('subject_id', subjectId);
+
+      if (error) {
+        showMessage('Cập nhật thất bại: ' + error.message, 'error');
+      } else {
+        showMessage('Cập nhật môn học thành công!', 'success');
+      }
+    }
+  </script>
+</body>
+</html>
