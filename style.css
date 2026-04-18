@@ -1,0 +1,65 @@
+/* Tối ưu hóa kích thước chung */
+:root {
+    --primary-color: #1e3a8a; /* Blue 900 */
+    --accent-color: #fbbf24;  /* Yellow 400 */
+}
+
+body {
+    font-size: 18px; /* Tăng kích thước chữ cơ bản */
+}
+
+/* Header to và rõ ràng hơn */
+header {
+    padding: 0.5rem 0;
+}
+
+.logo-text {
+    font-size: 1.75rem; /* Tăng cỡ chữ TOÁN */
+    line-height: 1;
+}
+
+/* Menu bar rộng rãi */
+nav ul li a {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+}
+
+/* Banner Slider to hơn */
+.mySwiper {
+    height: 550px !important; /* Tăng chiều cao Banner */
+}
+
+/* Card bài giảng to và sang trọng hơn */
+.video-card {
+    background: white;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+}
+
+.video-card img {
+    height: 220px; /* Tăng chiều cao ảnh đại diện */
+    width: 100%;
+    object-cover: cover;
+}
+
+.video-card .title {
+    font-size: 1.4rem; /* Tiêu đề to hơn */
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+/* Grid rộng rãi hơn */
+#video-grid {
+    gap: 2.5rem; /* Tăng khoảng cách giữa các bài giảng */
+}
+
+.container {
+    max-width: 1400px !important; /* Mở rộng chiều ngang trang web */
+}
