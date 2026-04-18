@@ -3,83 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toán Thầy Thành - Luyện thi vào 10</title>
+    <title>Toán Thầy Thành - HDC Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-gray-50">
 
-    <header style="background: white; padding: 10px 0;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html" class="logo">
-                <img src="logo.png" class="logo-anh" alt="Toán Thầy Thành">
-                <div style="display: flex; flex-direction: column;">
-                    <span class="logo-chu-to">TOÁN</span>
-                    <span class="logo-chu-nho">THẦY THÀNH</span>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-3">
+                <img src="logo.png" alt="Logo" class="w-12 h-12 rounded-full border-2 border-blue-600 p-0.5">
+                <div class="leading-none">
+                    <div class="text-2xl font-black text-blue-900">TOÁN</div>
+                    <div class="text-sm font-bold text-gray-600 tracking-tighter">THẦY THÀNH</div>
                 </div>
             </a>
 
-            <div style="display: flex; gap: 20px;">
-                <button style="font-weight: bold; color: #1e3a8a; border: none; background: none; cursor: pointer;">Đăng nhập</button>
-                <button style="background: #1e3a8a; color: white; padding: 10px 25px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer;">Đăng ký</button>
+            <div class="flex-1 max-w-md mx-10 hidden md:block">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none rounded-full py-2 px-5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <i class="fas fa-search absolute right-4 top-3 text-gray-400"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-600 font-bold hover:text-blue-700">Đăng nhập</button>
+                <button class="bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md hover:bg-blue-800 transition">Đăng ký</button>
             </div>
         </div>
 
-        <nav class="menu">
-            <div class="container">
-                <ul>
-                    <li><a href="index.html" style="color: #fbbf24;">Trang chủ</a></li>
-                    <li><a href="#">Thông tin khóa học</a></li>
-                    <li><a href="#">Các khóa học</a></li>
-                    <li><a href="#" class="menu-dang-ky">Đăng ký khóa học</a></li>
+        <nav class="bg-blue-900 text-white">
+            <div class="container mx-auto px-4">
+                <ul class="flex space-x-8 py-3">
+                    <li><a href="#" class="nav-link text-yellow-400">Trang chủ</a></li>
+                    <li><a href="#" class="nav-link hover:text-blue-200">Thông tin khóa học</a></li>
+                    <li><a href="#" class="nav-link hover:text-blue-200">Các khóa học</a></li>
+                    <li><a href="#" class="nav-link bg-yellow-500 text-blue-900 px-3 py-1 rounded-md !text-blue-900">Đăng ký khóa học</a></li>
                 </ul>
             </div>
         </nav>
     </header>
 
-    <div class="pictruot swiper mySwiper">
+    <div class="swiper mySwiper">
         <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600">
-                <div class="pictruot-chu">
-                    <h2>CHINH PHỤC KỲ THI TS VÀO 10 CÙNG THẦY THÀNH</h2>
+            <div class="swiper-slide relative">
+                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <h2 class="text-4xl md:text-5xl font-black text-white italic text-center px-4">
+                        CHINH PHỤC KỲ THI VÀO 10 CÙNG THẦY THÀNH
+                    </h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <main class="container">
-        <h2 class="tieude-chinh">Bài giảng miễn phí</h2>
-        <div id="video-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 40px;">
+    <main class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-black text-blue-900 mb-8 border-l-4 border-yellow-500 pl-4 uppercase tracking-tight">Bài giảng mới nhất</h2>
+        
+        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="script.js"></script>
-</body>
-</html>            </div>
-        </nav>
-    </header>
-
-    <div class="pictruot swiper mySwiper">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600">
-                <div class="pictruot-chu">
-                    <h2>CHINH PHỤC KỲ THI TS VÀO 10 CÙNG THẦY THÀNH</h2>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <main class="container">
-        <h2 class="tieude-chinh">Bài giảng miễn phí</h2>
-        <div id="video-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 40px;">
-            </div>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+        var swiper = new Swiper(".mySwiper", {
+            loop: true,
+            autoplay: { delay: 4000 }
+        });
+    </script>
 </body>
 </html>
