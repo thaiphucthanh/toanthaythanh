@@ -25,8 +25,8 @@ nav ul li a {
 }
 
 /* Banner Slider to hơn */
-.mySwiper {
-    height: 550px !important; /* Tăng chiều cao Banner */
+.banner {
+    height: 200px !important; /* Tăng chiều cao Banner */
 }
 
 /* Card bài giảng to và sang trọng hơn */
