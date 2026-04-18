@@ -1,196 +1,150 @@
-/* --- CẤU HÌNH CHUNG --- */
+/* --- BIẾN MÀU SẮC CHỦ ĐẠO --- */
 :root {
-    --xanh-dam: #1e3a8a;
-    --vang-tuoi: #fbbf24;
+    --xanh-hoc-thuat: #1e3a8a;
+    --vang-diem-nhan: #fbbf24;
+    --nen-trang: #ffffff;
+    --chu-xam: #4b5563;
 }
 
-body {
-    font-size: 18px;
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f3f4f6;
-}
-
+/* --- KHUNG CHUNG --- */
 .khung-trang {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0 25px;
+    padding: 0 20px;
 }
 
-/* --- LOGO --- */
-.logo {
+/* --- LOGO & THƯƠNG HIỆU --- */
+.cum-logo {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     text-decoration: none;
 }
 
-.logo-anh {
-    width: 65px;
-    height: 65px;
+.anh-dai-dien-logo {
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
-    border: 3px solid var(--xanh-dam);
-    padding: 2px;
+    border: 2px solid var(--xanh-hoc-thuat);
     object-fit: cover;
 }
 
-.logo-chu-to {
+.ten-thuong-hieu-to {
     font-size: 2rem;
     font-weight: 900;
-    color: var(--xanh-dam);
+    color: var(--xanh-hoc-thuat);
     line-height: 1;
+    text-transform: uppercase;
 }
 
-.logo-chu-nho {
+.ten-thuong-hieu-nho {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--chu-xam);
+    letter-spacing: 1px;
+}
+
+/* --- THANH TÌM KIẾM --- */
+.vung-tim-kiem {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 40px;
+    position: relative;
+}
+
+.o-nhap-tim-kiem {
+    width: 100%;
+    background-color: #f3f4f6;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    padding: 12px 25px;
     font-size: 1.1rem;
-    font-weight: bold;
-    color: #374151;
+    outline: none;
+    transition: all 0.3s ease;
 }
 
-/* --- THANH MENU --- */
-.thanh-menu {
-    background-color: var(--xanh-dam);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.o-nhap-tim-kiem:focus {
+    background-color: white;
+    border-color: var(--xanh-hoc-thuat);
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+}
+
+/* --- KHỐI TÀI KHOẢN / ĐĂNG NHẬP --- */
+.cum-tai-khoan {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nut-bam-phu {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--xanh-hoc-thuat);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.nut-bam-chinh {
+    background-color: var(--xanh-hoc-thuat);
+    color: white;
+    padding: 10px 30px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.nut-bam-chinh:hover {
+    background-color: #152a66;
+    transform: scale(1.05);
+}
+
+/* Sau khi đăng nhập: Hiện Avatar tài khoản */
+.hien-thi-tai-khoan {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    color: var(--xanh-hoc-thuat);
+}
+
+.anh-user {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #e5e7eb;
+}
+
+/* --- THANH MENU ĐIỀU HƯỚNG --- */
+.thanh-menu-ngang {
+    background-color: var(--xanh-hoc-thuat);
+    padding: 15px 0;
 }
 
 .danh-sach-menu {
     list-style: none;
     display: flex;
-    gap: 45px;
-    padding: 18px 0;
+    gap: 40px;
     margin: 0;
+    padding: 0;
 }
 
-.danh-sach-menu li a {
+.item-menu {
     color: white;
     text-decoration: none;
+    font-size: 1.3rem; /* MENU TO THEO Ý THẦY */
     font-weight: 800;
-    font-size: 1.2rem; /* CHỮ MENU TO RÕ */
     text-transform: uppercase;
     transition: 0.3s;
 }
 
-.danh-sach-menu li a:hover {
-    color: var(--vang-tuoi);
+.item-menu:hover {
+    color: var(--vang-diem-nhan);
 }
 
-.nut-dang-ky-menu {
-    background-color: var(--vang-tuoi);
-    color: var(--xanh-dam) !important;
-    padding: 6px 20px;
-    border-radius: 8px;
-}
-
-/* --- ẢNH TRƯỢT (BANNER) --- */
-.pictruot {
-    height: 300px !important; /* BANNER NHỎ GỌN */
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.pictruot-anh {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.pictruot-lop-phu {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pictruot-chu {
-    color: white;
-    font-size: 3.5rem;
-    font-weight: 900;
-    font-style: italic;
-    text-transform: uppercase;
-    text-align: center;
-    margin: 0;
-    padding: 0 20px;
-}
-
-/* --- KHỐI BÀI GIẢNG --- */
-.vung-bai-giang {
-    padding: 60px 0;
-}
-
-.tieu-de-muc {
-    font-size: 2.8rem;
-    font-weight: 900;
-    color: var(--xanh-dam);
-    margin-bottom: 50px;
-    border-left: 10px solid var(--vang-tuoi);
-    padding-left: 25px;
-    text-transform: uppercase;
-}
-
-.o-video {
-    background: white;
-    border-radius: 25px;
-    overflow: hidden;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-    cursor: pointer;
-    transition: 0.4s;
-}
-
-.o-video:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-}
-
-.o-video-anh {
-    width: 100%;
-    height: 240px;
-    object-fit: cover;
-}
-
-.o-video-than {
-    padding: 30px;
-}
-
-.o-video-mon {
-    color: #2563eb;
-    font-weight: 800;
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.o-video-tieude {
-    font-size: 1.6rem;
-    font-weight: 800;
-    margin: 15px 0;
-    line-height: 1.3;
-    color: #111827;
-}
-/* --- ĐIỀU CHỈNH MENU TO RÕ --- */
-.nav-link {
-    font-size: 1.25rem !important; /* Tăng cỡ chữ lên mức dễ nhìn nhất */
-    font-weight: 800 !important;   /* Làm chữ đậm hơn để nổi bật trên nền xanh */
-    padding: 0.75rem 1.25rem !important;
-    letter-spacing: 0.5px;
-}
-
-/* --- ĐIỀU CHỈNH BANNER GỌN GÀNG --- */
-.mySwiper {
-    height: 350px !important; /* Giảm chiều cao xuống để lộ phần nội dung bên dưới */
-    max-height: 40vh;         /* Đảm bảo không bao giờ quá 40% chiều cao màn hình */
-}
-
-/* Chỉnh lại chữ trong banner cho cân xứng với độ cao mới */
-.mySwiper h2 {
-    font-size: 2.5rem !important; 
-    line-height: 1.2;
-    max-width: 80%;
-}
-
-/* --- TỐI ƯU KHOẢNG CÁCH --- */
-header {
-    padding-bottom: 0 !important; /* Thu nhỏ khoảng trắng thừa của header */
+.item-menu.dang-kich-hoat {
+    color: var(--vang-diem-nhan);
 }
