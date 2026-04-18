@@ -26,11 +26,28 @@
             <input type="text" placeholder="Tìm bài giảng..." class="o-nhap-tim-kiem">
         </div>
 
-        <div class="cum-tai-khoan">
-            <button class="nut-bam-phu">Đăng nhập</button>
-            <button class="nut-bam-chinh shadow-lg">Đăng ký</button>
+        <div class="cum-tai-khoan" id="user-section">
+    <button class="nut-bam-phu" onclick="location.href='dang-nhap.html'">Đăng nhập</button>
+    <button class="nut-bam-chinh shadow-lg">Đăng ký</button>
+</div>
 
-            </div>
+<script id="user-logged-template" type="text/template">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu()">
+        <div class="text-right hidden md:block">
+            <div class="text-blue-900 font-black text-sm uppercase">Hi, {fullname}</div>
+            <div class="text-gray-500 text-xs font-bold">{role_text}</div>
+        </div>
+        <img src="{avatar}" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover">
+        
+        <div class="dropdown-user" id="dropdownUser">
+            {admin_option}
+            <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-2"></i> Thông tin cá nhân</a>
+            <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-2"></i> Khóa học của tôi</a>
+            <div class="divider"></div>
+            <a href="#" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất</a>
+        </div>
+    </div>
+</script>
     </div>
 
     <nav class="thanh-menu-ngang">
