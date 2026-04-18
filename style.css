@@ -1,35 +1,40 @@
 /* Tối ưu hóa kích thước chung */
 :root {
-    --primary-color: #1e3a8a; /* Blue 900 */
-    --accent-color: #fbbf24;  /* Yellow 400 */
+    --primary-color: #1e3a8a; 
+    --accent-color: #fbbf24;  
 }
 
 body {
-    font-size: 18px; /* Tăng kích thước chữ cơ bản */
+    font-size: 18px; 
 }
 
-/* Header to và rõ ràng hơn */
-header {
-    padding: 0.5rem 0;
-}
-
+/* Header & Logo */
 .logo-text {
-    font-size: 1.75rem; /* Tăng cỡ chữ TOÁN */
+    font-size: 1.8rem; 
     line-height: 1;
 }
 
-/* Menu bar rộng rãi */
+/* MENU TO HƠN - Theo yêu cầu của thầy */
 nav ul li a {
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.1rem !important; /* Tăng cỡ chữ menu */
+    letter-spacing: 0.05em;      /* Khoảng cách chữ cho thoáng */
+    display: inline-block;
 }
 
-/* Banner Slider to hơn */
+/* BANNER NHỎ LẠI - Theo yêu cầu của thầy */
 .banner {
-    height: 200px !important; /* Tăng chiều cao Banner */
+    height: 300px !important; /* Độ cao vừa phải, không quá choán màn hình */
+    width: 100%;
+    overflow: hidden;
 }
 
-/* Card bài giảng to và sang trọng hơn */
+.banner h2 {
+    font-size: 3rem !important; /* Thu nhỏ chữ tiêu đề banner một chút cho cân xứng với banner nhỏ */
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+}
+
+/* Card bài giảng */
 .video-card {
     background: white;
     border-radius: 1.25rem;
@@ -44,22 +49,22 @@ nav ul li a {
 }
 
 .video-card img {
-    height: 220px; /* Tăng chiều cao ảnh đại diện */
+    height: 220px; 
     width: 100%;
-    object-cover: cover;
+    object-fit: cover;
 }
 
 .video-card .title {
-    font-size: 1.4rem; /* Tiêu đề to hơn */
+    font-size: 1.4rem; 
     font-weight: 800;
     line-height: 1.3;
 }
 
-/* Grid rộng rãi hơn */
+/* Grid & Container */
 #video-grid {
-    gap: 2.5rem; /* Tăng khoảng cách giữa các bài giảng */
+    gap: 2.5rem; 
 }
 
 .container {
-    max-width: 1400px !important; /* Mở rộng chiều ngang trang web */
+    max-width: 1400px !important; 
 }
