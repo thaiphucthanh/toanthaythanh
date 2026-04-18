@@ -1,219 +1,69 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cập nhật môn học</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 700px;
-      background: white;
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    }
-
-    h1 {
-      margin-top: 0;
-      text-align: center;
-      color: #1f2937;
-      margin-bottom: 24px;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #374151;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      font-size: 15px;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .btn-load {
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-update {
-      background: #16a34a;
-      color: white;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      opacity: 0.95;
-    }
-
-    .message {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 10px;
-      display: none;
-      font-weight: 500;
-    }
-
-    .success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .hint {
-      margin-top: 24px;
-      background: #eff6ff;
-      padding: 14px;
-      border-radius: 10px;
-      color: #1e40af;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDC Study - Hệ Thống Đào Tạo Trực Tuyến</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
-<body>
-  <div class="container">
-    <h1>Cập nhật bảng subject</h1>
+<body class="bg-gray-50 font-sans text-gray-900">
 
-    <div class="form-group">
-      <label for="subjectId">Subject ID</label>
-      <input type="number" id="subjectId" placeholder="Nhập subject_id" />
-    </div>
+    <header class="bg-white shadow-md sticky top-0 z-50 border-b-2 border-blue-100">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-700 p-0.5 bg-white group-hover:shadow-lg transition">
+                    <img src="/Users/thanhfthais/Desktop/logo.png" 
+                         alt="Logo Toán Thầy Thành" 
+                         class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-extrabold text-2xl tracking-tight text-blue-900 group-hover:text-blue-700 transition">TOÁN</span>
+                    <span class="text-sm font-semibold text-gray-700 -mt-1">THẦY THÀNH</span>
+                </div>
+            </a>
 
-    <div class="form-group">
-      <label for="subjectName">Tên môn học</label>
-      <input type="text" id="subjectName" placeholder="Tên môn học sẽ hiện ở đây" />
-    </div>
+            <div class="flex-1 max-w-lg mx-12 hidden lg:block">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm kiếm bài giảng, tài liệu..." 
+                           class="w-full border-2 border-gray-200 rounded-full py-2.5 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    <button class="absolute right-4 top-3 text-gray-400 hover:text-blue-600"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
 
-    <div class="btn-group">
-      <button class="btn-load" onclick="loadSubject()">Tải dữ liệu</button>
-      <button class="btn-update" onclick="updateSubject()">Cập nhật</button>
-    </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-700 hover:text-blue-700 font-medium text-sm">Đăng nhập</button>
+                <button class="bg-blue-700 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-blue-800 transition shadow-md hover:shadow-lg text-sm">Đăng ký ngay</button>
+            </div>
+        </div>
 
-    <div id="message" class="message"></div>
+        <nav class="bg-blue-950 text-white border-t border-blue-800">
+            <div class="container mx-auto px-4">
+                <ul class="flex items-center space-x-8 py-3.5 text-xs font-bold uppercase tracking-wide">
+                    <li>
+                        <a href="index.html" class="flex items-center hover:text-blue-300 transition text-yellow-300">
+                            <i class="fas fa-home mr-1.5 text-sm"></i> Trang chủ
+                        </a>
+                    </li>
+                    <li><a href="#" class="hover:text-blue-300 transition">Thông tin khóa học</a></li>
+                    <li><a href="#" class="hover:text-blue-300 transition">Các khóa học</a></li>
+                    <li class="relative group">
+                        <a href="#" class="bg-yellow-400 text-blue-950 px-4 py-1.5 rounded font-black hover:bg-white transition flex items-center shadow-inner">
+                            <i class="fas fa-edit mr-1.5"></i> Đăng ký khóa học
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
 
-    <div class="hint">
-      <b>Trước khi dùng:</b><br>
-      1. Thay SUPABASE_URL và SUPABASE_ANON_KEY bằng thông tin dự án của bạn.<br>
-      2. Bảng subject cần có 2 cột: <code>subject_id</code> và <code>name</code>.<br>
-      3. Nếu bật Row Level Security, cần tạo policy cho phép SELECT và UPDATE.
-    </div>
-  </div>
-
-  <script>
-    // Thay bằng thông tin Supabase của bạn
-    const SUPABASE_URL = 'https://kisogvsqpimhlqidkekf.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_nDW5RCRQYvaZ0-oEQci9jQ_fuwA3i2A';
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const messageBox = document.getElementById('message');
-
-    function showMessage(text, type) {
-      messageBox.textContent = text;
-      messageBox.className = `message ${type}`;
-      messageBox.style.display = 'block';
-    }
-
-    async function loadSubject() {
-      const subjectId = document.getElementById('subjectId').value.trim();
-
-      if (!subjectId) {
-        showMessage('Vui lòng nhập subject_id.', 'error');
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from('subject')
-        .select('subject_id, name')
-        .eq('subject_id', subjectId)
-        .single();
-
-      if (error) {
-        showMessage('Không tìm thấy môn học hoặc lỗi: ' + error.message, 'error');
-        return;
-      }
-
-      document.getElementById('subjectName').value = data.name;
-      showMessage('Đã tải dữ liệu môn học.', 'success');
-    }
-
-    async function updateSubject() {
-      const subjectId = document.getElementById('subjectId').value.trim();
-      const subjectName = document.getElementById('subjectName').value.trim();
-
-      if (!subjectId || !subjectName) {
-        showMessage('Vui lòng nhập đầy đủ subject_id và tên môn học.', 'error');
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from('subject')
-        .update({
-          name: subjectName
-        })
-        .eq('subject_id', subjectId);
-
-      if (error) {
-        showMessage('Cập nhật thất bại: ' + error.message, 'error');
-      } else {
-        showMessage('Cập nhật môn học thành công!', 'success');
-      }
-    }
-  </script>
-</body>
-</html>
+    <div class="swiper mySwiper h-[300px] md:h-[450px]">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide relative">
+                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600&auto=format&fit=crop" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-center p-4">
+                    <div>
+                        <h2 class="text-3xl md:text-5xl font-bold mb-4">Luyện thi Toán vào 10 cùng Thầy Thành</h2>
+                        <p class="text-lg md:text
