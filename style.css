@@ -6,11 +6,11 @@
     --chu-xam: #4b5563;
 }
 
-/* --- KHUNG CHUNG --- */
+/* --- KHUNG CHUNG (TỰ CO GIÃN) --- */
 .khung-trang {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 15px; /* Giữ khoảng cách an toàn 2 bên mép điện thoại */
 }
 
 /* --- LOGO & THƯƠNG HIỆU --- */
@@ -27,6 +27,13 @@
     border-radius: 50%;
     border: 2px solid var(--xanh-hoc-thuat);
     object-fit: cover;
+}
+
+/* Mobile: Chữ Logo nhỏ lại cho đỡ chật */
+@media (max-width: 640px) {
+    .anh-dai-dien-logo { width: 45px; height: 45px; }
+    .ten-thuong-hieu-to { font-size: 1.5rem !important; }
+    .ten-thuong-hieu-nho { font-size: 0.7rem !important; }
 }
 
 .ten-thuong-hieu-to {
@@ -57,119 +64,126 @@
     background-color: #f3f4f6;
     border: 2px solid transparent;
     border-radius: 999px;
-    padding: 12px 25px;
-    font-size: 1.1rem;
+    padding: 10px 20px;
+    font-size: 1rem;
     outline: none;
     transition: all 0.3s ease;
 }
 
-.o-nhap-tim-kiem:focus {
-    background-color: white;
-    border-color: var(--xanh-hoc-thuat);
-    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
-}
-
-/* --- KHỐI TÀI KHOẢN / ĐĂNG NHẬP --- */
+/* --- KHỐI TÀI KHOẢN --- */
 .cum-tai-khoan {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
+}
+
+@media (max-width: 640px) {
+    .cum-tai-khoan { gap: 10px; }
+    .nut-bam-phu { font-size: 0.9rem !important; }
+    .nut-bam-chinh { padding: 8px 15px !important; font-size: 0.9rem !important; }
 }
 
 .nut-bam-phu {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--xanh-hoc-thuat);
     cursor: pointer;
-    background: none;
-    border: none;
+    white-space: nowrap;
 }
 
 .nut-bam-chinh {
     background-color: var(--xanh-hoc-thuat);
     color: white;
-    padding: 10px 30px;
+    padding: 10px 25px;
     border-radius: 50px;
     font-size: 1.1rem;
     font-weight: 700;
     border: none;
     cursor: pointer;
     transition: 0.3s;
+    white-space: nowrap;
 }
 
-.nut-bam-chinh:hover {
-    background-color: #152a66;
-    transform: scale(1.05);
-}
-
-/* Sau khi đăng nhập: Hiện Avatar tài khoản */
-.hien-thi-tai-khoan {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    color: var(--xanh-hoc-thuat);
-}
-
-.anh-user {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: #e5e7eb;
-}
-
-/* --- THANH MENU ĐIỀU HƯỚNG --- */
+/* --- THANH MENU (TỰ BIẾN ĐỔI CHO MOBILE) --- */
 .thanh-menu-ngang {
     background-color: var(--xanh-hoc-thuat);
-    padding: 15px 0;
+    padding: 0;
+    /* Quan trọng: Cho phép vuốt ngang trên điện thoại nếu menu dài */
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
 }
 
 .danh-sach-menu {
     list-style: none;
     display: flex;
-    gap: 40px;
+    gap: 30px;
     margin: 0;
-    padding: 0;
+    padding: 12px 0;
+    /* Giữ menu trên 1 dòng duy nhất để vuốt */
+    white-space: nowrap; 
 }
 
 .item-menu {
     color: white;
     text-decoration: none;
-    font-size: 1.3rem; /* MENU TO THEO Ý THẦY */
+    font-size: 1.2rem;
     font-weight: 800;
     text-transform: uppercase;
     transition: 0.3s;
 }
 
-.item-menu:hover {
-    color: var(--vang-diem-nhan);
+@media (max-width: 768px) {
+    .item-menu { font-size: 1rem; }
+    .danh-sach-menu { gap: 20px; }
 }
 
-.item-menu.dang-kich-hoat {
-    color: var(--vang-diem-nhan);
-}
-/* --- CẤU HÌNH BANNER CO GIÃN THÔNG MINH --- */
+/* --- BANNER CO GIÃN THÔNG MINH --- */
 .mySwiper {
     width: 100%;
     height: auto !important; 
     display: block;
-    /* Giữ chỗ sẵn cho ảnh để chống nháy giật khi load trang */
+    /* Tỉ lệ 16/5 cho máy tính */
     aspect-ratio: 16 / 5; 
     background: linear-gradient(to right, #0076de, #fdb913);
+    overflow: hidden;
 }
 
 .anh-banner-format {
-    align-content: center;
     width: 100%;
-    height: auto;      /* Ép chiều cao đi theo chiều rộng */
+    height: 100%;
     display: block;
-    object-fit: cover; /* Giúp ảnh tràn đầy khung hình */
+    object-fit: cover;
 }
 
-/* Khi trên điện thoại (màn hình nhỏ hơn 768px) */
+/* ĐIỆN THOẠI: Banner cao hơn để dễ nhìn thiết kế */
 @media (max-width: 768px) {
     .mySwiper {
-        /* Trên mobile ta có thể để tỉ lệ khác hoặc giữ nguyên */
         aspect-ratio: 16 / 9; 
     }
+}
+
+/* --- LƯỚI VIDEO (GRID) TỰ ĐỘNG CHIA CỘT --- */
+/* Thầy dùng cái này cho id="video-grid" trong file HTML */
+#video-grid {
+    display: grid;
+    gap: 20px;
+    /* Mặc định: 1 cột (cho điện thoại) */
+    grid-template-columns: repeat(1, 1fr); 
+}
+
+/* Máy tính bảng: 2 cột */
+@media (min-width: 640px) {
+    #video-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Máy tính lớn: 3 cột */
+@media (min-width: 1024px) {
+    #video-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.the-video {
+    transition: all 0.3s ease;
+}
+.the-video:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
