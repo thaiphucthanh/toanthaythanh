@@ -148,3 +148,27 @@
 .item-menu.dang-kich-hoat {
     color: var(--vang-diem-nhan);
 }
+/* --- CẤU HÌNH BANNER CO GIÃN THÔNG MINH --- */
+.mySwiper {
+    width: 100%;
+    height: auto !important; 
+    display: block;
+    /* Giữ chỗ sẵn cho ảnh để chống nháy giật khi load trang */
+    aspect-ratio: 16 / 5; 
+    background: linear-gradient(to right, #0076de, #fdb913);
+}
+
+.anh-banner-format {
+    width: 100%;
+    height: auto;      /* Ép chiều cao đi theo chiều rộng */
+    display: block;
+    object-fit: cover; /* Giúp ảnh tràn đầy khung hình */
+}
+
+/* Khi trên điện thoại (màn hình nhỏ hơn 768px) */
+@media (max-width: 768px) {
+    .mySwiper {
+        /* Trên mobile ta có thể để tỉ lệ khác hoặc giữ nguyên */
+        aspect-ratio: 16 / 9; 
+    }
+}
