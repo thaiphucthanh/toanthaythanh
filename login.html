@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Toán Thầy Thành</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -21,7 +22,7 @@
         </div>
 
         <div class="p-8">
-            <form action="#" class="space-y-6">
+            <form id="loginForm" class="space-y-6">
                 <div>
                     <label class="block text-blue-900 font-bold mb-2 ml-1">Tài khoản học sinh</label>
                     <div class="relative">
@@ -74,6 +75,44 @@
             </div>
         </div>
     </div>
+<script>
+    // 1. Cấu hình kết nối Supabase
+const _supabaseUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
+const _supabaseKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+const supabase = supabase.createClient(_supabaseUrl, _supabaseKey);
 
+// 2. Xử lý sự kiện khi học sinh bấm "Vào học ngay"
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Chặn trang web tải lại
+
+    const identifier = e.target.elements[0].value; // Email hoặc SĐT
+    const password = e.target.elements[1].value;   // Mật khẩu
+
+    // 3. Truy vấn bảng accounts
+    // Ở đây ta kiểm tra xem identifier khớp với email HOẶC sdt trong bảng
+    const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .or(`email.eq.${identifier},sdt.eq.${identifier}`)
+        .eq('password', password) // Lưu ý: Sau này nên mã hóa mật khẩu
+        .single();
+
+    if (error || !data) {
+        alert("Thông tin đăng nhập không chính xác, thầy mời em kiểm tra lại nhé!");
+    } else {
+        // 4. Nếu đúng: Lưu thông tin vào máy học sinh để trang chủ nhận diện
+        const userData = {
+            fullname: data.fullname,
+            role: data.role,
+            avatar: data.link_fb || 'logo.png' // Tạm lấy link FB làm avatar hoặc dùng logo
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        alert(`Chào mừng ${data.fullname} đã quay trở lại học tập!`);
+        window.location.href = 'index.html'; // Quay về trang chủ
+    }
+});
+</script>
 </body>
 </html>
