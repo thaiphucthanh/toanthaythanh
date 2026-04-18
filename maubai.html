@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Học liệu - Thầy Thành</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+
+    <nav class="bg-blue-700 text-white shadow-lg p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">HDC STUDY CENTER</h1>
+            <div class="space-x-4">
+                <a href="#" class="hover:text-blue-200">Bài giảng</a>
+                <a href="#" class="hover:text-blue-200">Tài liệu</a>
+                <span id="user-info" class="text-sm border-l pl-4 border-blue-400">Chào Thầy Thành!</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 px-4 mb-20">
+        
+        <header class="mb-8 border-b pb-6">
+            <div id="lesson-category" class="text-blue-600 font-semibold uppercase text-sm mb-2">Đang tải...</div>
+            <h2 id="lesson-title" class="text-3xl font-extrabold text-gray-800 leading-tight">
+                Tiêu đề bài giảng sẽ hiển thị ở đây
+            </h2>
+            <p id="lesson-insight" class="mt-3 text-lg text-gray-600 italic">
+                Insight và mong muốn của học sinh sẽ hiển thị tại đây...
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-black rounded-xl overflow-hidden shadow-2xl aspect-video relative">
+                    <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" 
+                        src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="mt-6 bg-white p-6 rounded-xl shadow-sm border">
+                    <h3 class="font-bold text-xl mb-4 border-l-4 border-blue-600 pl-3">Nội dung chi tiết</h3>
+                    <div id="lesson-content" class="text-gray-700 leading-relaxed space-y-4">
+                        </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-blue-100">
+                    <h3 class="font-bold text-lg mb-4 flex items-center">
+                        <i class="fas fa-file-download mr-2 text-blue-600"></i> Kho tài liệu bài học
+                    </h3>
+                    <ul id="document-list" class="space-y-3">
+                        <li class="p-3 bg-gray-50 rounded hover:bg-blue-50 transition border border-dashed text-gray-500">
+                            Đang tải tài liệu...
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t p-6 mt-12 text-center text-gray-500 text-sm">
+        © 2026 HDC Study Center - Đồng hành cùng học sinh Vinh
+    </footer>
+
+    <script>
+        // 1. Cấu hình Supabase (Thay thông tin thật của bạn vào đây)
+const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+
+// 2. Hàm tự động lấy ID từ link web và tải dữ liệu
+async function fetchLessonData() {
+    // Lấy tham số 'id' trên trình duyệt (ví dụ: ?id=5)
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonId = urlParams.get('id');
+
+    if (!lessonId) {
+        document.getElementById('lesson-title').innerText = "Vui lòng chọn bài giảng!";
+        return;
+    }
+
+    try {
+        // Gọi API Supabase
+        const response = await fetch(`${SB_URL}/rest/v1/lessons?id=eq.${lessonId}&select=*`, {
+            headers: {
+                "apikey": SB_KEY,
+                "Authorization": `Bearer ${SB_KEY}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            renderLesson(data[0]);
+        } else {
+            document.getElementById('lesson-title').innerText = "Không tìm thấy bài giảng!";
+        }
+    } catch (error) {
+        console.error("Lỗi kết nối:", error);
+        alert("Lỗi tải dữ liệu. Thầy kiểm tra lại URL hoặc API Key nhé!");
+    }
+}
+
+// 3. Hàm hiển thị dữ liệu lên giao diện
+function renderLesson(lesson) {
+    document.getElementById('lesson-title').innerText = lesson.title;
+    document.getElementById('lesson-insight').innerText = lesson.insight || "";
+    document.getElementById('lesson-category').innerText = lesson.category || "Học liệu";
+    
+    // Xử lý nội dung bài giảng
+    document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang được cập nhật...";
+
+    // Xử lý Video (Hỗ trợ cả link YouTube đầy đủ hoặc ID)
+    if (lesson.video_url) {
+        let embedUrl = lesson.video_url;
+        if (embedUrl.includes("watch?v=")) {
+            embedUrl = embedUrl.replace("watch?v=", "embed/");
+        }
+        document.getElementById('video-frame').src = embedUrl;
+    }
+
+    // Xử lý Tài liệu (Dạng JSONB)
+    const docList = document.getElementById('document-list');
+    let docs = [];
+    
+    try {
+        docs = typeof lesson.documents === 'string' ? JSON.parse(lesson.documents) : lesson.documents;
+    } catch (e) {
+        docs = [];
+    }
+
+    if (docs && docs.length > 0) {
+        docList.innerHTML = docs.map(doc => `
+            <li class="group">
+                <a href="${doc.url}" target="_blank" class="flex items-center p-3 bg-blue-50 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition font-medium">
+                    <i class="far fa-file-alt mr-3 text-blue-500 group-hover:text-white"></i>
+                    <span class="truncate">${doc.name}</span>
+                </a>
+            </li>
+        `).join('');
+    } else {
+        docList.innerHTML = "<li class='text-gray-400 italic'>Không có tài liệu cho bài này.</li>";
+    }
+}
+
+// Kích hoạt hàm khi tải trang
+fetchLessonData();
+    </script>
