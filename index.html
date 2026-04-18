@@ -4,65 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toán Thầy Thành - Luyện thi vào 10</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header class="bg-white shadow-md sticky top-0 z-50 border-b-2 border-blue-100">
-        <div class="container mx-auto px-6 flex items-center justify-between">
-            <a href="index.html" class="flex items-center space-x-4 group">
-                <div class="w-14 h-14 rounded-full border-2 border-blue-700 p-1">
-                    <img src="logo.png" class="w-full h-full rounded-full object-cover">
-                </div>
-                <div class="flex flex-col">
-                    <span class="logo-text font-black text-blue-900">TOÁN</span>
-                    <span class="text-base font-bold text-gray-700">THẦY THÀNH</span>
+    <header style="background: white; padding: 10px 0;">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" class="logo">
+                <img src="logo.png" class="logo-anh" alt="Toán Thầy Thành">
+                <div style="display: flex; flex-direction: column;">
+                    <span class="logo-chu-to">TOÁN</span>
+                    <span class="logo-chu-nho">THẦY THÀNH</span>
                 </div>
             </a>
 
-            <div class="flex-1 max-w-xl mx-12 hidden lg:block">
-                <div class="relative">
-                    <input type="text" placeholder="Tìm kiếm bài giảng..." class="w-full border-2 border-gray-200 rounded-full py-3 px-8 text-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-6 text-lg">
-                <button class="font-bold text-blue-900">Đăng nhập</button>
-                <button class="bg-blue-700 text-white px-8 py-3 rounded-full font-bold shadow-lg">Đăng ký</button>
+            <div style="display: flex; gap: 20px;">
+                <button style="font-weight: bold; color: #1e3a8a; border: none; background: none; cursor: pointer;">Đăng nhập</button>
+                <button style="background: #1e3a8a; color: white; padding: 10px 25px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer;">Đăng ký</button>
             </div>
         </div>
-        
-        <nav class="bg-blue-900 text-white mt-2">
-            <div class="container mx-auto px-6">
-                <ul class="flex space-x-10 py-4 uppercase font-bold text-sm tracking-wider">
-                    <li><a href="#" class="text-yellow-400">Trang chủ</a></li>
+
+        <nav class="menu">
+            <div class="container">
+                <ul>
+                    <li><a href="index.html" style="color: #fbbf24;">Trang chủ</a></li>
                     <li><a href="#">Thông tin khóa học</a></li>
                     <li><a href="#">Các khóa học</a></li>
-                    <li><a href="#" class="bg-yellow-500 text-blue-900 px-4 py-1 rounded">Đăng ký khóa học</a></li>
+                    <li><a href="#" class="menu-dang-ky">Đăng ký khóa học</a></li>
                 </ul>
             </div>
         </nav>
     </header>
 
-    <div class="banner swiper mySwiper">
-        <div class="swiper-wrapper text-white">
-            <div class="swiper-slide relative">
-                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-center px-4">
-                    <h2 class="text-6xl font-black italic uppercase tracking-tighter">
-                        Chinh phục kỳ thi TS vào 10 cùng Thầy Thành
-                    </h2>
+    <div class="pictruot swiper mySwiper">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1600">
+                <div class="pictruot-chu">
+                    <h2>CHINH PHỤC KỲ THI TS VÀO 10 CÙNG THẦY THÀNH</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <main class="container mx-auto px-6 py-16">
-        <h2 class="text-4xl font-black text-blue-900 mb-10 border-l-8 border-yellow-500 pl-6 uppercase">Bài giảng miễn phí</h2>
-        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+    <main class="container">
+        <h2 class="tieude-chinh">Bài giảng miễn phí</h2>
+        <div id="video-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 40px;">
             </div>
     </main>
 
