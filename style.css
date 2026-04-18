@@ -169,3 +169,28 @@ body {
     line-height: 1.3;
     color: #111827;
 }
+/* --- ĐIỀU CHỈNH MENU TO RÕ --- */
+.nav-link {
+    font-size: 1.25rem !important; /* Tăng cỡ chữ lên mức dễ nhìn nhất */
+    font-weight: 800 !important;   /* Làm chữ đậm hơn để nổi bật trên nền xanh */
+    padding: 0.75rem 1.25rem !important;
+    letter-spacing: 0.5px;
+}
+
+/* --- ĐIỀU CHỈNH BANNER GỌN GÀNG --- */
+.mySwiper {
+    height: 350px !important; /* Giảm chiều cao xuống để lộ phần nội dung bên dưới */
+    max-height: 40vh;         /* Đảm bảo không bao giờ quá 40% chiều cao màn hình */
+}
+
+/* Chỉnh lại chữ trong banner cho cân xứng với độ cao mới */
+.mySwiper h2 {
+    font-size: 2.5rem !important; 
+    line-height: 1.2;
+    max-width: 80%;
+}
+
+/* --- TỐI ƯU KHOẢNG CÁCH --- */
+header {
+    padding-bottom: 0 !important; /* Thu nhỏ khoảng trắng thừa của header */
+}
