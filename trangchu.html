@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toán Thầy Thành - HDC Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50">
+
+    <header class="bg-white shadow-md">
+    <div class="khung-trang flex items-center justify-between py-4">
+        
+        <a href="index.html" class="cum-logo">
+            <img src="logo.png" class="anh-dai-dien-logo">
+            <div>
+                <div class="ten-thuong-hieu-to">Toán</div>
+                <div class="ten-thuong-hieu-nho">Thầy Thành</div>
+            </div>
+        </a>
+
+        <div class="vung-tim-kiem hidden md:block">
+            <input type="text" placeholder="Tìm bài giảng..." class="o-nhap-tim-kiem">
+        </div>
+
+        <div class="cum-tai-khoan">
+            <button class="nut-bam-phu">Đăng nhập</button>
+            <button class="nut-bam-chinh shadow-lg">Đăng ký</button>
+
+            </div>
+    </div>
+
+    <nav class="thanh-menu-ngang">
+        <div class="khung-trang">
+            <ul class="danh-sach-menu">
+                <li><a href="index.html" class="item-menu dang-kich-hoat">Trang chủ</a></li>
+                <li><a href="#" class="item-menu">Khóa học vào 10</a></li>
+                <li><a href="#" class="item-menu">Tài liệu miễn phí</a></li>
+                <li><a href="#" class="item-menu" style="background: #fbbf24; color: #1e3a8a; padding: 5px 15px; border-radius: 5px;">Đăng ký ngay</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+    <div class="swiper mySwiper">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide">
+            <style>
+                /* --- CHỈNH BANNER ĐẸP VÀ CÂN ĐỐI --- */
+            .mySwiper {
+                height: auto !important; /* Để chiều cao tự động theo tỉ lệ ảnh thiết kế */
+                /*max-height: 400px;       /* Khống chế độ cao tối đa để không quá to */
+                width: 100%;
+                background-color: #007bff; /* Màu xanh nền trùng với màu banner của thầy */
+            }
+            
+            .anh-banner-format {
+                width: 100%;
+                height: 100%;
+                /* Quan trọng: 'contain' giúp hiện hết toàn bộ ảnh thiết kế không bị mất góc */
+                /* Nếu muốn ảnh tràn hết khung bất kể tỉ lệ, hãy dùng 'cover' */
+                object-fit: contain; 
+                display: block;
+            }
+            
+            /* Xử lý khoảng trống màu xám bên phải nếu ảnh không đủ rộng */
+            .swiper-slide {
+                display: flex;
+                justify-content: center;
+                background: linear-gradient(to right, #0076de, #fdb913); /* Tạo dải màu chuyển tiếp giống ảnh của thầy */
+            }
+            </style>
+            <img src="banner.png" class="anh-banner-format">
+        </div>
+    </div>
+</div>
+
+    <main class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-black text-blue-900 mb-8 border-l-4 border-yellow-500 pl-4 uppercase tracking-tight">Bài giảng mới nhất</h2>
+        
+        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+        var swiper = new Swiper(".mySwiper", {
+            loop: true,
+            autoplay: { delay: 4000 }
+        });
+    </script>
+</body>
+</html>
