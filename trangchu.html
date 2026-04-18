@@ -110,5 +110,50 @@
             autoplay: { delay: 4000 }
         });
     </script>
+<script>
+    function checkLogin() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const userSection = document.getElementById('user-section');
+    
+    if (user) {
+        let template = document.getElementById('user-logged-template').innerHTML;
+        
+        // Kiểm tra nếu là admin thì hiện thêm dòng Quản trị
+        let adminOption = '';
+        if (user.role === 'admin') {
+            adminOption = '<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50"><i class="fas fa-user-shield mr-2"></i> Trang quản trị</a><div class="divider"></div>';
+        }
+
+        // Thay thế các dữ liệu vào template
+        template = template.replace('{fullname}', user.fullname)
+                           .replace('{role_text}', user.role === 'admin' ? 'Quản trị viên' : 'Học sinh')
+                           .replace('{avatar}', user.avatar || 'logo.png')
+                           .replace('{admin_option}', adminOption);
+        
+        userSection.innerHTML = template;
+    }
+}
+
+function toggleUserMenu() {
+    document.getElementById('dropdownUser').classList.toggle('active');
+}
+
+function logout() {
+    localStorage.removeItem('user');
+    window.location.reload();
+}
+
+// Chạy kiểm tra ngay khi load trang
+checkLogin();
+
+// Đóng menu khi click ra ngoài
+window.onclick = function(event) {
+    if (!event.target.closest('.cum-tai-khoan')) {
+        const dropdown = document.getElementById('dropdownUser');
+        if (dropdown) dropdown.classList.remove('active');
+    }
+}
+</script>
+
 </body>
 </html>
