@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Toán Thầy Thành</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+        <div class="bg-blue-900 p-8 text-center relative">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/mathematics.png')]"></div>
+            <a href="index.html" class="inline-block mb-4">
+                <img src="logo.png" alt="Logo" class="w-20 h-20 rounded-full border-4 border-white mx-auto shadow-lg bg-white">
+            </a>
+            <h1 class="text-white text-2xl font-black uppercase tracking-tight">Chào mừng bạn trở lại!</h1>
+            <p class="text-blue-200 text-sm font-bold mt-2">Đăng nhập để tiếp tục chinh phục toán học</p>
+        </div>
+
+        <div class="p-8">
+            <form action="#" class="space-y-6">
+                <div>
+                    <label class="block text-blue-900 font-bold mb-2 ml-1">Tài khoản học sinh</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+                        <input type="text" placeholder="Nhập tên đăng nhập hoặc Email" 
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2 ml-1">
+                        <label class="text-blue-900 font-bold">Mật khẩu</label>
+                        <a href="#" class="text-blue-600 text-sm font-bold hover:underline">Quên mật khẩu?</a>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                        <input type="password" placeholder="Nhập mật khẩu của bạn" 
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center ml-1">
+                    <input type="checkbox" id="remember" class="w-4 h-4 text-blue-600 rounded">
+                    <label for="remember" class="ml-2 text-gray-600 text-sm font-semibold">Ghi nhớ đăng nhập</label>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1 text-lg uppercase">
+                    Vào học ngay
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-gray-500 font-semibold">
+                    Chưa có tài khoản? 
+                    <a href="#" class="text-yellow-600 font-black hover:underline">Đăng ký thành viên mới</a>
+                </p>
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <a href="index.html" class="text-gray-400 hover:text-blue-900 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
