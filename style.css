@@ -187,3 +187,48 @@
     transform: translateY(-8px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
+/* --- MENU TÀI KHOẢN DROPDOWN --- */
+.cum-tai-khoan {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-user {
+    display: none; /* Mặc định ẩn */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    min-width: 200px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 10px 0;
+    z-index: 100;
+    margin-top: 10px;
+    border: 1px solid #eee;
+}
+
+.dropdown-user.active {
+    display: block; /* Hiện khi bấm vào avatar/tên */
+}
+
+.item-dropdown {
+    display: block;
+    padding: 10px 20px;
+    color: #1e3a8a;
+    font-weight: 700;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.item-dropdown:hover {
+    background: #f0f4ff;
+    color: #2563eb;
+}
+
+.divider {
+    height: 1px;
+    background: #eee;
+    margin: 5px 0;
+}
