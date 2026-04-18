@@ -79,7 +79,7 @@
     // 1. Cấu hình kết nối Supabase
 const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
 const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-const supabase = supabase.createClient(SUBPUrl, SUBPKey);
+const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
 
 // 2. Xử lý sự kiện khi học sinh bấm "Vào học ngay"
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
