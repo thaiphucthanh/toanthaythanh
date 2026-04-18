@@ -7,37 +7,91 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Thêm CSS cho Dropdown Menu vì trong code thầy có dùng các class này */
+        .dropdown-user {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 220px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none; /* Mặc định ẩn */
+            flex-direction: column;
+            padding: 10px 0;
+            z-index: 100;
+            border: 1px solid #f0f0f0;
+        }
+        .dropdown-user.active {
+            display: flex; /* Hiện khi có class active */
+        }
+        .item-dropdown {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            transition: all 0.2s;
+            display: flex;
+            items-center: center;
+        }
+        .item-dropdown:hover {
+            background: #f3f4f6;
+            color: #1e40af;
+        }
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 5px 0;
+        }
+        .anh-banner-format {
+            width: 100%;
+            height: auto;
+            max-height: 450px;
+            object-fit: cover;
+        }
+        /* CSS cho menu ngang */
+        .thanh-menu-ngang { background: #1e3a8a; color: white; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+        .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; }
+        .item-menu { font-weight: bold; font-size: 15px; }
+        .cum-logo { display: flex; items-center: center; gap: 10px; }
+        .anh-dai-dien-logo { width: 50px; height: 50px; border-radius: 50%; }
+        .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-thuong-hieu-nho { font-size: 14px; color: #6b7280; font-weight: bold; }
+    </style>
 </head>
 <body class="bg-gray-50">
 
-    <header class="bg-white shadow-md">
+    <header class="bg-white shadow-md sticky top-0 z-[1000]">
         <div class="khung-trang flex items-center justify-between py-4">
             <a href="trangchu.html" class="cum-logo">
-                <img src="logo.png" class="anh-dai-dien-logo">
+                <img src="logo.png" class="anh-dai-dien-logo border border-blue-100">
                 <div>
-                    <div class="ten-thuong-hieu-to">Toán</div>
-                    <div class="ten-thuong-hieu-nho">Thầy Thành</div>
+                    <div class="ten-thuong-hieu-to tracking-tighter uppercase">Toán</div>
+                    <div class="ten-thuong-hieu-nho uppercase tracking-widest text-[10px]">Thầy Thành</div>
                 </div>
             </a>
 
-            <div class="vung-tim-kiem hidden md:block">
-                <input type="text" placeholder="Tìm bài giảng..." class="o-nhap-tim-kiem">
+            <div class="vung-tim-kiem hidden md:block flex-1 max-w-md mx-10">
+                <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            <div class="cum-tai-khoan" id="user-section">
-                <button class="nut-bam-phu" onclick="location.href='dang-nhap.html'">Đăng nhập</button>
-                <button class="nut-bam-chinh shadow-lg">Đăng ký</button>
+            <div class="cum-tai-khoan relative" id="user-section">
+                <div class="flex gap-2">
+                    <button class="px-5 py-2 text-blue-900 font-bold text-sm" onclick="location.href='dang-nhap.html'">Đăng nhập</button>
+                    <button class="px-5 py-2 bg-blue-900 text-white rounded-full font-bold text-sm shadow-md hover:bg-blue-800 transition-all">Đăng ký</button>
+                </div>
             </div>
         </div>
 
         <nav class="thanh-menu-ngang">
             <div class="khung-trang">
                 <ul class="danh-sach-menu">
-                    <li><a href="trangchu.html" class="item-menu dang-kich-hoat">Trang chủ</a></li>
-                    <li><a href="#" class="item-menu">Khóa học vào 10</a></li>
-                    <li><a href="#" class="item-menu">Tài liệu miễn phí</a></li>
-                    <li id="menu-dk-ngay"><a href="#" class="item-menu" style="background: #fbbf24; color: #1e3a8a; padding: 5px 15px; border-radius: 5px;">Đăng ký ngay</a></li>
+                    <li><a href="trangchu.html" class="item-menu opacity-100 border-b-2 border-yellow-400 pb-1">Trang chủ</a></li>
+                    <li><a href="#" class="item-menu opacity-80 hover:opacity-100">Khóa học vào 10</a></li>
+                    <li><a href="#" class="item-menu opacity-80 hover:opacity-100">Tài liệu miễn phí</a></li>
+                    <li id="menu-dk-ngay"><a href="#" class="item-menu bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-lg hover:bg-yellow-500 transition-all">Đăng ký ngay</a></li>
                 </ul>
             </div>
         </nav>
@@ -51,26 +105,26 @@
         </div>
     </div>
 
-    <main class="container mx-auto px-4 py-12">
-        <h2 class="text-3xl font-black text-blue-900 mb-8 border-l-4 border-yellow-500 pl-4 uppercase tracking-tight">Bài giảng mới nhất</h2>
+    <main class="khung-trang py-12">
+        <h2 class="text-3xl font-black text-blue-900 mb-8 border-l-8 border-yellow-400 pl-4 uppercase tracking-tight">Bài giảng mới nhất</h2>
         <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
     </main>
 
     <script id="user-logged-template" type="text/template">
-        <div class="flex items-center gap-3 cursor-pointer relative" onclick="toggleUserMenu()">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
             <div class="text-right hidden md:block">
                 <div class="text-blue-900 font-black text-sm uppercase leading-tight">{fullname}</div>
-                <div class="text-gray-500 text-xs font-bold">{role_text}</div>
+                <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{role_text}</div>
             </div>
-            <img src="{avatar}" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm">
+            <img src="{avatar}" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-md">
             
-            <div class="dropdown-user" id="dropdownUser">
+            <div class="dropdown-user shadow-2xl" id="dropdownUser">
                 {admin_option}
-                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-2"></i> Thông tin cá nhân</a>
-                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-2"></i> Khóa học của tôi</a>
+                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i> Thông tin cá nhân</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3 text-green-500"></i> Khóa học của tôi</a>
                 <div class="divider"></div>
-                <a href="#" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất</a>
+                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i> Đăng xuất</a>
             </div>
         </div>
     </script>
@@ -92,13 +146,18 @@
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
                 
-                // 1. Kiểm tra quyền Admin
+                // KIỂM TRA ROLE ADMIN ĐỂ HIỆN NÚT
                 let adminOption = '';
                 if (user.role === 'admin') {
-                    adminOption = '<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50"><i class="fas fa-user-shield mr-2"></i> Trang quản trị</a><div class="divider"></div>';
+                    adminOption = `
+                        <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">
+                            <i class="fas fa-user-shield mr-3"></i> TRANG QUẢN TRỊ
+                        </a>
+                        <div class="divider"></div>
+                    `;
                 }
 
-                // 2. Thay thế dữ liệu vào mẫu
+                // Thay thế dữ liệu
                 template = template.replace('{fullname}', user.fullname)
                                    .replace('{role_text}', user.role === 'admin' ? 'Quản trị viên' : 'Học sinh')
                                    .replace('{avatar}', user.avatar || 'logo.png')
@@ -106,18 +165,21 @@
                 
                 userSection.innerHTML = template;
 
-                // 3. Ẩn nút "Đăng ký ngay" trên menu nếu đã là thành viên
+                // Ẩn nút "Đăng ký ngay" nếu đã đăng nhập
                 if(menuDkNgay) menuDkNgay.style.display = 'none';
             }
         }
 
-        function toggleUserMenu() {
+        // Đóng/Mở menu tài khoản
+        function toggleUserMenu(event) {
+            event.stopPropagation(); // Ngăn chặn sự kiện click lan ra ngoài
             const dropdown = document.getElementById('dropdownUser');
             if(dropdown) dropdown.classList.toggle('active');
         }
 
+        // Đăng xuất
         function logout() {
-            if(confirm("Thầy/Bạn muốn đăng xuất phải không?")) {
+            if(confirm("Thầy Thành muốn đăng xuất hệ thống?")) {
                 localStorage.removeItem('user');
                 window.location.reload();
             }
@@ -126,13 +188,11 @@
         // Chạy kiểm tra khi load trang
         window.onload = checkLogin;
 
-        // Đóng menu khi click ra ngoài vùng tài khoản
+        // Đóng menu khi click bất kỳ đâu ngoài vùng menu
         window.onclick = function(event) {
-            if (!event.target.closest('.cum-tai-khoan')) {
-                const dropdown = document.getElementById('dropdownUser');
-                if (dropdown && dropdown.classList.contains('active')) {
-                    dropdown.classList.remove('active');
-                }
+            const dropdown = document.getElementById('dropdownUser');
+            if (dropdown && !event.target.closest('.cum-tai-khoan')) {
+                dropdown.classList.remove('active');
             }
         }
     </script>
