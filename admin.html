@@ -196,7 +196,47 @@
             </div>
 
             <div id="content-course-list" class="content-section hidden"></div>
-            <div id="content-add-course" class="content-section hidden"></div>
+            <div id="content-add-course" class="content-section hidden">
+    <h3 class="text-2xl font-bold text-blue-900 mb-6 uppercase">Thêm bài giảng / Khóa học mới</h3>
+    <div class="bg-white p-8 rounded-[30px] shadow-sm max-w-4xl border border-gray-100">
+        <form id="form-add-lesson" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Danh mục (Lớp/Chương)</label>
+                <input type="text" id="lesson-category-input" placeholder="Ví dụ: TOÁN 12 - CHƯƠNG 1" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tiêu đề bài giảng</label>
+                <input type="text" id="lesson-title-input" placeholder="Nhập tiêu đề theo công thức của Thầy" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Insight (Nỗi đau/Mong muốn học sinh)</label>
+                <textarea id="lesson-insight-input" rows="2" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" placeholder="Ví dụ: Giúp 2k8 nắm trọn công thức tính nhanh chỉ trong 30s..."></textarea>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Link Video (YouTube)</label>
+                <input type="text" id="lesson-video-input" placeholder="https://www.youtube.com/watch?v=..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Nội dung chi tiết (HTML)</label>
+                <textarea id="lesson-content-input" rows="5" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" placeholder="Nhập nội dung hoặc mã HTML mô tả bài học..."></textarea>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tài liệu (JSON format)</label>
+                <textarea id="lesson-docs-input" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1 font-mono text-sm" placeholder='[{"name": "File bài tập", "url": "link_pdf"}]'></textarea>
+            </div>
+
+            <div class="md:col-span-2 mt-4">
+                <button type="submit" id="btn-save-lesson" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-blue-800 transition-all">
+                    <i class="fas fa-cloud-upload-alt"></i> ĐĂNG TẢI HỌC LIỆU
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
             <div id="content-exam" class="content-section hidden"></div>
 
         </div>
@@ -361,6 +401,60 @@
                 else fetchUsers();
             }
         }
+    </script>
+    <script>
+        // --- 8. Logic: Thêm Bài giảng mới vào bảng 'lessons' ---
+document.getElementById('form-add-lesson').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-lesson');
+    
+    // Thu thập dữ liệu
+    const category = document.getElementById('lesson-category-input').value;
+    const title = document.getElementById('lesson-title-input').value;
+    const insight = document.getElementById('lesson-insight-input').value;
+    const video_url = document.getElementById('lesson-video-input').value;
+    const content = document.getElementById('lesson-content-input').value;
+    const docs_raw = document.getElementById('lesson-docs-input').value;
+
+    let documents = [];
+    try {
+        documents = docs_raw ? JSON.parse(docs_raw) : [];
+    } catch (err) {
+        alert("Định dạng Tài liệu JSON chưa đúng Thầy ơi! Hãy kiểm tra lại dấu ngoặc.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải lên...';
+
+    try {
+        const { data, error } = await _supabase
+            .from('lessons') // Thầy đảm bảo bảng trong Supabase tên là 'lessons'
+            .insert([
+                { 
+                    title: title, 
+                    category: category, 
+                    insight: insight, 
+                    video_url: video_url, 
+                    content: content, 
+                    documents: documents,
+                    created_at: new Date()
+                }
+            ]);
+
+        if (error) throw error;
+
+        alert("Tuyệt vời Thầy ơi! Bài giảng '" + title + "' đã được đưa lên hệ thống.");
+        document.getElementById('form-add-lesson').reset();
+        // Sau khi thêm xong có thể chuyển về danh sách bài giảng (nếu có)
+        // showContent('course-list'); 
+    } catch (err) {
+        alert("Lỗi rồi Thầy Thành ơi: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ĐĂNG TẢI HỌC LIỆU';
+    }
+});
     </script>
 </body>
 </html>
