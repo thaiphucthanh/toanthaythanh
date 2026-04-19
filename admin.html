@@ -197,44 +197,55 @@
 
             <div id="content-course-list" class="content-section hidden"></div>
             <div id="content-add-course" class="content-section hidden">
-    <h3 class="text-2xl font-bold text-blue-900 mb-6 uppercase">Thêm bài giảng / Khóa học mới</h3>
-    <div class="bg-white p-8 rounded-[30px] shadow-sm max-w-4xl border border-gray-100">
-        <form id="form-add-lesson" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
             <div>
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Danh mục (Lớp/Chương)</label>
-                <input type="text" id="lesson-category-input" placeholder="Ví dụ: TOÁN 12 - CHƯƠNG 1" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
+                <h2 class="text-2xl font-bold text-gray-800">Thiết lập Khóa học mới</h2>
+                <p class="text-gray-500 text-sm">Khởi tạo nền tảng cho các chuyên đề và bài giảng</p>
             </div>
-            <div>
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tiêu đề bài giảng</label>
-                <input type="text" id="lesson-title-input" placeholder="Nhập tiêu đề theo công thức của Thầy" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
-            </div>
+            <i class="fas fa-graduation-cap text-4xl text-blue-100"></i>
+        </div>
 
-            <div class="md:col-span-2">
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Insight (Nỗi đau/Mong muốn học sinh)</label>
-                <textarea id="lesson-insight-input" rows="2" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" placeholder="Ví dụ: Giúp 2k8 nắm trọn công thức tính nhanh chỉ trong 30s..."></textarea>
-            </div>
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tên khóa học</label>
+                    <input type="text" id="course_name" 
+                        placeholder="Ví dụ: Toán 12 - Luyện thi THPT Quốc gia" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                </div>
 
-            <div class="md:col-span-2">
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Link Video (YouTube)</label>
-                <input type="text" id="lesson-video-input" placeholder="https://www.youtube.com/watch?v=..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
-            </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả khóa học</label>
+                    <textarea id="course_description" rows="4" 
+                        placeholder="Mô tả mục tiêu, đối tượng hoặc lộ trình khóa học..." 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"></textarea>
+                </div>
 
-            <div class="md:col-span-2">
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Nội dung chi tiết (HTML)</label>
-                <textarea id="lesson-content-input" rows="5" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" placeholder="Nhập nội dung hoặc mã HTML mô tả bài học..."></textarea>
-            </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ảnh đại diện (Thumbnail URL)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="course_thumbnail" 
+                            placeholder="Dán link ảnh từ Canva hoặc Google Drive..." 
+                            class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                        <button onclick="previewThumb()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="thumb-preview" class="mt-3 hidden">
+                        <img src="" alt="Preview" class="h-32 rounded-lg border shadow-sm">
+                    </div>
+                </div>
 
-            <div class="md:col-span-2">
-                <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tài liệu (JSON format)</label>
-                <textarea id="lesson-docs-input" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1 font-mono text-sm" placeholder='[{"name": "File bài tập", "url": "link_pdf"}]'></textarea>
+                <div class="pt-4">
+                    <button onclick="saveCourse()" id="btn-save-course" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                        <i class="fas fa-rocket"></i>
+                        Xác nhận khởi tạo khóa học
+                    </button>
+                </div>
             </div>
-
-            <div class="md:col-span-2 mt-4">
-                <button type="submit" id="btn-save-lesson" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-blue-800 transition-all">
-                    <i class="fas fa-cloud-upload-alt"></i> ĐĂNG TẢI HỌC LIỆU
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
             <div id="content-exam" class="content-section hidden"></div>
@@ -402,59 +413,68 @@
             }
         }
     </script>
-    <script>
+    <script id="them khoa hoc moi">
         // --- 8. Logic: Thêm Bài giảng mới vào bảng 'lessons' ---
-document.getElementById('form-add-lesson').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-lesson');
-    
-    // Thu thập dữ liệu
-    const category = document.getElementById('lesson-category-input').value;
-    const title = document.getElementById('lesson-title-input').value;
-    const insight = document.getElementById('lesson-insight-input').value;
-    const video_url = document.getElementById('lesson-video-input').value;
-    const content = document.getElementById('lesson-content-input').value;
-    const docs_raw = document.getElementById('lesson-docs-input').value;
+// Hàm xem trước ảnh khi dán link
+function previewThumb() {
+    const url = document.getElementById('course_thumbnail').value;
+    const previewDiv = document.getElementById('thumb-preview');
+    if (url) {
+        previewDiv.querySelector('img').src = url;
+        previewDiv.classList.remove('hidden');
+    }
+}
 
-    let documents = [];
-    try {
-        documents = docs_raw ? JSON.parse(docs_raw) : [];
-    } catch (err) {
-        alert("Định dạng Tài liệu JSON chưa đúng Thầy ơi! Hãy kiểm tra lại dấu ngoặc.");
+// Hàm lưu Khóa học vào Supabase
+async function saveCourse() {
+    const btn = document.getElementById('btn-save-course');
+    const name = document.getElementById('course_name').value;
+    const desc = document.getElementById('course_description').value;
+    const thumb = document.getElementById('course_thumbnail').value;
+
+    if (!name) {
+        alert("Thầy cho em xin cái tên Khóa học với ạ!");
         return;
     }
 
+    // Hiệu ứng đang xử lý
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải lên...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi tạo...';
 
     try {
-        const { data, error } = await _supabase
-            .from('lessons') // Thầy đảm bảo bảng trong Supabase tên là 'lessons'
-            .insert([
-                { 
-                    title: title, 
-                    category: category, 
-                    insight: insight, 
-                    video_url: video_url, 
-                    content: content, 
-                    documents: documents,
-                    created_at: new Date()
-                }
-            ]);
+        const response = await fetch(`${SB_URL}/rest/v1/courses`, {
+            method: 'POST',
+            headers: {
+                "apikey": SB_KEY,
+                "Authorization": `Bearer ${SB_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=representation"
+            },
+            body: JSON.stringify({
+                course_name: name,
+                description: desc,
+                thumbnail_url: thumb
+            })
+        });
 
-        if (error) throw error;
-
-        alert("Tuyệt vời Thầy ơi! Bài giảng '" + title + "' đã được đưa lên hệ thống.");
-        document.getElementById('form-add-lesson').reset();
-        // Sau khi thêm xong có thể chuyển về danh sách bài giảng (nếu có)
-        // showContent('course-list'); 
-    } catch (err) {
-        alert("Lỗi rồi Thầy Thành ơi: " + err.message);
+        if (response.ok) {
+            alert("Đã tạo khóa học thành công! Bây giờ Thầy có thể thêm chuyên đề cho khóa này.");
+            // Reset form
+            document.getElementById('course_name').value = "";
+            document.getElementById('course_description').value = "";
+            document.getElementById('course_thumbnail').value = "";
+            document.getElementById('thumb-preview').classList.add('hidden');
+        } else {
+            throw new Error("Lỗi API");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Có lỗi rồi Thầy ơi, Thầy kiểm tra lại bảng 'courses' trong Supabase nhé!");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ĐĂNG TẢI HỌC LIỆU';
+        btn.innerHTML = '<i class="fas fa-rocket"></i> Xác nhận khởi tạo khóa học';
     }
-});
+}
     </script>
 </body>
 </html>
