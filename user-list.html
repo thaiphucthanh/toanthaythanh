@@ -181,67 +181,69 @@
     async function fetchUsers() {
         const tbody = document.getElementById('user-table-body');
         
-        // Truy vấn bảng 'profiles'
-        const { data: users, error } = await supabaseClient
-            .from('profiles') 
-            .select('*')
-            .order('created_at', { ascending: false });
+        try {
+            // Đã đổi từ 'profiles' sang 'accounts' theo bảng của Thầy
+            const { data: users, error } = await supabaseClient
+                .from('accounts') 
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        if (error) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi: ${error.message}</td></tr>`;
-            return;
+            if (error) {
+                // Báo lỗi cụ thể nếu vẫn không kết nối được
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">
+                    Lỗi kết nối bảng "accounts": ${error.message}
+                </td></tr>`;
+                return;
+            }
+
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-bold">Chưa có dữ liệu học viên trong bảng accounts.</td></tr>`;
+                return;
+            }
+
+            renderTable(users);
+
+        } catch (err) {
+            console.error('Lỗi hệ thống:', err);
+            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
         }
+    }
 
-        if (!users || users.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-bold">Chưa có dữ liệu học viên nào.</td></tr>`;
-            return;
-        }
-
-        // Xóa thông báo đang tải và đổ dữ liệu thật
+    function renderTable(users) {
+        const tbody = document.getElementById('user-table-body');
         tbody.innerHTML = '';
+        
         users.forEach(user => {
+            // Lưu ý: Nếu cột tên là 'name' thay vì 'fullname', Thầy sửa user.fullname thành user.name
+            const displayName = user.fullname || user.name || 'Học viên';
+            const initial = displayName.charAt(0).toUpperCase();
+
             const tr = document.createElement('tr');
             tr.className = "border-b border-gray-50 hover:bg-blue-50/30 transition-colors";
-            
-            // Tạo chữ cái đầu cho Avatar
-            const initial = user.fullname ? user.fullname.charAt(0).toUpperCase() : '?';
-
             tr.innerHTML = `
                 <td class="p-5">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm">
-                            ${initial}
-                        </div>
+                        <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm">${initial}</div>
                         <div>
-                            <div class="font-bold text-gray-900 text-sm uppercase">${user.fullname || 'ẨN DANH'}</div>
-                            <div class="text-[10px] text-gray-400 font-medium">${user.email || 'Không có email'}</div>
+                            <div class="font-bold text-gray-900 text-sm uppercase">${displayName}</div>
+                            <div class="text-[10px] text-gray-400 font-medium">${user.email || ''}</div>
                         </div>
                     </div>
                 </td>
-                <td class="p-5 text-sm font-semibold text-gray-600">${user.phone || '---'}</td>
+                <td class="p-5 text-sm font-semibold text-gray-600">${user.phone || user.sdt || '---'}</td>
                 <td class="p-5">
-                    <span class="px-3 py-1 ${user.role === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-black rounded-full uppercase">
-                        ${user.role || 'Học sinh'}
-                    </span>
-                </td>
-                <td class="p-5">
-                    <span class="flex items-center gap-1.5 text-green-600 text-[10px] font-black uppercase">
-                        <span class="w-2 h-2 bg-green-600 rounded-full"></span> Hoạt động
-                    </span>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-full uppercase">${user.role || 'Học sinh'}</span>
                 </td>
                 <td class="p-5 text-center">
-                    <div class="flex justify-center gap-2">
-                        <button onclick="editUser('${user.id}')" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fas fa-edit text-xs"></i>
-                        </button>
-                    </div>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Chạy hàm lấy dữ liệu khi trang tải xong
     window.onload = fetchUsers;
 
     function toggleSubmenu(id, element) {
