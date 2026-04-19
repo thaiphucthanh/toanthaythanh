@@ -23,6 +23,21 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+
+        /* Style cho Dropdown Thao tác */
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            right: 40px;
+            top: 20px;
+            z-index: 100;
+            min-width: 160px;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+        }
+        .user-dropdown.show { display: block; }
     </style>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden">
@@ -196,74 +211,62 @@
             </div>
 
             <div id="content-course-list" class="content-section hidden">
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h3 class="text-2xl font-bold text-blue-900 uppercase tracking-tighter">Hệ thống khóa học hiện có</h3>
-            <p class="text-gray-500 text-sm">Quản lý nội dung, chuyên đề và học viên theo từng khóa</p>
-        </div>
-        <button onclick="fetchCourses()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 transition-all">
-            <i class="fas fa-sync-alt"></i> Làm mới
-        </button>
-    </div>
-    
-    <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="col-span-full p-10 text-center text-gray-400 italic">Đang tải danh sách khóa học...</div>
-    </div>
-</div>
-            <div id="content-add-course" class="content-section hidden">
-    <div class="max-w-3xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Thiết lập Khóa học mới</h2>
-                <p class="text-gray-500 text-sm">Khởi tạo nền tảng cho các chuyên đề và bài giảng</p>
-            </div>
-            <i class="fas fa-graduation-cap text-4xl text-blue-100"></i>
-        </div>
-
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tên khóa học</label>
-                    <input type="text" id="course_name" 
-                        placeholder="Ví dụ: Toán 12 - Luyện thi THPT Quốc gia" 
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả khóa học</label>
-                    <textarea id="course_description" rows="4" 
-                        placeholder="Mô tả mục tiêu, đối tượng hoặc lộ trình khóa học..." 
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ảnh đại diện (Thumbnail URL)</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="course_thumbnail" 
-                            placeholder="Dán link ảnh từ Canva hoặc Google Drive..." 
-                            class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-                        <button onclick="previewThumb()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-blue-900 uppercase tracking-tighter">Hệ thống khóa học hiện có</h3>
+                        <p class="text-gray-500 text-sm">Quản lý nội dung, chuyên đề và học viên theo từng khóa</p>
                     </div>
-                    <div id="thumb-preview" class="mt-3 hidden">
-                        <img src="" alt="Preview" class="h-32 rounded-lg border shadow-sm">
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <button onclick="saveCourse()" id="btn-save-course" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
-                        <i class="fas fa-rocket"></i>
-                        Xác nhận khởi tạo khóa học
+                    <button onclick="fetchCourses()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 transition-all">
+                        <i class="fas fa-sync-alt"></i> Làm mới
                     </button>
                 </div>
+                <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="col-span-full p-10 text-center text-gray-400 italic">Đang tải danh sách khóa học...</div>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-            <div id="content-exam" class="content-section hidden"></div>
 
+            <div id="content-add-course" class="content-section hidden">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Thiết lập Khóa học mới</h2>
+                            <p class="text-gray-500 text-sm">Khởi tạo nền tảng cho các chuyên đề và bài giảng</p>
+                        </div>
+                        <i class="fas fa-graduation-cap text-4xl text-blue-100"></i>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên khóa học</label>
+                                <input type="text" id="course_name" placeholder="Ví dụ: Toán 12 - Luyện thi THPT Quốc gia" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả khóa học</label>
+                                <textarea id="course_description" rows="4" placeholder="Mô tả mục tiêu, đối tượng hoặc lộ trình khóa học..." class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Ảnh đại diện (Thumbnail URL)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="course_thumbnail" placeholder="Dán link ảnh từ Canva hoặc Google Drive..." class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                                    <button onclick="previewThumb()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div id="thumb-preview" class="mt-3 hidden">
+                                    <img src="" alt="Preview" class="h-32 rounded-lg border shadow-sm">
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <button onclick="saveCourse()" id="btn-save-course" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                                    <i class="fas fa-rocket"></i> Xác nhận khởi tạo khóa học
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="content-exam" class="content-section hidden"></div>
         </div>
     </main>
 
@@ -313,12 +316,13 @@
             }
 
             if (section === 'user-list') fetchUsers();
+            if (section === 'course-list') fetchCourses();
         }
 
-        // --- 4. Logic Supabase: Danh sách người dùng ---
+        // --- 4. Logic Supabase: Danh sách người dùng (CẬP NHẬT NÚT BA CHẤM) ---
         async function fetchUsers() {
             const tbody = document.getElementById('user-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang truy xuất Supabase...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang truy xuất dữ liệu...</td></tr>';
 
             try {
                 const { data, error } = await _supabase
@@ -332,9 +336,10 @@
                 data.forEach(user => {
                     const statusClass = user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
                     const statusText = user.status === 'active' ? 'Đang học' : 'Đã khóa';
+                    const statusIcon = user.status === 'active' ? 'fa-user-slash' : 'fa-user-check';
                     
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-blue-50/50 transition-colors";
+                    tr.className = "hover:bg-blue-50/50 transition-colors relative group";
                     tr.innerHTML = `
                         <td class="p-5 font-black text-blue-900">${user.fullname || 'Học sinh'}</td>
                         <td class="p-5">
@@ -349,13 +354,20 @@
                         <td class="p-5 text-center">
                             <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase ${statusClass}">${statusText}</span>
                         </td>
-                        <td class="p-5 text-center">
-                            <div class="flex justify-center gap-2">
-                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white transition-all">
-                                    <i class="fas fa-power-off text-xs"></i>
+                        <td class="p-5 text-center relative">
+                            <button onclick="toggleUserMenu(event, '${user.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-gray-400 transition-all mx-auto">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+
+                            <div id="user-dropdown-${user.id}" class="user-dropdown overflow-hidden">
+                                <button onclick="editUser('${user.id}')" class="w-full text-left px-4 py-3 text-[11px] font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2 border-b border-gray-50">
+                                    <i class="fas fa-edit w-4"></i> CHỈNH SỬA
                                 </button>
-                                <button onclick="deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">
-                                    <i class="fas fa-trash text-xs"></i>
+                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="w-full text-left px-4 py-3 text-[11px] font-bold ${user.status === 'active' ? 'text-orange-600' : 'text-green-600'} hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50">
+                                    <i class="fas ${statusIcon} w-4"></i> ${user.status === 'active' ? 'KHÓA TÀI KHOẢN' : 'MỞ TÀI KHOẢN'}
+                                </button>
+                                <button onclick="deleteUser('${user.id}')" class="w-full text-left px-4 py-3 text-[11px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-2">
+                                    <i class="fas fa-trash-alt w-4"></i> XÓA VĨNH VIỄN
                                 </button>
                             </div>
                         </td>
@@ -367,11 +379,48 @@
             }
         }
 
-        // --- 5. Logic: Thêm người dùng mới vào Supabase ---
+        // --- HÀM ĐIỀU KHIỂN DROPDOWN ---
+        function toggleUserMenu(event, id) {
+            event.stopPropagation();
+            // Đóng tất cả dropdown đang mở khác
+            document.querySelectorAll('.user-dropdown').forEach(el => {
+                if (el.id !== `user-dropdown-${id}`) el.classList.remove('show');
+            });
+            // Mở dropdown hiện tại
+            const menu = document.getElementById(`user-dropdown-${id}`);
+            menu.classList.toggle('show');
+        }
+
+        // Click ra ngoài thì đóng menu
+        window.addEventListener('click', function() {
+            document.querySelectorAll('.user-dropdown').forEach(el => el.classList.remove('show'));
+        });
+
+        function editUser(id) {
+            alert("Tính năng sửa thông tin học sinh ID: " + id + " đang được xây dựng ạ!");
+        }
+
+        // --- Logic: Đổi trạng thái ---
+        async function toggleUserStatus(id, current) {
+            const next = current === 'active' ? 'inactive' : 'active';
+            const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
+            if (error) alert("Lỗi: " + error.message);
+            else fetchUsers();
+        }
+
+        // --- Logic: Xóa người dùng ---
+        async function deleteUser(id) {
+            if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
+                const { error } = await _supabase.from('accounts').delete().eq('id', id);
+                if (error) alert("Lỗi xóa: " + error.message);
+                else fetchUsers();
+            }
+        }
+
+        // --- 5. Logic: Thêm người dùng mới ---
         document.getElementById('form-add-new-user').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit-user');
-            
             const fullname = document.getElementById('add-fullname').value;
             const email = document.getElementById('add-email').value;
             const password = document.getElementById('add-password').value;
@@ -383,201 +432,93 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
 
             try {
-                const { data, error } = await _supabase
+                const { error } = await _supabase
                     .from('accounts')
-                    .insert([
-                        { 
-                            fullname: fullname, 
-                            email: email, 
-                            password: password, 
-                            sdt: sdt, 
-                            link_fb: link_fb, 
-                            role: role,
-                            status: 'active' 
-                        }
-                    ]);
+                    .insert([{ fullname, email, password, sdt, link_fb, role, status: 'active' }]);
 
                 if (error) throw error;
-
-                alert("Chúc mừng thầy! Đã thêm thành công học sinh: " + fullname);
+                alert("Đã thêm thành công học sinh: " + fullname);
                 document.getElementById('form-add-new-user').reset();
-                showContent('user-list'); // Quay lại danh sách để xem kết quả
+                showContent('user-list');
             } catch (err) {
-                alert("Có lỗi xảy ra rồi thầy ơi: " + err.message);
+                alert("Lỗi: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-user-plus"></i> LƯU THÀNH VIÊN';
             }
         });
 
-        // --- 6. Logic: Đổi trạng thái ---
-        async function toggleUserStatus(id, current) {
-            const next = current === 'active' ? 'inactive' : 'active';
-            const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
-            if (error) alert("Lỗi: " + error.message);
-            else fetchUsers();
-        }
-
-        // --- 7. Logic: Xóa người dùng ---
-        async function deleteUser(id) {
-            if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
-                const { error } = await _supabase.from('accounts').delete().eq('id', id);
-                if (error) alert("Lỗi xóa: " + error.message);
-                else fetchUsers();
+        // --- LOGIC KHÓA HỌC ---
+        function previewThumb() {
+            const url = document.getElementById('course_thumbnail').value;
+            const previewDiv = document.getElementById('thumb-preview');
+            if (url) {
+                const img = previewDiv.querySelector('img');
+                img.src = url;
+                previewDiv.classList.remove('hidden');
             }
         }
-    </script>
-    <script id="them khoa hoc moi">
-// 1. Hàm xem trước ảnh khi dán link
-function previewThumb() {
-    const url = document.getElementById('course_thumbnail').value;
-    const previewDiv = document.getElementById('thumb-preview');
-    if (url) {
-        const img = previewDiv.querySelector('img');
-        img.src = url;
-        previewDiv.classList.remove('hidden');
-    }
-}
 
-// 2. Hàm lưu Khóa học vào Supabase (Đã sửa tên biến cho khớp)
-async function saveCourse() {
-    const btn = document.getElementById('btn-save-course');
-    const name = document.getElementById('course_name').value;
-    const desc = document.getElementById('course_description').value;
-    const thumb = document.getElementById('course_thumbnail').value;
+        async function saveCourse() {
+            const btn = document.getElementById('btn-save-course');
+            const name = document.getElementById('course_name').value;
+            const desc = document.getElementById('course_description').value;
+            const thumb = document.getElementById('course_thumbnail').value;
 
-    if (!name) {
-        alert("Thầy cho em xin cái tên Khóa học với ạ!");
-        return;
-    }
+            if (!name) { alert("Vui lòng nhập tên khóa học!"); return; }
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi tạo...';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi tạo...';
 
-    try {
-        // Dùng đúng biến SUPABASE_URL và SUPABASE_KEY Thầy đã khai báo ở trên
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/courses`, {
-            method: 'POST',
-            headers: {
-                "apikey": SUPABASE_KEY,
-                "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=representation"
-            },
-            body: JSON.stringify({
-                course_name: name,
-                description: desc,
-                thumbnail_url: thumb
-            })
-        });
-
-        if (response.ok) {
-            alert("Đã tạo khóa học thành công! Chúc mừng Thầy Thành.");
-            // Reset form cho sạch sẽ
-            document.getElementById('course_name').value = "";
-            document.getElementById('course_description').value = "";
-            document.getElementById('course_thumbnail').value = "";
-            document.getElementById('thumb-preview').classList.add('hidden');
-        } else {
-            const errorData = await response.json();
-            console.error("Chi tiết lỗi:", errorData);
-            throw new Error(errorData.message || "Lỗi API");
-        }
-    } catch (error) {
-        console.error("Lỗi kết nối:", error);
-        alert("Có lỗi: " + error.message + ". Thầy kiểm tra lại quyền RLS của bảng courses nhé!");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-rocket"></i> Xác nhận khởi tạo khóa học';
-    }
-}
-</script>
-    <script id = "danh sach khoa hoc">
-        // --- LOGIC DANH SÁCH KHÓA HỌC ---
-
-// 1. Cập nhật hàm showContent hiện tại để gọi fetchCourses khi mở tab
-const originalShowContent = showContent;
-showContent = function(section, element) {
-    originalShowContent(section, element);
-    if (section === 'course-list') fetchCourses();
-};
-
-// 2. Hàm lấy dữ liệu từ Supabase
-async function fetchCourses() {
-    const grid = document.getElementById('course-grid');
-    grid.innerHTML = '<div class="col-span-full text-center py-10 text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang lấy dữ liệu khóa học...</div>';
-
-    try {
-        const { data, error } = await _supabase
-            .from('courses')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (data.length === 0) {
-            grid.innerHTML = '<div class="col-span-full bg-white p-10 rounded-3xl text-center border">Thầy chưa tạo khóa học nào ạ!</div>';
-            return;
+            try {
+                const { error } = await _supabase.from('courses').insert([{ course_name: name, description: desc, thumbnail_url: thumb }]);
+                if (error) throw error;
+                alert("Tạo khóa học thành công!");
+                showContent('course-list');
+            } catch (error) {
+                alert("Lỗi: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Xác nhận khởi tạo khóa học';
+            }
         }
 
-        grid.innerHTML = '';
-        data.forEach(course => {
-            const card = document.createElement('div');
-            card.className = "bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group";
-            card.innerHTML = `
-                <div class="relative h-40 overflow-hidden">
-                    <img src="${course.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Image'}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute top-4 right-4">
-                        <span class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-blue-900 shadow-sm">
-                            ID: ${course.id}
-                        </span>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-lg font-black text-blue-900 mb-2 line-clamp-1">${course.course_name}</h4>
-                    <p class="text-gray-500 text-sm line-clamp-2 mb-4 h-10 font-medium">${course.description || 'Chưa có mô tả cho khóa học này.'}</p>
-                    
-                    <div class="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <div class="flex gap-2">
-                            <button onclick="editCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
-                                <i class="fas fa-edit text-sm"></i>
-                            </button>
-                            <button onclick="deleteCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all">
-                                <i class="fas fa-trash text-sm"></i>
-                            </button>
+        async function fetchCourses() {
+            const grid = document.getElementById('course-grid');
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang lấy dữ liệu...</div>';
+            try {
+                const { data, error } = await _supabase.from('courses').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                grid.innerHTML = data.length ? '' : '<div class="col-span-full text-center">Chưa có khóa học nào.</div>';
+                data.forEach(course => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group";
+                    card.innerHTML = `
+                        <div class="relative h-40 overflow-hidden">
+                            <img src="${course.thumbnail_url || 'https://via.placeholder.com/400x200'}" class="w-full h-full object-cover group-hover:scale-105 transition-all">
                         </div>
-                        <button class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-orange-500 transition-colors">
-                            VÀO QUẢN TRỊ <i class="fas fa-arrow-right ml-1"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    } catch (err) {
-        grid.innerHTML = `<div class="col-span-full text-red-500 text-center p-10">Lỗi: ${err.message}</div>`;
-    }
-}
-
-// 3. Hàm Xóa khóa học
-async function deleteCourse(id) {
-    if (confirm("Thầy có chắc muốn xóa khóa học này không? Mọi dữ liệu liên quan sẽ bị ảnh hưởng!")) {
-        try {
-            const { error } = await _supabase.from('courses').delete().eq('id', id);
-            if (error) throw error;
-            alert("Đã xóa khóa học thành công.");
-            fetchCourses();
-        } catch (err) {
-            alert("Lỗi khi xóa: " + err.message);
+                        <div class="p-6">
+                            <h4 class="text-lg font-black text-blue-900 mb-2 line-clamp-1">${course.course_name}</h4>
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-50">
+                                <div class="flex gap-2">
+                                    <button class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
+                                    <button onclick="deleteCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                                </div>
+                                <button class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-bold">QUẢN TRỊ <i class="fas fa-arrow-right ml-1"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) { grid.innerHTML = `<div class="col-span-full text-red-500">${err.message}</div>`; }
         }
-    }
-}
 
-// 4. Hàm sửa (Tạm thời thông báo, Thầy có thể phát triển thêm Modal sửa sau)
-function editCourse(id) {
-    alert("Tính năng cập nhật thông tin khóa học " + id + " đang được phát triển ạ!");
-}
+        async function deleteCourse(id) {
+            if (confirm("Xóa khóa học này?")) {
+                const { error } = await _supabase.from('courses').delete().eq('id', id);
+                if (error) alert(error.message); else fetchCourses();
+            }
+        }
     </script>
 </body>
 </html>
