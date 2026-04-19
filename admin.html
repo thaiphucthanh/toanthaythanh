@@ -195,7 +195,21 @@
                 </div>
             </div>
 
-            <div id="content-course-list" class="content-section hidden"></div>
+            <div id="content-course-list" class="content-section hidden">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h3 class="text-2xl font-bold text-blue-900 uppercase tracking-tighter">Hệ thống khóa học hiện có</h3>
+            <p class="text-gray-500 text-sm">Quản lý nội dung, chuyên đề và học viên theo từng khóa</p>
+        </div>
+        <button onclick="fetchCourses()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 transition-all">
+            <i class="fas fa-sync-alt"></i> Làm mới
+        </button>
+    </div>
+    
+    <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full p-10 text-center text-gray-400 italic">Đang tải danh sách khóa học...</div>
+    </div>
+</div>
             <div id="content-add-course" class="content-section hidden">
     <div class="max-w-3xl mx-auto">
         <div class="flex items-center justify-between mb-8">
@@ -478,5 +492,92 @@ async function saveCourse() {
     }
 }
 </script>
+    <script id = "danh sach khoa hoc">
+        // --- LOGIC DANH SÁCH KHÓA HỌC ---
+
+// 1. Cập nhật hàm showContent hiện tại để gọi fetchCourses khi mở tab
+const originalShowContent = showContent;
+showContent = function(section, element) {
+    originalShowContent(section, element);
+    if (section === 'course-list') fetchCourses();
+};
+
+// 2. Hàm lấy dữ liệu từ Supabase
+async function fetchCourses() {
+    const grid = document.getElementById('course-grid');
+    grid.innerHTML = '<div class="col-span-full text-center py-10 text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang lấy dữ liệu khóa học...</div>';
+
+    try {
+        const { data, error } = await _supabase
+            .from('courses')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+            grid.innerHTML = '<div class="col-span-full bg-white p-10 rounded-3xl text-center border">Thầy chưa tạo khóa học nào ạ!</div>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        data.forEach(course => {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group";
+            card.innerHTML = `
+                <div class="relative h-40 overflow-hidden">
+                    <img src="${course.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Image'}" 
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute top-4 right-4">
+                        <span class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-blue-900 shadow-sm">
+                            ID: ${course.id}
+                        </span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-lg font-black text-blue-900 mb-2 line-clamp-1">${course.course_name}</h4>
+                    <p class="text-gray-500 text-sm line-clamp-2 mb-4 h-10 font-medium">${course.description || 'Chưa có mô tả cho khóa học này.'}</p>
+                    
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-50">
+                        <div class="flex gap-2">
+                            <button onclick="editCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                            <button onclick="deleteCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                        <button class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-orange-500 transition-colors">
+                            VÀO QUẢN TRỊ <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    } catch (err) {
+        grid.innerHTML = `<div class="col-span-full text-red-500 text-center p-10">Lỗi: ${err.message}</div>`;
+    }
+}
+
+// 3. Hàm Xóa khóa học
+async function deleteCourse(id) {
+    if (confirm("Thầy có chắc muốn xóa khóa học này không? Mọi dữ liệu liên quan sẽ bị ảnh hưởng!")) {
+        try {
+            const { error } = await _supabase.from('courses').delete().eq('id', id);
+            if (error) throw error;
+            alert("Đã xóa khóa học thành công.");
+            fetchCourses();
+        } catch (err) {
+            alert("Lỗi khi xóa: " + err.message);
+        }
+    }
+}
+
+// 4. Hàm sửa (Tạm thời thông báo, Thầy có thể phát triển thêm Modal sửa sau)
+function editCourse(id) {
+    alert("Tính năng cập nhật thông tin khóa học " + id + " đang được phát triển ạ!");
+}
+    </script>
 </body>
 </html>
