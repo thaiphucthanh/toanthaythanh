@@ -6,35 +6,37 @@
     <title>Quản trị - Toán Thầy Thành</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .sidebar-item { transition: all 0.3s; cursor: pointer; }
         .sidebar-item:hover { background-color: #1e40af; }
         .active-menu { background-color: #1e40af; border-right: 4px solid #fbbf24; }
         
-        /* Menu con: Mặc định ẩn */
+        /* Menu con */
         .submenu { display: none; background-color: #172554; }
-        
-        /* Khi có class này mới hiện */
         .submenu.show { display: block !important; }
 
         .arrow-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
+        
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden">
 
     <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
-        
         <div class="p-6 flex items-center gap-3 border-b border-blue-800">
-    <a href="trangchu.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-        <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
-        <div>
-            <div class="font-black text-lg leading-tight text-white">TOÁN</div>
-            <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+            <a href="trangchu.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+                <div>
+                    <div class="font-black text-lg leading-tight text-white">TOÁN</div>
+                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+                </div>
+            </a>
         </div>
-    </a>
-</div>
 
         <nav class="flex-1 mt-4 overflow-y-auto">
             <div class="sidebar-item active-menu p-4 flex items-center gap-3" onclick="showContent('welcome', this)">
@@ -96,6 +98,7 @@
         <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
             <h2 id="page-title" class="text-xl font-black text-blue-900 uppercase tracking-tight">Trang Welcome</h2>
             <div class="flex items-center gap-3">
+                <span id="admin-name" class="text-sm font-bold text-blue-900 hidden md:block">Chào Thầy Thành</span>
                 <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 bg-white">
             </div>
         </header>
@@ -103,78 +106,104 @@
         <div id="main-content" class="p-8 overflow-y-auto bg-gray-50 flex-1">
             
             <div id="content-welcome" class="content-section">
-                <div class="bg-white p-12 rounded-[40px] shadow-sm text-center">
+                <div class="bg-white p-12 rounded-[40px] shadow-sm text-center border border-gray-100">
                     <h3 class="text-3xl font-black text-blue-900">Chào mừng Thầy Thành! 👋</h3>
-                    <p class="text-gray-500 mt-2">Hệ thống HDC Study đã sẵn sàng.</p>
+                    <p class="text-gray-500 mt-2 font-medium">Hệ thống quản trị học viên HDC Study đã sẵn sàng.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+                        <div class="p-6 bg-blue-50 rounded-3xl border border-blue-100">
+                            <div class="text-blue-900 font-black text-2xl">01</div>
+                            <div class="text-blue-700 text-xs uppercase font-bold tracking-widest mt-1">Kiểm soát bài giảng</div>
+                        </div>
+                        <div class="p-6 bg-green-50 rounded-3xl border border-green-100">
+                            <div class="text-green-900 font-black text-2xl">02</div>
+                            <div class="text-green-700 text-xs uppercase font-bold tracking-widest mt-1">Quản lý học viên</div>
+                        </div>
+                        <div class="p-6 bg-orange-50 rounded-3xl border border-orange-100">
+                            <div class="text-orange-900 font-black text-2xl">03</div>
+                            <div class="text-orange-700 text-xs uppercase font-bold tracking-widest mt-1">Tổ chức thi Online</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="content-user-list" class="content-section hidden">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-bold text-blue-900 uppercase">Danh sách học sinh</h3>
-        <button onclick="fetchUsers()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold hover:bg-blue-200">
-            <i class="fas fa-sync-alt mr-2"></i> Làm mới dữ liệu
-        </button>
-    </div>
-    
-    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
-        <table class="w-full text-left">
-            <thead class="bg-blue-900 text-white">
-                <tr>
-                    <th class="p-4 pl-6 text-sm font-bold uppercase">Họ và tên</th>
-                    <th class="p-4 text-sm font-bold uppercase">Số điện thoại</th>
-                    <th class="p-4 text-sm font-bold uppercase">Vai trò</th>
-                    <th class="p-4 text-sm font-bold uppercase">Hành động</th>
-                </tr>
-            </thead>
-            <tbody id="user-table-body" class="divide-y divide-gray-100">
-                <tr>
-                    <td colspan="4" class="p-10 text-center text-gray-400">Đang tải danh sách học sinh...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-blue-900 uppercase tracking-tighter">Danh sách người dùng</h3>
+                    <button onclick="fetchUsers()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 transition-all">
+                        <i class="fas fa-sync-alt"></i> Làm mới
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-[30px] shadow-sm overflow-hidden border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-blue-900 border-b">
+                                <tr>
+                                    <th class="p-5 text-xs font-black uppercase tracking-wider">Họ và tên</th>
+                                    <th class="p-5 text-xs font-black uppercase tracking-wider">Liên hệ</th>
+                                    <th class="p-5 text-xs font-black uppercase tracking-wider text-center">Vai trò</th>
+                                    <th class="p-5 text-xs font-black uppercase tracking-wider text-center">Trạng thái</th>
+                                    <th class="p-5 text-xs font-black uppercase tracking-wider text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body" class="divide-y divide-gray-50">
+                                <tr><td colspan="5" class="p-10 text-center text-gray-400 italic">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <div id="content-add-user" class="content-section hidden">
-                <h3 class="text-2xl font-bold text-blue-900 mb-4 uppercase">Thêm người dùng mới</h3>
-                <div class="bg-white p-8 rounded-3xl shadow-sm max-w-lg">
+                <h3 class="text-2xl font-bold text-blue-900 mb-6 uppercase">Thêm học sinh mới</h3>
+                <div class="bg-white p-8 rounded-[30px] shadow-sm max-w-lg border border-gray-100">
                     <form class="space-y-4">
-                        <input type="text" placeholder="Họ và tên học sinh" class="w-full border p-3 rounded-xl outline-none focus:border-blue-500">
-                        <input type="text" placeholder="Số điện thoại / Tài khoản" class="w-full border p-3 rounded-xl outline-none focus:border-blue-500">
-                        <button class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold">LƯU THÀNH VIÊN</button>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tên học sinh</label>
+                            <input type="text" placeholder="Nguyễn Văn A" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Số điện thoại</label>
+                            <input type="text" placeholder="09xxx..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                        </div>
+                        <button type="button" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 mt-4">LƯU THÀNH VIÊN</button>
                     </form>
                 </div>
             </div>
 
-            </div>
+        </div>
     </main>
 
     <script>
-        // SỬA LỖI: Hàm đóng mở menu con cực chuẩn
-        function toggleSubmenu(id, element) {
-            const menu = document.getElementById(id);
-            const arrow = element.querySelector('.arrow-icon');
-            
-            // Đảo ngược trạng thái hiển thị bằng cách thêm/xóa class 'show'
-            menu.classList.toggle('show');
-            
-            // Xoay mũi tên
-            if (arrow) {
-                arrow.classList.toggle('rotate-180');
+        // --- 1. Cấu hình Supabase ---
+        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5'; // Thầy nhớ kiểm tra ngoặc kép ở đầu
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // --- 2. Bảo mật: Kiểm tra Admin ---
+        window.onload = function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || user.role !== 'admin') {
+                alert("Thầy chưa đăng nhập hoặc không có quyền Admin!");
+                window.location.href = 'trangchu.html';
+            } else {
+                document.getElementById('admin-name').innerText = "Chào " + (user.fullname || "Thầy Thành");
             }
         }
 
-        // Hàm chuyển nội dung
+        // --- 3. Giao diện Sidebar ---
+        function toggleSubmenu(id, element) {
+            const menu = document.getElementById(id);
+            const arrow = element.querySelector('.arrow-icon');
+            menu.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+
         function showContent(section, element) {
-            // Ẩn hết
             document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-            
-            // Hiện cái cần
             const target = document.getElementById('content-' + section);
             if(target) target.classList.remove('hidden');
 
-            // Đổi tiêu đề
             const titles = {
                 'welcome': 'Trang Welcome',
                 'user-list': 'Danh sách người dùng',
@@ -185,77 +214,82 @@
             };
             document.getElementById('page-title').innerText = titles[section] || 'Quản trị';
 
-            // Xử lý Active màu sắc menu
             document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active-menu'));
-            if(element.classList.contains('sidebar-item')) {
+            if(element && element.classList.contains('sidebar-item')) {
                 element.classList.add('active-menu');
             }
-            window.onload = function() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.role !== 'admin') {
-        // Nếu không phải admin, đẩy ngay về trang chủ
-        window.location.href = 'trangchu.html'; 
-    }
+
+            if (section === 'user-list') fetchUsers();
+        }
+
+        // --- 4. Logic Supabase: Danh sách người dùng ---
+        async function fetchUsers() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang truy xuất Supabase...</td></tr>';
+
+            try {
+                const { data, error } = await _supabase
+                    .from('accounts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                tbody.innerHTML = '';
+
+                data.forEach(user => {
+                    const statusClass = user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+                    const statusText = user.status === 'active' ? 'Đang học' : 'Đã khóa';
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-blue-50/50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-5 font-black text-blue-900">${user.fullname || 'Học sinh'}</td>
+                        <td class="p-5">
+                            <div class="text-sm font-bold text-gray-600">${user.sdt || user.phone || '---'}</div>
+                            <div class="text-[11px] text-gray-400 font-medium">${user.email || 'no-email'}</div>
+                        </td>
+                        <td class="p-5 text-center">
+                            <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase ${user.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">
+                                ${user.role}
+                            </span>
+                        </td>
+                        <td class="p-5 text-center">
+                            <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="p-5 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white transition-all">
+                                    <i class="fas fa-power-off text-xs"></i>
+                                </button>
+                                <button onclick="deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
             }
         }
-    </script>
-    <script>
-        // 1. Cấu hình Supabase (Thay thông tin dự án của thầy vào đây)
-const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
-const SUPABASE_KEY = sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 2. Hàm lấy dữ liệu từ bảng 'accounts'
-async function fetchUsers() {
-    const tbody = document.getElementById('user-table-body');
-    
-    try {
-        // Lấy dữ liệu từ bảng accounts
-        const { data, error } = await _supabase
-            .from('accounts') // Tên bảng của thầy
-            .select('*')
-            .order('created_at', { ascending: false });
+        // --- 5. Logic: Đổi trạng thái ---
+        async function toggleUserStatus(id, current) {
+            const next = current === 'active' ? 'inactive' : 'active';
+            const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
+            if (error) alert("Lỗi: " + error.message);
+            else fetchUsers();
+        }
 
-        if (error) throw error;
-
-        // Xóa nội dung cũ
-        tbody.innerHTML = '';
-
-        // Đổ dữ liệu mới vào bảng
-        data.forEach(user => {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-blue-50 transition-colors";
-            tr.innerHTML = `
-                <td class="p-4 pl-6 font-bold text-blue-900">${user.fullname || 'Chưa cập nhật'}</td>
-                <td class="p-4 text-gray-600">${user.phone || 'N/A'}</td>
-                <td class="p-4">
-                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${user.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
-                        ${user.role}
-                    </span>
-                </td>
-                <td class="p-4">
-                    <button class="text-blue-500 hover:text-blue-700 mr-3"><i class="fas fa-edit"></i></button>
-                    <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-    } catch (err) {
-        console.error("Lỗi lấy dữ liệu:", err.message);
-        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
-    }
-}
-
-// 3. Cập nhật hàm showContent để tự động load dữ liệu khi bấm vào 'user-list'
-const originalShowContent = showContent; // Giữ lại hàm cũ
-showContent = function(section, element) {
-    originalShowContent(section, element); // Chạy hàm cũ để chuyển tab
-    
-    if (section === 'user-list') {
-        fetchUsers(); // Gọi hàm lấy dữ liệu khi nhấn vào tab danh sách
-    }
-};
+        // --- 6. Logic: Xóa người dùng ---
+        async function deleteUser(id) {
+            if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
+                const { error } = await _supabase.from('accounts').delete().eq('id', id);
+                if (error) alert("Lỗi xóa: " + error.message);
+                else fetchUsers();
+            }
+        }
     </script>
 </body>
 </html>
