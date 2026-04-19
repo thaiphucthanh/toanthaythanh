@@ -58,12 +58,42 @@
                     </a>
                 </div>
             </div>
-            </nav>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="course-menu" class="submenu">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
+                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
+                    </a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
+                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
+                    </a>
+                </div>
+            </div>
+
+            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3">
+                <i class="fas fa-edit w-5 text-blue-300"></i>
+                <span class="font-bold">Thi Online</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-blue-800">
+            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span class="text-sm font-bold">Quay lại trang chủ</span>
+            </a>
+        </div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
-            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Quản lý tài khoản</h2>
+            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Danh sách người dùng</h2>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-blue-900 hidden md:block text-right">
                     Chào Thầy Thành<br>
@@ -77,12 +107,17 @@
             <div class="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
                 <div class="relative w-full md:w-96">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Tìm kiếm theo tên hoặc SĐT..." 
+                    <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Tìm tên hoặc SĐT..." 
                            class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 outline-none shadow-sm">
                 </div>
-                <a href="add-user.html" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20">
-                    <i class="fas fa-plus"></i> Thêm học sinh
-                </a>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button class="bg-white border border-gray-200 px-4 py-3 rounded-2xl font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <a href="add-user.html" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 flex items-center gap-2 shadow-lg shadow-blue-900/20">
+                        <i class="fas fa-plus"></i> Thêm học sinh
+                    </a>
+                </div>
             </div>
 
             <div class="bg-white rounded-[30px] shadow-sm overflow-hidden border border-gray-100">
@@ -90,19 +125,19 @@
                     <table class="w-full text-left" id="user-table">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-100">
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Học viên</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Học viên / Email</th>
                                 <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Số điện thoại</th>
                                 <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Quyền</th>
                                 <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Trạng thái</th>
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest text-center text-red-500">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="user-table-body">
                             <tr>
                                 <td colspan="5" class="p-10 text-center">
-                                    <div class="flex flex-col items-center justify-center gap-3">
-                                        <i class="fas fa-circle-notch animate-spin text-blue-900 text-3xl"></i>
-                                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Đang kết nối dữ liệu...</span>
+                                    <div class="flex flex-col items-center justify-center gap-3 text-blue-900 font-bold">
+                                        <i class="fas fa-circle-notch animate-spin text-3xl"></i>
+                                        <span>Đang kết nối accounts...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -123,18 +158,18 @@
             const tbody = document.getElementById('user-table-body');
             try {
                 const { data: users, error } = await supabaseClient
-                    .from('accounts') 
+                    .from('accounts')
                     .select('*')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
                 if (!users || users.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-bold">Trống.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 uppercase font-bold">Chưa có học viên nào</td></tr>`;
                     return;
                 }
                 renderTable(users);
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi kết nối: ${err.message}</td></tr>`;
             }
         }
 
@@ -143,43 +178,41 @@
             tbody.innerHTML = '';
             
             users.forEach(user => {
-                const displayName = user.fullname || user.name || 'Học viên';
+                const displayName = user.fullname || user.name || 'N/A';
                 const initial = displayName.charAt(0).toUpperCase();
                 const status = user.status || 'active';
 
                 const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-50 hover:bg-blue-50/30 transition-colors";
+                tr.className = "border-b border-gray-50 hover:bg-blue-50/50 transition-colors";
                 tr.innerHTML = `
                     <td class="p-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">${initial}</div>
+                            <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm shadow-md">${initial}</div>
                             <div>
-                                <div class="font-bold text-gray-900 text-sm uppercase leading-tight">${displayName}</div>
-                                <div class="text-[10px] text-gray-400 font-medium">${user.email || 'Không có email'}</div>
+                                <div class="font-bold text-gray-900 text-sm uppercase">${displayName}</div>
+                                <div class="text-[10px] text-gray-400 font-medium">${user.email || 'N/A'}</div>
                             </div>
                         </div>
                     </td>
                     <td class="p-5 text-sm font-semibold text-gray-600">${user.phone || user.sdt || '---'}</td>
                     <td class="p-5">
-                        <span class="px-3 py-1 ${user.role === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-black rounded-full uppercase italic">
-                            ${user.role || 'Học sinh'}
-                        </span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black rounded-full uppercase">${user.role || 'Học sinh'}</span>
                     </td>
                     <td class="p-5">
                         <span class="flex items-center gap-1.5 ${status === 'active' ? 'text-green-600' : 'text-red-400'} text-[10px] font-black uppercase">
-                            <span class="w-2 h-2 ${status === 'active' ? 'bg-green-600' : 'bg-red-400'} rounded-full"></span>
-                            ${status === 'active' ? 'Hoạt động' : 'Đã khóa'}
+                            <span class="w-2 h-2 ${status === 'active' ? 'bg-green-600 animate-pulse' : 'bg-red-400'} rounded-full"></span>
+                            ${status === 'active' ? 'Đang học' : 'Đã khóa'}
                         </span>
                     </td>
                     <td class="p-5">
                         <div class="flex justify-center gap-2">
-                            <a href="edit-user.html?id=${user.id}" title="Sửa" class="w-8 h-8 rounded-lg bg-gray-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <a href="edit-user.html?id=${user.id}" title="Chỉnh sửa" class="w-8 h-8 rounded-lg bg-gray-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                 <i class="fas fa-edit text-xs"></i>
                             </a>
-                            <button onclick="toggleStatus('${user.id}', '${status}')" title="${status === 'active' ? 'Khóa' : 'Mở khóa'}" class="w-8 h-8 rounded-lg bg-gray-100 ${status === 'active' ? 'text-orange-500' : 'text-green-600'} flex items-center justify-center hover:opacity-70 shadow-sm transition-all">
+                            <button onclick="toggleStatus('${user.id}', '${status}')" title="${status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}" class="w-8 h-8 rounded-lg bg-gray-100 ${status === 'active' ? 'text-orange-500' : 'text-green-600'} flex items-center justify-center hover:opacity-70 transition-all shadow-sm">
                                 <i class="fas ${status === 'active' ? 'fa-user-slash' : 'fa-user-check'} text-xs"></i>
                             </button>
-                            <button onclick="deleteUser('${user.id}', '${displayName}')" title="Xóa" class="w-8 h-8 rounded-lg bg-gray-100 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                            <button onclick="deleteUser('${user.id}', '${displayName}')" title="Xóa vĩnh viễn" class="w-8 h-8 rounded-lg bg-gray-100 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm">
                                 <i class="fas fa-trash text-xs"></i>
                             </button>
                         </div>
@@ -196,7 +229,7 @@
         }
 
         async function deleteUser(id, name) {
-            if (confirm(`Xóa tài khoản: ${name}?`)) {
+            if (confirm(`Thầy muốn xóa tài khoản của ${name}?`)) {
                 const { error } = await supabaseClient.from('accounts').delete().eq('id', id);
                 if (error) alert(error.message); else fetchUsers();
             }
