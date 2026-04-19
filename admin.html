@@ -156,20 +156,48 @@
 
             <div id="content-add-user" class="content-section hidden">
                 <h3 class="text-2xl font-bold text-blue-900 mb-6 uppercase">Thêm học sinh mới</h3>
-                <div class="bg-white p-8 rounded-[30px] shadow-sm max-w-lg border border-gray-100">
-                    <form class="space-y-4">
+                <div class="bg-white p-8 rounded-[30px] shadow-sm max-w-2xl border border-gray-100">
+                    <form id="form-add-new-user" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Họ và tên</label>
+                            <input type="text" id="add-fullname" placeholder="Nguyễn Văn A" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
+                        </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Tên học sinh</label>
-                            <input type="text" placeholder="Nguyễn Văn A" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Email (Tài khoản)</label>
+                            <input type="email" id="add-email" placeholder="email@gmail.com" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Mật khẩu</label>
+                            <input type="password" id="add-password" placeholder="******" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1" required>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-400 uppercase ml-2">Số điện thoại</label>
-                            <input type="text" placeholder="09xxx..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                            <input type="text" id="add-sdt" placeholder="09xxx..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
                         </div>
-                        <button type="button" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 mt-4">LƯU THÀNH VIÊN</button>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Link Facebook</label>
+                            <input type="text" id="add-fb" placeholder="facebook.com/..." class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Phân quyền</label>
+                            <select id="add-role" class="w-full border p-3 rounded-2xl outline-none focus:border-blue-500 bg-gray-50 mt-1">
+                                <option value="student">Học sinh (Student)</option>
+                                <option value="teacher">Trợ giảng (Teacher)</option>
+                                <option value="admin">Quản trị viên (Admin)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 mt-4">
+                            <button type="submit" id="btn-submit-user" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 hover:bg-blue-800 transition-all">
+                                <i class="fas fa-user-plus"></i> LƯU THÀNH VIÊN
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
+
+            <div id="content-course-list" class="content-section hidden"></div>
+            <div id="content-add-course" class="content-section hidden"></div>
+            <div id="content-exam" class="content-section hidden"></div>
 
         </div>
     </main>
@@ -177,7 +205,7 @@
     <script>
         // --- 1. Cấu hình Supabase ---
         const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5'; // Thầy nhớ kiểm tra ngoặc kép ở đầu
+        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5'; 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- 2. Bảo mật: Kiểm tra Admin ---
@@ -245,7 +273,7 @@
                     tr.innerHTML = `
                         <td class="p-5 font-black text-blue-900">${user.fullname || 'Học sinh'}</td>
                         <td class="p-5">
-                            <div class="text-sm font-bold text-gray-600">${user.sdt || user.phone || '---'}</div>
+                            <div class="text-sm font-bold text-gray-600">${user.sdt || '---'}</div>
                             <div class="text-[11px] text-gray-400 font-medium">${user.email || 'no-email'}</div>
                         </td>
                         <td class="p-5 text-center">
@@ -274,7 +302,50 @@
             }
         }
 
-        // --- 5. Logic: Đổi trạng thái ---
+        // --- 5. Logic: Thêm người dùng mới vào Supabase ---
+        document.getElementById('form-add-new-user').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-user');
+            
+            const fullname = document.getElementById('add-fullname').value;
+            const email = document.getElementById('add-email').value;
+            const password = document.getElementById('add-password').value;
+            const sdt = document.getElementById('add-sdt').value;
+            const link_fb = document.getElementById('add-fb').value;
+            const role = document.getElementById('add-role').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+            try {
+                const { data, error } = await _supabase
+                    .from('accounts')
+                    .insert([
+                        { 
+                            fullname: fullname, 
+                            email: email, 
+                            password: password, 
+                            sdt: sdt, 
+                            link_fb: link_fb, 
+                            role: role,
+                            status: 'active' 
+                        }
+                    ]);
+
+                if (error) throw error;
+
+                alert("Chúc mừng thầy! Đã thêm thành công học sinh: " + fullname);
+                document.getElementById('form-add-new-user').reset();
+                showContent('user-list'); // Quay lại danh sách để xem kết quả
+            } catch (err) {
+                alert("Có lỗi xảy ra rồi thầy ơi: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> LƯU THÀNH VIÊN';
+            }
+        });
+
+        // --- 6. Logic: Đổi trạng thái ---
         async function toggleUserStatus(id, current) {
             const next = current === 'active' ? 'inactive' : 'active';
             const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
@@ -282,7 +353,7 @@
             else fetchUsers();
         }
 
-        // --- 6. Logic: Xóa người dùng ---
+        // --- 7. Logic: Xóa người dùng ---
         async function deleteUser(id) {
             if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
                 const { error } = await _supabase.from('accounts').delete().eq('id', id);
