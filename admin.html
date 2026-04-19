@@ -24,20 +24,11 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
 
-        /* Style cho Dropdown Thao tác */
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            right: 40px;
-            top: 20px;
-            z-index: 100;
-            min-width: 160px;
-            background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 1px solid #f3f4f6;
-            border-radius: 12px;
+        .content-section { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .user-dropdown.show { display: block; }
     </style>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden">
@@ -266,7 +257,14 @@
                     </div>
                 </div>
             </div>
-            <div id="content-exam" class="content-section hidden"></div>
+
+            <div id="content-exam" class="content-section hidden">
+                <div class="text-center p-20">
+                    <i class="fas fa-tools text-64 text-gray-300 mb-4 text-5xl"></i>
+                    <h3 class="text-xl font-bold text-gray-500">Tính năng Thi Online đang được cập nhật...</h3>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -315,14 +313,15 @@
                 element.classList.add('active-menu');
             }
 
+            // Gọi hàm fetch tương ứng khi tab được chọn
             if (section === 'user-list') fetchUsers();
             if (section === 'course-list') fetchCourses();
         }
 
-        // --- 4. Logic Supabase: Danh sách người dùng (CẬP NHẬT NÚT BA CHẤM) ---
+        // --- 4. Logic: Danh sách người dùng (CẬP NHẬT NÚT SỬA) ---
         async function fetchUsers() {
             const tbody = document.getElementById('user-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang truy xuất dữ liệu...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang truy xuất Supabase...</td></tr>';
 
             try {
                 const { data, error } = await _supabase
@@ -336,10 +335,9 @@
                 data.forEach(user => {
                     const statusClass = user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
                     const statusText = user.status === 'active' ? 'Đang học' : 'Đã khóa';
-                    const statusIcon = user.status === 'active' ? 'fa-user-slash' : 'fa-user-check';
                     
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-blue-50/50 transition-colors relative group";
+                    tr.className = "hover:bg-blue-50/50 transition-colors";
                     tr.innerHTML = `
                         <td class="p-5 font-black text-blue-900">${user.fullname || 'Học sinh'}</td>
                         <td class="p-5">
@@ -354,20 +352,16 @@
                         <td class="p-5 text-center">
                             <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase ${statusClass}">${statusText}</span>
                         </td>
-                        <td class="p-5 text-center relative">
-                            <button onclick="toggleUserMenu(event, '${user.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-gray-400 transition-all mx-auto">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-
-                            <div id="user-dropdown-${user.id}" class="user-dropdown overflow-hidden">
-                                <button onclick="editUser('${user.id}')" class="w-full text-left px-4 py-3 text-[11px] font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2 border-b border-gray-50">
-                                    <i class="fas fa-edit w-4"></i> CHỈNH SỬA
+                        <td class="p-5 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="editUser('${user.id}')" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                                    <i class="fas fa-edit text-xs"></i>
                                 </button>
-                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="w-full text-left px-4 py-3 text-[11px] font-bold ${user.status === 'active' ? 'text-orange-600' : 'text-green-600'} hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50">
-                                    <i class="fas ${statusIcon} w-4"></i> ${user.status === 'active' ? 'KHÓA TÀI KHOẢN' : 'MỞ TÀI KHOẢN'}
+                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white transition-all">
+                                    <i class="fas fa-power-off text-xs"></i>
                                 </button>
-                                <button onclick="deleteUser('${user.id}')" class="w-full text-left px-4 py-3 text-[11px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-2">
-                                    <i class="fas fa-trash-alt w-4"></i> XÓA VĨNH VIỄN
+                                <button onclick="deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">
+                                    <i class="fas fa-trash text-xs"></i>
                                 </button>
                             </div>
                         </td>
@@ -376,44 +370,6 @@
                 });
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
-            }
-        }
-
-        // --- HÀM ĐIỀU KHIỂN DROPDOWN ---
-        function toggleUserMenu(event, id) {
-            event.stopPropagation();
-            // Đóng tất cả dropdown đang mở khác
-            document.querySelectorAll('.user-dropdown').forEach(el => {
-                if (el.id !== `user-dropdown-${id}`) el.classList.remove('show');
-            });
-            // Mở dropdown hiện tại
-            const menu = document.getElementById(`user-dropdown-${id}`);
-            menu.classList.toggle('show');
-        }
-
-        // Click ra ngoài thì đóng menu
-        window.addEventListener('click', function() {
-            document.querySelectorAll('.user-dropdown').forEach(el => el.classList.remove('show'));
-        });
-
-        function editUser(id) {
-            alert("Tính năng sửa thông tin học sinh ID: " + id + " đang được xây dựng ạ!");
-        }
-
-        // --- Logic: Đổi trạng thái ---
-        async function toggleUserStatus(id, current) {
-            const next = current === 'active' ? 'inactive' : 'active';
-            const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
-            if (error) alert("Lỗi: " + error.message);
-            else fetchUsers();
-        }
-
-        // --- Logic: Xóa người dùng ---
-        async function deleteUser(id) {
-            if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
-                const { error } = await _supabase.from('accounts').delete().eq('id', id);
-                if (error) alert("Lỗi xóa: " + error.message);
-                else fetchUsers();
             }
         }
 
@@ -432,12 +388,11 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
 
             try {
-                const { error } = await _supabase
-                    .from('accounts')
-                    .insert([{ fullname, email, password, sdt, link_fb, role, status: 'active' }]);
-
+                const { error } = await _supabase.from('accounts').insert([{ 
+                    fullname, email, password, sdt, link_fb, role, status: 'active' 
+                }]);
                 if (error) throw error;
-                alert("Đã thêm thành công học sinh: " + fullname);
+                alert("Chúc mừng thầy! Đã thêm thành công: " + fullname);
                 document.getElementById('form-add-new-user').reset();
                 showContent('user-list');
             } catch (err) {
@@ -448,7 +403,27 @@
             }
         });
 
-        // --- LOGIC KHÓA HỌC ---
+        // --- 6. Logic: Đổi trạng thái & Xóa & Sửa ---
+        async function toggleUserStatus(id, current) {
+            const next = current === 'active' ? 'inactive' : 'active';
+            const { error } = await _supabase.from('accounts').update({ status: next }).eq('id', id);
+            if (error) alert("Lỗi: " + error.message);
+            else fetchUsers();
+        }
+
+        async function deleteUser(id) {
+            if (confirm("Thầy có chắc muốn xóa vĩnh viễn học sinh này?")) {
+                const { error } = await _supabase.from('accounts').delete().eq('id', id);
+                if (error) alert("Lỗi xóa: " + error.message);
+                else fetchUsers();
+            }
+        }
+
+        function editUser(id) {
+            alert("Tính năng chỉnh sửa học sinh (ID: " + id + ") đang được phát triển ạ!");
+        }
+
+        // --- 7. Logic: Khóa học (Thêm mới) ---
         function previewThumb() {
             const url = document.getElementById('course_thumbnail').value;
             const previewDiv = document.getElementById('thumb-preview');
@@ -465,15 +440,17 @@
             const desc = document.getElementById('course_description').value;
             const thumb = document.getElementById('course_thumbnail').value;
 
-            if (!name) { alert("Vui lòng nhập tên khóa học!"); return; }
+            if (!name) return alert("Thầy điền tên khóa học nhé!");
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi tạo...';
 
             try {
-                const { error } = await _supabase.from('courses').insert([{ course_name: name, description: desc, thumbnail_url: thumb }]);
+                const { error } = await _supabase.from('courses').insert([{ 
+                    course_name: name, description: desc, thumbnail_url: thumb 
+                }]);
                 if (error) throw error;
-                alert("Tạo khóa học thành công!");
+                alert("Đã tạo khóa học thành công!");
                 showContent('course-list');
             } catch (error) {
                 alert("Lỗi: " + error.message);
@@ -483,41 +460,56 @@
             }
         }
 
+        // --- 8. Logic: Khóa học (Danh sách) ---
         async function fetchCourses() {
             const grid = document.getElementById('course-grid');
-            grid.innerHTML = '<div class="col-span-full text-center py-10 text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang lấy dữ liệu...</div>';
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-blue-900 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang lấy dữ liệu khóa học...</div>';
+
             try {
                 const { data, error } = await _supabase.from('courses').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
-                grid.innerHTML = data.length ? '' : '<div class="col-span-full text-center">Chưa có khóa học nào.</div>';
+                if (data.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full bg-white p-10 rounded-3xl text-center border">Chưa có khóa học nào.</div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
                 data.forEach(course => {
                     const card = document.createElement('div');
                     card.className = "bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group";
                     card.innerHTML = `
                         <div class="relative h-40 overflow-hidden">
-                            <img src="${course.thumbnail_url || 'https://via.placeholder.com/400x200'}" class="w-full h-full object-cover group-hover:scale-105 transition-all">
+                            <img src="${course.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Image'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         </div>
                         <div class="p-6">
                             <h4 class="text-lg font-black text-blue-900 mb-2 line-clamp-1">${course.course_name}</h4>
+                            <p class="text-gray-500 text-sm line-clamp-2 mb-4 h-10 font-medium">${course.description || 'Chưa có mô tả.'}</p>
                             <div class="flex items-center justify-between pt-4 border-t border-gray-50">
                                 <div class="flex gap-2">
-                                    <button class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
-                                    <button onclick="deleteCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                                    <button onclick="editCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-edit text-sm"></i></button>
+                                    <button onclick="deleteCourse('${course.id}')" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash text-sm"></i></button>
                                 </div>
-                                <button class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-bold">QUẢN TRỊ <i class="fas fa-arrow-right ml-1"></i></button>
+                                <button class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-orange-500 transition-colors">QUẢN TRỊ <i class="fas fa-arrow-right ml-1"></i></button>
                             </div>
                         </div>
                     `;
                     grid.appendChild(card);
                 });
-            } catch (err) { grid.innerHTML = `<div class="col-span-full text-red-500">${err.message}</div>`; }
+            } catch (err) {
+                grid.innerHTML = `<div class="col-span-full text-red-500 text-center p-10">Lỗi: ${err.message}</div>`;
+            }
         }
 
         async function deleteCourse(id) {
-            if (confirm("Xóa khóa học này?")) {
+            if (confirm("Xóa khóa học này có thể mất dữ liệu liên quan. Thầy chắc chứ?")) {
                 const { error } = await _supabase.from('courses').delete().eq('id', id);
-                if (error) alert(error.message); else fetchCourses();
+                if (error) alert("Lỗi: " + error.message);
+                else fetchCourses();
             }
+        }
+
+        function editCourse(id) {
+            alert("Đang phát triển tính năng sửa khóa học " + id);
         }
     </script>
 </body>
