@@ -20,6 +20,7 @@
         .arrow-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden">
 
@@ -109,9 +110,31 @@
             </div>
 
             <div id="content-user-list" class="content-section hidden">
-                <h3 class="text-2xl font-bold text-blue-900 mb-4 uppercase">Danh sách người dùng</h3>
-                <div class="bg-white p-6 rounded-3xl shadow-sm italic text-gray-400">Đang tải dữ liệu từ Supabase...</div>
-            </div>
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-blue-900 uppercase">Danh sách học sinh</h3>
+        <button onclick="fetchUsers()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold hover:bg-blue-200">
+            <i class="fas fa-sync-alt mr-2"></i> Làm mới dữ liệu
+        </button>
+    </div>
+    
+    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-blue-900 text-white">
+                <tr>
+                    <th class="p-4 pl-6 text-sm font-bold uppercase">Họ và tên</th>
+                    <th class="p-4 text-sm font-bold uppercase">Số điện thoại</th>
+                    <th class="p-4 text-sm font-bold uppercase">Vai trò</th>
+                    <th class="p-4 text-sm font-bold uppercase">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body" class="divide-y divide-gray-100">
+                <tr>
+                    <td colspan="4" class="p-10 text-center text-gray-400">Đang tải danh sách học sinh...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
             <div id="content-add-user" class="content-section hidden">
                 <h3 class="text-2xl font-bold text-blue-900 mb-4 uppercase">Thêm người dùng mới</h3>
@@ -175,6 +198,64 @@
     }
             }
         }
+    </script>
+    <script>
+        // 1. Cấu hình Supabase (Thay thông tin dự án của thầy vào đây)
+const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+const SUPABASE_KEY = sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 2. Hàm lấy dữ liệu từ bảng 'accounts'
+async function fetchUsers() {
+    const tbody = document.getElementById('user-table-body');
+    
+    try {
+        // Lấy dữ liệu từ bảng accounts
+        const { data, error } = await _supabase
+            .from('accounts') // Tên bảng của thầy
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Xóa nội dung cũ
+        tbody.innerHTML = '';
+
+        // Đổ dữ liệu mới vào bảng
+        data.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-blue-50 transition-colors";
+            tr.innerHTML = `
+                <td class="p-4 pl-6 font-bold text-blue-900">${user.fullname || 'Chưa cập nhật'}</td>
+                <td class="p-4 text-gray-600">${user.phone || 'N/A'}</td>
+                <td class="p-4">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${user.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                        ${user.role}
+                    </span>
+                </td>
+                <td class="p-4">
+                    <button class="text-blue-500 hover:text-blue-700 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error("Lỗi lấy dữ liệu:", err.message);
+        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Lỗi: ${err.message}</td></tr>`;
+    }
+}
+
+// 3. Cập nhật hàm showContent để tự động load dữ liệu khi bấm vào 'user-list'
+const originalShowContent = showContent; // Giữ lại hàm cũ
+showContent = function(section, element) {
+    originalShowContent(section, element); // Chạy hàm cũ để chuyển tab
+    
+    if (section === 'user-list') {
+        fetchUsers(); // Gọi hàm lấy dữ liệu khi nhấn vào tab danh sách
+    }
+};
     </script>
 </body>
 </html>
