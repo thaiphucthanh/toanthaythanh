@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách người dùng - Admin HDC Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .active-menu { background: #facc15 !important; color: #1e3a8a !important; shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+        .submenu.show { max-height: 500px; margin-top: 5px; }
+        .rotate-180 { transform: rotate(180deg); }
+        
+        /* Tùy chỉnh thanh cuộn cho bảng */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-100 flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+                <div>
+                    <div class="font-black text-lg leading-tight text-white">TOÁN</div>
+                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 mt-4 overflow-y-auto">
+            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+                <i class="fas fa-home w-5 text-blue-300"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-users w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý người dùng</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+                </div>
+                <div id="user-menu" class="submenu show">
+                    <a href="user-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
+                        <i class="fas fa-list-ul mr-2"></i> Danh sách người dùng
+                    </a>
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
+                        <i class="fas fa-user-plus mr-2 opacity-70"></i> Thêm mới
+                    </a>
+                </div>
+            </div>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="course-menu" class="submenu">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
+                    </a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
+                    </a>
+                </div>
+            </div>
+
+            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3">
+                <i class="fas fa-edit w-5 text-blue-300"></i>
+                <span class="font-bold">Thi Online</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-blue-800">
+            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span class="text-sm font-bold">Quay lại trang chủ</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Danh sách người dùng</h2>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-blue-900 hidden md:block text-right">
+                    Chào Thầy Thành<br>
+                    <span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>
+                </span>
+                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 bg-white p-0.5">
+            </div>
+        </header>
+
+        <div class="p-8 overflow-y-auto bg-gray-50 flex-1 custom-scrollbar">
+            <div class="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
+                <div class="relative w-full md:w-96">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm học sinh theo tên hoặc số điện thoại..." 
+                           class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all shadow-sm">
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button class="bg-white border border-gray-200 px-4 py-3 rounded-2xl font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <a href="add-user.html" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20">
+                        <i class="fas fa-plus"></i> Thêm học sinh
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[30px] shadow-sm overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Học viên</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Số điện thoại</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Vai trò</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Trạng thái</th>
+                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <tr class="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                                <td class="p-5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-bold">NT</div>
+                                        <div>
+                                            <div class="font-bold text-gray-900 text-sm uppercase">Nguyễn Văn Thuận</div>
+                                            <div class="text-[10px] text-gray-400 font-medium">thuan.nguyen@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-5 text-sm font-semibold text-gray-600">0987.654.321</td>
+                                <td class="p-5">
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase">Học sinh</span>
+                                </td>
+                                <td class="p-5">
+                                    <span class="flex items-center gap-1.5 text-green-600 text-[10px] font-black uppercase">
+                                        <span class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span> Hoạt động
+                                    </span>
+                                </td>
+                                <td class="p-5 text-center">
+                                    <div class="flex justify-center gap-2">
+                                        <button class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
+                                            <i class="fas fa-edit text-xs"></i>
+                                        </button>
+                                        <button class="w-8 h-8 rounded-lg bg-gray-100 text-red-500 hover:bg-red-600 hover:text-white transition-all">
+                                            <i class="fas fa-trash text-xs"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="p-5 border-t border-gray-50 flex justify-between items-center bg-gray-50/50">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Hiển thị 1 - 10 trên 150 học viên</span>
+                    <div class="flex gap-1">
+                        <button class="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-white hover:text-blue-900 transition-all shadow-sm disabled:opacity-50" disabled>
+                            <i class="fas fa-chevron-left text-[10px]"></i>
+                        </button>
+                        <button class="w-8 h-8 rounded-lg bg-blue-900 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-blue-900/20">1</button>
+                        <button class="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-xs font-bold text-gray-600 hover:border-blue-900 transition-all">2</button>
+                        <button class="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-white hover:text-blue-900 transition-all shadow-sm">
+                            <i class="fas fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleSubmenu(id, element) {
+            const menu = document.getElementById(id);
+            const arrow = element.querySelector('.arrow-icon');
+            menu.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+    </script>
+</body>
+</html>
