@@ -9,27 +9,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background-color: #f9fafb; }
-        
         .sidebar-scroll::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
-        
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
         .lesson-item.active { background-color: #eff6ff; color: #1e3a8a; border-left: 4px solid #1e3a8a; }
-        .lesson-item.active i { color: #1e3a8a; }
-        
         .submenu { display: none; }
         .submenu.show { display: block; }
-
-        .dropdown-user {
-            position: absolute; top: 120%; right: 0; width: 220px;
-            background: white; border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: none; flex-direction: column; padding: 10px 0;
-            z-index: 100; border: 1px solid #f0f0f0;
-        }
+        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 100; border: 1px solid #f0f0f0; }
         .dropdown-user.active { display: flex; }
         .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; }
-        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
     </style>
 </head>
 <body>
@@ -45,7 +33,6 @@
             </a>
             <div class="cum-tai-khoan relative" id="user-section"></div>
         </div>
-
         <nav class="thanh-menu-ngang px-6 py-2">
             <ul class="flex gap-6 list-none p-0 m-0">
                 <li><a href="trangchu.html" class="text-white no-underline font-bold text-xs opacity-80 hover:opacity-100">Trang chủ</a></li>
@@ -71,16 +58,14 @@
                 <div class="bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video relative border-8 border-white mb-8">
                     <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
                 </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-6">
                         <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
-                            <div id="lesson-category" class="text-blue-600 font-bold uppercase text-[10px] tracking-widest mb-2">Toán Thầy Thành</div>
+                            <div id="lesson-category" class="text-blue-600 font-bold uppercase text-[10px] tracking-widest mb-2">HDC Study</div>
                             <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight">Đang tải...</h1>
-                            <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4"></div>
+                            <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4 font-medium"></div>
                         </div>
                     </div>
-
                     <div class="lg:col-span-1">
                         <div class="bg-white p-6 rounded-[30px] shadow-sm border border-blue-100 sticky top-0">
                             <h3 class="font-black text-sm mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
@@ -125,7 +110,7 @@
             const userSection = document.getElementById('user-section');
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">Quản trị viên</a>` : '';
+                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">Quản trị</a>` : '';
                 template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
                 userSection.innerHTML = template;
             } else { window.location.href = 'login.html'; }
@@ -139,13 +124,13 @@
                 const topicLessons = lessons.filter(l => l.topic_id === topic.id);
                 return `
                     <div class="mb-1">
-                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-3 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between">
+                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-3 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between uppercase">
                             ${topic.topic_name} <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="submenu show">
                             ${topicLessons.map(l => `
-                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-3 pl-6 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-3 transition-all hover:bg-gray-50">
-                                    <i class="fas fa-play-circle text-gray-300"></i>
+                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-3 pl-6 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-3 transition-all">
+                                    <i class="fas fa-play-circle ${l.id == currentLessonId ? 'text-blue-900' : 'text-gray-300'}"></i>
                                     <span class="truncate">${l.title}</span>
                                 </div>
                             `).join('')}
@@ -160,24 +145,32 @@
 
             document.getElementById('lesson-title').innerText = lesson.title;
             document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang cập nhật...";
-            document.getElementById('lesson-insight').innerHTML = "💡 Insight: " + (lesson.insight || "Cố gắng lên nhé!");
+            document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Chúc bạn học tốt!");
             
             if (lesson.video_url) {
                 let vid = lesson.video_url.includes('v=') ? lesson.video_url.split('v=')[1].split('&')[0] : lesson.video_url.split('/').pop();
                 document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}`;
             }
 
-            // --- FIX LỖI LINK TÀI LIỆU TẠI ĐÂY ---
+            // --- XỬ LÝ LINK TỪ SUPABASE STORAGE ---
             const docSection = document.getElementById('document-section');
             if (lesson.documents && lesson.documents.trim() !== "") {
-                let rawLink = lesson.documents.trim();
-                // Nếu link không bắt đầu bằng http, tự thêm vào để tránh lỗi 404 trang nội bộ
-                let finalLink = (rawLink.startsWith('http')) ? rawLink : 'https://' + rawLink;
+                let finalLink = lesson.documents.trim();
+                
+                // Nếu link KHÔNG bắt đầu bằng http, chúng ta coi đó là tên file trong storage
+                // Ở đây tôi giả sử Thầy để bucket tên là 'documents'
+                if (!finalLink.startsWith('http')) {
+                    const { data } = supabaseClient.storage.from('documents').getPublicUrl(finalLink);
+                    if (data) finalLink = data.publicUrl;
+                }
 
                 docSection.innerHTML = `
-                    <a href="${finalLink}" target="_blank" rel="noopener noreferrer" class="flex items-center p-4 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100">
+                    <a href="${finalLink}" target="_blank" class="flex items-center p-4 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100 shadow-sm">
                         <i class="fas fa-file-pdf mr-3 text-xl"></i>
-                        <span class="text-xs uppercase">Xem tài liệu chi tiết</span>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase opacity-70">Tài liệu học tập</span>
+                            <span class="text-xs uppercase tracking-tight">Nhấn để xem ngay</span>
+                        </div>
                     </a>`;
             } else {
                 docSection.innerHTML = `<div class="p-4 bg-gray-50 text-gray-400 text-[10px] text-center rounded-2xl border border-dashed italic">Chưa có tài liệu</div>`;
