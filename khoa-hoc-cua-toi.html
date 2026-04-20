@@ -48,7 +48,7 @@
             </a>
 
             <div class="vung-tim-kiem hidden md:block flex-1 max-w-md mx-10">
-                <input type="text" placeholder="Tìm khóa học của bạn..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="search-course" placeholder="Tìm khóa học của bạn..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="cum-tai-khoan relative" id="user-section">
@@ -71,7 +71,7 @@
         <div class="flex justify-between items-end mb-10">
             <div>
                 <h2 class="text-3xl font-black text-blue-900 border-l-8 border-yellow-400 pl-4 uppercase tracking-tight">Khóa học của tôi</h2>
-                <p id="welcome-message" class="text-gray-500 font-medium mt-2 ml-4">Chào mừng bạn quay trở lại học tập!</p>
+                <p id="welcome-message" class="text-gray-500 font-medium mt-2 ml-4 italic">Đang tải thông tin học tập...</p>
             </div>
         </div>
 
@@ -107,40 +107,52 @@
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
+        let userLocal = null;
+
         function checkLogin() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            const userSection = document.getElementById('user-section');
-            if (user) {
-                // Cập nhật lời chào
-                document.getElementById('welcome-message').innerText = `Chào mừng ${user.fullname} quay trở lại học tập!`;
-                
-                let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = user.role === 'admin' ? `
-                    <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
-                        <i class="fas fa-user-shield mr-3"></i> TRANG QUẢN TRỊ
-                    </a>
-                    <div class="divider"></div>` : '';
-                
-                template = template.replace('{fullname}', user.fullname)
-                                   .replace('{role_text}', user.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
-                                   .replace('{admin_option}', adminOption);
-                userSection.innerHTML = template;
-                return user;
-            } else {
+            const data = localStorage.getItem('user');
+            if (!data) {
                 window.location.href = 'login.html';
                 return null;
             }
+            userLocal = JSON.parse(data);
+            
+            // Cập nhật giao diện Header
+            const userSection = document.getElementById('user-section');
+            document.getElementById('welcome-message').innerText = `Chào mừng ${userLocal.fullname} quay trở lại học tập!`;
+            
+            let template = document.getElementById('user-logged-template').innerHTML;
+            let adminOption = userLocal.role === 'admin' ? `
+                <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
+                    <i class="fas fa-user-shield mr-3"></i> TRANG QUẢN TRỊ
+                </a>
+                <div class="divider"></div>` : '';
+            
+            template = template.replace('{fullname}', userLocal.fullname)
+                               .replace('{role_text}', userLocal.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
+                               .replace('{admin_option}', adminOption);
+            userSection.innerHTML = template;
+            return userLocal;
         }
 
         async function loadMyCourses() {
-            const user = JSON.parse(localStorage.getItem('user'));
             const courseContainer = document.getElementById('course-grid');
             
-            if (!user) return;
-
             try {
-                // Truy vấn bảng trung gian course_enrollments
-                const { data: enrolledData, error } = await supabaseClient
+                // 1. Lấy lại dữ liệu User mới nhất từ DB để chắc chắn ID khớp
+                const { data: account, error: accError } = await supabaseClient
+                    .from('accounts')
+                    .select('id')
+                    .eq('username', userLocal.username) // Dựa vào username là duy nhất
+                    .single();
+
+                if (accError || !account) {
+                    console.error("Không tìm thấy account khớp");
+                    return;
+                }
+
+                // 2. Truy vấn bảng course_enrollments dựa trên ID thật từ DB
+                const { data: enrolledData, error: enrollError } = await supabaseClient
                     .from('course_enrollments')
                     .select(`
                         course_id,
@@ -151,32 +163,36 @@
                             description
                         )
                     `)
-                    .eq('user_id', user.id);
+                    .eq('user_id', account.id);
 
-                if (error) throw error;
+                if (enrollError) throw enrollError;
 
+                // 3. Xử lý hiển thị
                 if (!enrolledData || enrolledData.length === 0) {
                     courseContainer.innerHTML = `
-                        <div class="col-span-full text-center py-20">
-                            <div class="text-gray-400 font-bold italic uppercase tracking-widest">
-                                Em chưa được cấp quyền khóa học nào.<br>Hãy liên hệ Thầy Thành để được vào lớp nhé!
+                        <div class="col-span-full text-center py-20 bg-white rounded-[40px] border-2 border-dashed">
+                            <i class="fas fa-book-reader text-5xl text-gray-200 mb-4"></i>
+                            <div class="text-gray-400 font-bold italic uppercase tracking-widest px-10">
+                                Em chưa được cấp quyền khóa học nào.<br>
+                                <span class="text-blue-900 not-italic text-sm">Hãy nhắn tin cho Thầy Thành để được kích hoạt vào lớp nhé!</span>
                             </div>
                         </div>`;
                     return;
                 }
 
-                const myCourses = enrolledData.map(item => item.courses);
-                
-                // Đổ dữ liệu ra Card
+                // Lọc bỏ các dòng bị null nếu khóa học bị xóa nhưng enrollment vẫn còn
+                const myCourses = enrolledData.filter(item => item.courses !== null).map(item => item.courses);
+
                 courseContainer.innerHTML = myCourses.map(course => `
                     <div class="bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
-                        <div class="aspect-video overflow-hidden bg-gray-100">
-                            <img src="${course.image_url || 'logo.png'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="aspect-video overflow-hidden bg-gray-100 relative">
+                            <img src="${course.image_url || 'logo.png'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='logo.png'">
+                            <div class="absolute top-4 left-4 bg-yellow-400 text-blue-900 text-[9px] font-black px-3 py-1 rounded-full uppercase">Đã kích hoạt</div>
                         </div>
                         <div class="p-8">
                             <div class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">Toán Thầy Thành</div>
-                            <h3 class="text-xl font-black text-blue-900 mb-3 uppercase tracking-tighter">${course.course_name}</h3>
-                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học Toán cùng Thầy Thành để bứt phá điểm số.'}</p>
+                            <h3 class="text-xl font-black text-blue-900 mb-3 uppercase tracking-tighter line-clamp-1">${course.course_name}</h3>
+                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học Toán cùng Thầy Thành để bứt phá điểm số trong các kỳ thi sắp tới.'}</p>
                             
                             <a href="lesson-detail.html?id=${course.id}" class="inline-flex items-center justify-center w-full py-4 bg-blue-900 text-white rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-800 transition-colors shadow-lg shadow-blue-100">
                                 Vào học ngay <i class="fas fa-arrow-right ml-2 text-[9px]"></i>
@@ -187,7 +203,7 @@
 
             } catch (err) {
                 console.error("Lỗi:", err);
-                courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold">LỖI KẾT NỐI DỮ LIỆU. VUI LÒNG THỬ LẠI!</p>`;
+                courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold bg-red-50 p-10 rounded-3xl">LỖI KẾT NỐI DỮ LIỆU. THẦY/EM VUI LÒNG KIỂM TRA LẠI INTERNET!</p>`;
             }
         }
 
@@ -197,20 +213,18 @@
         }
 
         function logout() {
-            if(confirm("Thầy muốn đăng xuất hệ thống?")) {
+            if(confirm("Thầy/Em muốn đăng xuất hệ thống?")) {
                 localStorage.removeItem('user');
                 window.location.href = 'trangchu.html';
             }
         }
 
-        // Tự động chạy khi load trang
         window.onload = () => {
             if(checkLogin()) {
                 loadMyCourses();
             }
         };
 
-        // Đóng menu khi click ngoài
         window.onclick = () => {
             document.getElementById('dropdownUser')?.classList.remove('active');
         };
