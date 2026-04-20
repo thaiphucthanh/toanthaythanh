@@ -70,10 +70,6 @@
                 </div>
             </div>
         </nav>
-        
-        <div class="p-4 border-t border-blue-800 text-center">
-            <span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest italic">HDC Study Management</span>
-        </div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
@@ -102,14 +98,14 @@
                     </div>
 
                     <div>
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2 font-bold text-red-600">Số điện thoại (sđt)</label>
-                        <input type="text" id="sdt_input" required placeholder="09xxxxxxx" 
+                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2 font-bold text-red-600">Số điện thoại (sdt)</label>
+                        <input type="text" id="sdt" required placeholder="09xxxxxxx" 
                                class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2 font-bold text-blue-600">Link Facebook (link_fb)</label>
-                        <input type="url" id="link_fb_input" placeholder="https://facebook.com/..." 
+                        <input type="url" id="link_fb" placeholder="https://facebook.com/..." 
                                class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
                     </div>
 
@@ -155,26 +151,25 @@
             btnSave.disabled = true;
             btnSave.innerHTML = `Đang lưu...`;
 
-            // Khai báo đúng các cột trong Database của Thầy
+            // Khớp chính xác tên cột của Thầy: sdt (không dấu), link_fb, fullname, email, password, role, status
             const newUser = {
                 fullname: document.getElementById('fullname').value,
                 email: document.getElementById('email').value,
-                "sđt": document.getElementById('sdt_input').value, // Cột sđt (có dấu đ)
-                link_fb: document.getElementById('link_fb_input').value, // Cột link_fb
+                sdt: document.getElementById('sdt').value, 
+                link_fb: document.getElementById('link_fb').value,
                 password: document.getElementById('password').value,
-                role: document.getElementById('role').value, // Gửi 'student', 'admin' hoặc 'teacher'
+                role: document.getElementById('role').value, // Sẽ gửi 'student', 'admin', hoặc 'teacher'
                 status: 'active'
             };
 
             const { error } = await supabaseClient.from('accounts').insert([newUser]);
 
             if (error) {
-                alert('Lỗi: ' + error.message);
-                console.error(error);
+                alert('Lỗi khi lưu: ' + error.message);
                 btnSave.disabled = false;
                 btnSave.innerHTML = `Lưu tài khoản`;
             } else {
-                alert('Thầy đã thêm thành công học viên mới!');
+                alert('Thầy đã thêm thành viên thành công!');
                 window.location.href = 'user-list.html';
             }
         });
