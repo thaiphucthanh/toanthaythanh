@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết bài học - HDC Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+        .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+        .submenu.show { max-height: 500px; margin-top: 5px; }
+        .rotate-180 { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+                <div>
+                    <div class="font-black text-lg leading-tight text-white uppercase">HDC Study</div>
+                    <div class="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Quản lý bài học</div>
+                </div>
+            </a>
+        </div>
+        <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
+            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+                <i class="fas fa-home w-5 text-blue-300"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold text-yellow-400">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+                </div>
+                <div id="course-menu" class="submenu show">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Thêm khóa học mới</a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <div>
+                <span id="course-breadcrumb" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">...</span>
+                <h2 id="topic-title" class="text-xl font-black text-blue-900 uppercase">Đang tải chuyên đề...</h2>
+            </div>
+            <button onclick="history.back()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200">
+                <i class="fas fa-chevron-left mr-2"></i>Quay lại
+            </button>
+        </header>
+
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
+                        <p class="text-sm text-gray-500 italic">Quản lý nội dung, video và tài liệu từng bài học</p>
+                    </div>
+                    <button onclick="addNewLesson()" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Thêm bài học mới</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
+                                <th class="p-5 pl-8">Tiêu đề bài học</th>
+                                <th class="p-5">Insight</th>
+                                <th class="p-5 text-center">Video</th>
+                                <th class="p-5 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lesson-table-body" class="divide-y divide-gray-50">
+                            </tbody>
+                    </table>
+                    <div id="loading" class="p-20 text-center">
+                        <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const topicId = urlParams.get('topic_id');
+
+        async function init() {
+            if (!topicId) {
+                alert("Thiếu ID chuyên đề!");
+                return;
+            }
+            await loadTopicHeader();
+            await fetchLessons();
+        }
+
+        async function loadTopicHeader() {
+            // Lấy thông tin Topic và Course (để làm breadcrumb)
+            const { data: topic } = await supabaseClient
+                .from('topics')
+                .select('topic_name, course_id')
+                .eq('id', topicId)
+                .single();
+            
+            if (topic) {
+                document.getElementById('topic-title').innerText = topic.topic_name;
+                const { data: course } = await supabaseClient.from('courses').select('course_name').eq('id', topic.course_id).single();
+                if (course) document.getElementById('course-breadcrumb').innerText = "Khóa học: " + course.course_name;
+            }
+        }
+
+        async function fetchLessons() {
+            const tbody = document.getElementById('lesson-table-body');
+            const loader = document.getElementById('loading');
+            
+            const { data: lessons, error } = await supabaseClient
+                .from('lessons')
+                .select('*')
+                .eq('topic_id', topicId)
+                .order('created_at', { ascending: true });
+
+            loader.classList.add('hidden');
+
+            if (error) { alert(error.message); return; }
+
+            if (lessons.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-400 italic font-medium">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lessons.map(l => `
+                <tr class="hover:bg-blue-50/20 transition-all group">
+                    <td class="p-5 pl-8">
+                        <div class="font-bold text-blue-900">${l.title}</div>
+                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id}</div>
+                    </td>
+                    <td class="p-5">
+                        <div class="text-xs text-gray-600 line-clamp-1 max-w-xs">${l.insight || '---'}</div>
+                    </td>
+                    <td class="p-5 text-center">
+                        ${l.video_url ? `<i class="fab fa-youtube text-red-500 text-lg"></i>` : `<i class="fas fa-video-slash text-gray-300"></i>`}
+                    </td>
+                    <td class="p-5">
+                        <div class="flex justify-center gap-3">
+                            <button class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addNewLesson() {
+            const title = prompt("Nhập tên bài học:");
+            if (!title) return;
+            const insight = prompt("Nhập insight (nguyện vọng/nỗi đau của HS):");
+            const video = prompt("Dán Link Video (Youtube):");
+
+            const { error } = await supabaseClient.from('lessons').insert([{
+                topic_id: topicId,
+                title: title,
+                insight: insight,
+                video_url: video
+            }]);
+
+            if (error) alert(error.message); else fetchLessons();
+        }
+
+        async function deleteLesson(id) {
+            if(confirm('Xóa bài học này?')) {
+                await supabaseClient.from('lessons').delete().eq('id', id);
+                fetchLessons();
+            }
+        }
+
+        function toggleSubmenu(id, element) {
+            const menu = document.getElementById(id);
+            const arrow = element.querySelector('.arrow-icon');
+            menu.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+
+        init();
+    </script>
+</body>
+</html>
