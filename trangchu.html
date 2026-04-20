@@ -41,11 +41,12 @@
         /* Banner full */
         .swiper { width: 100%; }
         .swiper-slide img {
-            width: auto;
-            height: 100%;
-            display: block;
-            object-fit: contain; /* giữ nguyên tỷ lệ, không cắt */
-        }
+    width: 100%;        /* Rộng hết cỡ theo khung trang */
+    height: auto;       /* Cao tự do theo tỉ lệ ảnh -> KHÔNG BỊ CẮT */
+    display: block;
+    object-position: center; 
+    /* Không dùng object-fit: cover ở đây nếu muốn thấy hết ảnh */
+}
 
         /* Menu */
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
