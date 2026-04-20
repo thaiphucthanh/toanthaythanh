@@ -139,42 +139,8 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
-let currentLessonId = urlParams.get('id');
-const courseIdParam = urlParams.get('course_id'); // ← thêm dòng này
-
-window.onload = async () => {
-    checkLogin();
-    if (currentLessonId) {
-        fetchLessonData(currentLessonId);
-    } else if (courseIdParam) {
-        // Tìm bài học đầu tiên của khóa học này
-        const { data: firstTopic } = await supabaseClient
-            .from('topics')
-            .select('id')
-            .eq('course_id', courseIdParam)
-            .order('id', { ascending: true })
-            .limit(1)
-            .single();
-
-        if (firstTopic) {
-            const { data: firstLesson } = await supabaseClient
-                .from('lessons')
-                .select('id')
-                .eq('topic_id', firstTopic.id)
-                .order('id', { ascending: true })
-                .limit(1)
-                .single();
-
-            if (firstLesson) {
-                currentLessonId = String(firstLesson.id);
-                window.history.replaceState({}, '', `?id=${firstLesson.id}`);
-                fetchLessonData(firstLesson.id);
-            }
-        }
-    } else {
-        document.getElementById('lesson-title').innerText = 'Vui lòng chọn bài học';
-    }
-};
+        let currentLessonId = urlParams.get('id');
+        const courseIdParam = urlParams.get('course_id');
 
         // =====================
         // KIỂM TRA ĐĂNG NHẬP
@@ -441,10 +407,55 @@ window.onload = async () => {
         // =====================
         // KHỞI ĐỘNG
         // =====================
-        window.onload = () => {
+        window.onload = async () => {
             checkLogin();
+
             if (currentLessonId) {
+                // Có id bài học cụ thể → load luôn
                 fetchLessonData(currentLessonId);
+
+            } else if (courseIdParam) {
+                // Có course_id → tìm bài học đầu tiên của khóa
+                document.getElementById('lesson-title').innerText = 'Đang tải bài học...';
+                try {
+                    // Lấy chuyên đề đầu tiên
+                    const { data: firstTopic } = await supabaseClient
+                        .from('topics')
+                        .select('id')
+                        .eq('course_id', courseIdParam)
+                        .order('id', { ascending: true })
+                        .limit(1)
+                        .single();
+
+                    if (!firstTopic) {
+                        document.getElementById('lesson-title').innerText = 'Khóa học chưa có chuyên đề';
+                        // Vẫn load sidebar để hiện danh sách trống
+                        loadSidebar(courseIdParam);
+                        return;
+                    }
+
+                    // Lấy bài học đầu tiên của chuyên đề đó
+                    const { data: firstLesson } = await supabaseClient
+                        .from('lessons')
+                        .select('id')
+                        .eq('topic_id', firstTopic.id)
+                        .order('id', { ascending: true })
+                        .limit(1)
+                        .single();
+
+                    if (firstLesson) {
+                        currentLessonId = String(firstLesson.id);
+                        window.history.replaceState({}, '', `?id=${firstLesson.id}`);
+                        fetchLessonData(firstLesson.id);
+                    } else {
+                        document.getElementById('lesson-title').innerText = 'Khóa học chưa có bài giảng';
+                        loadSidebar(courseIdParam);
+                    }
+                } catch (e) {
+                    console.error('Lỗi load bài đầu tiên:', e);
+                    document.getElementById('lesson-title').innerText = 'Có lỗi xảy ra';
+                }
+
             } else {
                 document.getElementById('lesson-title').innerText = 'Vui lòng chọn bài học từ danh sách';
                 document.getElementById('sidebar-content').innerHTML = `<div class="text-center text-gray-400 text-xs p-6 italic">Không có bài học được chọn</div>`;
