@@ -199,24 +199,36 @@
         title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
         html: `
             <div class="text-left space-y-3">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tiêu đề bài học</label>
-                <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Ví dụ: Bài 1 - Ôn tập">
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Tiêu đề bài học</label>
+                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập hình học">
+                </div>
                 
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Link YouTube</label>
-                <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Dán link vào đây...">
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Link YouTube (Nếu có)</label>
+                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
                 
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Insight</label>
-                <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Nỗi đau của học sinh..."></textarea>
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Insight (Nỗi đau của học sinh)</label>
+                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Các em hay nhầm lẫn định lý..."></textarea>
+                </div>
                 
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tải lên PDF (Tùy chọn)</label>
-                <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700" accept=".pdf">
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Tài liệu PDF (Tùy chọn)</label>
+                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf">
+                </div>
             </div>
         `,
+        showCancelButton: true,
         confirmButtonText: 'Lưu bài học',
+        cancelButtonText: 'Hủy',
         confirmButtonColor: '#1e3a8a',
         preConfirm: () => {
+            const title = document.getElementById('swal-title').value;
+            if (!title) { Swal.showValidationMessage('Thầy chưa nhập tên bài học ạ!'); return false; }
             return {
-                title: document.getElementById('swal-title').value,
+                title: title,
                 video: document.getElementById('swal-video').value,
                 insight: document.getElementById('swal-insight').value,
                 file: document.getElementById('swal-file').files[0]
@@ -224,14 +236,32 @@
         }
     });
 
-    if (!formValues || !formValues.title) return;
+    if (!formValues) return;
 
-    Swal.fire({ title: 'Đang xử lý...', didOpen: () => Swal.showLoading() });
+    Swal.fire({
+        title: 'HDC Study đang lưu...',
+        html: 'Đang xử lý dữ liệu và upload tài liệu...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
-    let finalDocs = []; // Mảng chứa tài liệu để lưu vào jsonb
+    let finalDocs = [];
 
+    // 1. Xử lý Upload file nếu Thầy có chọn file
     if (formValues.file) {
-        const fileName = `${Date.now()}-${formValues.file.name}`;
+        const originalName = formValues.file.name;
+        
+        // Chuẩn hóa tên file: xóa dấu tiếng Việt, thay khoảng trắng bằng "-"
+        const cleanName = originalName
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Xóa dấu
+            .replace(/[đĐ]/g, "d")
+            .replace(/([^a-z0-9.]+)/g, '-') // Thay ký tự đặc biệt thành "-"
+            .replace(/-+/g, "-") // Xóa gạch ngang thừa
+            .replace(/^-|-$/g, ""); // Xóa gạch ngang ở đầu/cuối
+
+        const fileName = `${Date.now()}-${cleanName}`;
+
         const { data: uploadData, error: uploadError } = await supabaseClient.storage
             .from('documents')
             .upload(fileName, formValues.file);
@@ -241,25 +271,31 @@
             return;
         }
 
+        // Lấy link công khai sau khi upload thành công
         const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-        // Tạo cấu trúc JSON cho tài liệu
-        finalDocs.push({ name: formValues.file.name, url: urlData.publicUrl });
+        finalDocs.push({ name: originalName, url: urlData.publicUrl });
     }
 
-    // Lưu vào bảng lessons theo sơ đồ ER của Thầy
+    // 2. Lưu vào bảng 'lessons' (Khớp các cột: topic_id, title, video_url, insight, documents)
     const { error: insertError } = await supabaseClient.from('lessons').insert([{
         topic_id: topicId,
         title: formValues.title,
         video_url: formValues.video,
         insight: formValues.insight,
-        documents: finalDocs // Lưu mảng JSON vào cột jsonb
+        documents: finalDocs // Lưu dạng JSONB cho cột documents
     }]);
 
     if (insertError) {
-        Swal.fire('Lỗi lưu!', insertError.message, 'error');
+        Swal.fire('Lỗi lưu Database!', insertError.message, 'error');
     } else {
-        Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, showConfirmButton: false });
-        fetchLessons();
+        Swal.fire({
+            icon: 'success',
+            title: 'Đã thêm bài học!',
+            text: 'Dữ liệu đã được cập nhật thành công.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        fetchLessons(); // Tải lại danh sách hiển thị
     }
 }
 
