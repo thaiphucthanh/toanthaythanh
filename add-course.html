@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm khóa học - Toán thầy Thành</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .active-menu { background: #facc15 !important; color: #1e3a8a !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+        .submenu.show { max-height: 500px; margin-top: 5px; }
+        .rotate-180 { transform: rotate(180deg); }
+        
+        /* Chống cắt banner */
+        .preview-banner-container {
+            width: 100%;
+            background: #f8fafc;
+            border: 2px dashed #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        #img-render {
+            width: 100%;
+            height: auto; /* Giữ đúng tỉ lệ ảnh gốc */
+            display: block;
+            object-fit: contain; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+                <div>
+                    <div class="font-black text-lg leading-tight text-white">TOÁN</div>
+                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+                </div>
+            </a>
+        </div>
+
+       <nav class="flex-1 mt-4 overflow-y-auto">
+            <a href="admin.html" class="sidebar-item active-menu p-4 flex items-center gap-3 mb-1">
+                <i class="fas fa-home w-5"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-users w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý người dùng</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="user-menu" class="submenu">
+                    <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-list-ul mr-2 opacity-70"></i> Danh sách người dùng
+                    </a>
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-user-plus mr-2 opacity-70"></i> Thêm mới
+                    </a>
+                </div>
+            </div>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="course-menu" class="submenu">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
+                    </a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
+                    </a>
+                </div>
+            </div>
+
+            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3">
+                <i class="fas fa-edit w-5 text-blue-300"></i>
+                <span class="font-bold">Thi Online</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-blue-800">
+            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span class="text-sm font-bold">Quay lại trang chủ</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight italic">Thêm khóa học mới</h2>
+            <div class="flex items-center gap-3">
+                <span id="admin-name" class="text-sm font-bold text-blue-900 hidden md:block text-right">
+                    Chào Thầy Thành<br>
+                    <span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>
+                </span>
+                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 bg-white p-0.5">
+            </div>
+        </header>
+
+        <div class="p-8 overflow-y-auto bg-gray-50 flex-1">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
+                    <form id="courseForm" class="space-y-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Tên khóa học (Course Name)</label>
+                            <input type="text" id="course_name" required
+                                class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-900 outline-none font-bold text-gray-700 transition-all"
+                                placeholder="Nhập tên khóa học...">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Link Banner (Tỷ lệ Panorama)</label>
+                            <div class="flex gap-3">
+                                <input type="text" id="thumbnail_url" required
+                                    class="flex-1 px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-900 outline-none font-bold text-gray-700 transition-all"
+                                    placeholder="Dán link ảnh từ database/drive...">
+                                <button type="button" onclick="previewImage()" 
+                                    class="px-6 bg-blue-100 text-blue-900 rounded-2xl font-black text-[10px] uppercase hover:bg-blue-200 transition-all">
+                                    Check Ảnh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="preview-area" class="hidden animate-fade-in">
+                            <p class="text-[9px] font-bold text-gray-400 mb-2 uppercase italic ml-2">Xem trước hiển thị (Không bị cắt):</p>
+                            <div class="preview-banner-container shadow-inner">
+                                <img id="img-render" src="">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Mô tả khóa học</label>
+                            <textarea id="description" rows="3"
+                                class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-900 outline-none font-bold text-gray-700 transition-all"
+                                placeholder="Nội dung tóm tắt khóa học..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Trạng thái</label>
+                                <select id="status" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-900 outline-none font-bold text-gray-700">
+                                    <option value="active">Hiển thị (Active)</option>
+                                    <option value="closed">Tạm ẩn (Closed)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" id="submitBtn"
+                                class="w-full py-5 bg-blue-900 text-white rounded-[20px] font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-3">
+                                <i class="fas fa-cloud-upload-alt"></i> Cập nhật khóa học lên hệ thống
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Cấu hình Submenu của Thầy Thành
+        function toggleSubmenu(id, element) {
+            const menu = document.getElementById(id);
+            const arrow = element.querySelector('.arrow-icon');
+            menu.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+
+        // Xem trước ảnh không cắt
+        function previewImage() {
+            const url = document.getElementById('thumbnail_url').value;
+            const img = document.getElementById('img-render');
+            const area = document.getElementById('preview-area');
+            if(url) {
+                img.src = url;
+                area.classList.remove('hidden');
+            }
+        }
+
+        // Logic Supabase
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        document.getElementById('courseForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang tải dữ liệu...';
+
+            const payload = {
+                course_name: document.getElementById('course_name').value,
+                thumbnail_url: document.getElementById('thumbnail_url').value,
+                description: document.getElementById('description').value,
+                status: document.getElementById('status').value,
+                created_at: new Date()
+            };
+
+            try {
+                const { error } = await supabaseClient.from('courses').insert([payload]);
+                if (error) throw error;
+                alert("Thành công! Khóa học đã được lưu.");
+                window.location.reload();
+            } catch (err) {
+                alert("Lỗi: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Cập nhật khóa học lên hệ thống';
+            }
+        };
+    </script>
+</body>
+</html>
