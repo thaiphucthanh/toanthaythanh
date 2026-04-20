@@ -186,7 +186,9 @@
                     </td>
                     <td class="p-5">
                         <div class="flex justify-center gap-3">
-                            <button class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
+                            <button onclick="editLesson('${l.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+    <i class="fas fa-edit"></i>
+</button>
                             <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </td>
@@ -299,6 +301,100 @@
     }
 }
 
+        async function editLesson(id) {
+    // 1. Lấy dữ liệu hiện tại của bài học
+    Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    const { data: lesson, error: fetchError } = await supabaseClient
+        .from('lessons')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (fetchError) {
+        Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error');
+        return;
+    }
+
+    // 2. Hiện Form chỉnh sửa (tương tự form thêm mới nhưng điền sẵn data)
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-blue-900 font-black uppercase">Chỉnh sửa bài học</span>',
+        html: `
+            <div class="text-left space-y-3">
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Tiêu đề bài học</label>
+                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.title || ''}">
+                </div>
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Link YouTube</label>
+                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.video_url || ''}">
+                </div>
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Insight</label>
+                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20">${lesson.insight || ''}</textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Cập nhật tài liệu PDF (Để trống nếu giữ nguyên)</label>
+                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf">
+                    ${lesson.documents && lesson.documents.length > 0 ? `<p class="text-[10px] text-green-600 mt-1 italic font-medium">Hiện có: ${lesson.documents[0].name}</p>` : ''}
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Cập nhật ngay',
+        cancelButtonText: 'Bỏ qua',
+        confirmButtonColor: '#1e3a8a',
+        preConfirm: () => {
+            const title = document.getElementById('swal-title').value;
+            if (!title) { Swal.showValidationMessage('Tên bài học không được để trống!'); return false; }
+            return {
+                title: title,
+                video: document.getElementById('swal-video').value,
+                insight: document.getElementById('swal-insight').value,
+                file: document.getElementById('swal-file').files[0]
+            }
+        }
+    });
+
+    if (!formValues) return;
+
+    Swal.fire({ title: 'HDC Study đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    let updatedData = {
+        title: formValues.title,
+        video_url: formValues.video,
+        insight: formValues.insight
+    };
+
+    // 3. Xử lý Upload file mới nếu Thầy chọn file khác
+    if (formValues.file) {
+        const originalName = formValues.file.name;
+        const cleanName = originalName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").replace(/([^a-z0-9.]+)/g, '-').replace(/^-|-$/g, "");
+        const fileName = `${Date.now()}-${cleanName}`;
+
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+            .from('documents')
+            .upload(fileName, formValues.file);
+
+        if (!uploadError) {
+            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+            updatedData.documents = [{ name: originalName, url: urlData.publicUrl }];
+        }
+    }
+
+    // 4. Update vào Database
+    const { error: updateError } = await supabaseClient
+        .from('lessons')
+        .update(updatedData)
+        .eq('id', id);
+
+    if (updateError) {
+        Swal.fire('Lỗi!', updateError.message, 'error');
+    } else {
+        Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false });
+        fetchLessons(); // Load lại bảng
+    }
+}
         async function deleteLesson(id) {
             if(confirm('Xóa bài học này?')) {
                 await supabaseClient.from('lessons').delete().eq('id', id);
