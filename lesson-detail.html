@@ -8,22 +8,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
         html, body { height: 100%; margin: 0; }
         body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; background-color: #f9fafb; overflow: hidden; }
+        
+        /* Sidebar Scroll */
         .sidebar-scroll::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+        
+        /* Menu & Active State */
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
         .lesson-item.active { background-color: #eff6ff; color: #1e3a8a; border-left: 4px solid #1e3a8a; }
+        .lesson-item.active i { color: #1e3a8a; }
+        
         .submenu { display: none; }
         .submenu.show { display: block; }
-        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 100; border: 1px solid #f0f0f0; }
+
+        /* User Dropdown */
+        .dropdown-user {
+            position: absolute; top: 120%; right: 0; width: 220px;
+            background: white; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none; flex-direction: column; padding: 10px 0;
+            z-index: 1000; border: 1px solid #f0f0f0;
+        }
         .dropdown-user.active { display: flex; }
-        .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; }
+        .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; transition: all 0.2s; }
+        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
     </style>
 </head>
 <body>
 
-    <header class="bg-white shadow-sm z-[1000] flex-none">
+    <header class="bg-white shadow-sm z-[1100] flex-none">
         <div class="px-6 py-3 flex items-center justify-between">
             <a href="trangchu.html" class="flex items-center gap-2">
                 <img src="logo.png" class="w-10 h-10 rounded-full border">
@@ -32,13 +48,16 @@
                     <div class="text-gray-400 font-bold text-[8px] tracking-widest uppercase">Thầy Thành</div>
                 </div>
             </a>
-            <div class="cum-tai-khoan relative" id="user-section"></div>
+            
+            <div class="cum-tai-khoan relative" id="user-section">
+                </div>
         </div>
+
         <nav class="thanh-menu-ngang px-6 py-2">
             <ul class="flex gap-6 list-none p-0 m-0">
-                <li><a href="trangchu.html" class="text-white no-underline font-bold text-xs opacity-80 hover:opacity-100">Trang chủ</a></li>
-                <li><a href="khoa-hoc-cua-toi.html" class="text-white no-underline font-bold text-xs border-b-2 border-yellow-400 pb-1">Khóa học của tôi</a></li>
-                <li><a href="#" class="text-white no-underline font-bold text-xs opacity-80 hover:opacity-100">Tài liệu ôn thi</a></li>
+                <li><a href="trangchu.html" class="text-white no-underline font-bold text-xs opacity-80 hover:opacity-100 uppercase tracking-tighter">Trang chủ</a></li>
+                <li><a href="khoa-hoc-cua-toi.html" class="text-white no-underline font-bold text-xs border-b-2 border-yellow-400 pb-1 uppercase tracking-tighter">Khóa học của tôi</a></li>
+                <li><a href="#" class="text-white no-underline font-bold text-xs opacity-80 hover:opacity-100 uppercase tracking-tighter">Tài liệu ôn thi</a></li>
             </ul>
         </nav>
     </header>
@@ -46,7 +65,8 @@
     <div class="flex flex-1 overflow-hidden">
         <aside class="w-80 bg-white border-r flex flex-col shadow-inner z-40 flex-none">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                <h3 class="font-black text-blue-900 text-xs uppercase tracking-widest">Nội dung học tập</h3>
+                <h3 class="font-black text-blue-900 text-[10px] uppercase tracking-widest">Nội dung học tập</h3>
+                <i class="fas fa-book-reader text-blue-200"></i>
             </div>
             <nav id="sidebar-content" class="flex-1 overflow-y-auto sidebar-scroll p-2 space-y-1">
                 <div class="text-center py-10"><i class="fas fa-spinner animate-spin text-blue-900"></i></div>
@@ -55,36 +75,45 @@
 
         <main class="flex-1 overflow-y-auto flex flex-col scroll-smooth bg-gray-50">
             <div class="p-6 md:p-10 flex-1">
-                <div class="max-w-5xl mx-auto">
-                    <div class="bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video relative border-8 border-white mb-8 italic font-black">
+                <div class="max-w-6xl mx-auto">
+                    <div class="bg-black rounded-[40px] overflow-hidden shadow-2xl aspect-video relative border-[12px] border-white mb-10">
                         <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-2 space-y-6">
-                            <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
-                                <div id="lesson-topic-name" class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">ĐANG TẢI CHUYÊN ĐỀ...</div>
-                                <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight uppercase">Tiêu đề bài học</h1>
-                                <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="bg-white p-10 rounded-[40px] shadow-sm border border-gray-100">
+                                <div id="lesson-topic-name" class="text-blue-600 font-black uppercase text-[10px] tracking-[0.2em] mb-3 italic">Đang tải chuyên đề...</div>
+                                <h1 id="lesson-title" class="text-4xl font-black text-blue-900 mb-6 tracking-tight leading-tight uppercase">Tiêu đề bài học</h1>
+                                <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4 text-base">
+                                    </div>
                             </div>
                         </div>
 
                         <div class="lg:col-span-1">
-                            <div class="bg-white p-6 rounded-[30px] shadow-sm border border-blue-100 sticky top-4">
-                                <h3 class="font-black text-sm mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-file-pdf text-red-500"></i> TÀI LIỆU BÀI GIẢNG
-                                </h3>
-                                <div id="document-section" class="space-y-3"></div>
-                                <div id="lesson-insight" class="mt-6 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold italic border-l-4 border-blue-900 leading-snug"></div>
+                            <div class="space-y-6 sticky top-6">
+                                <div class="bg-white p-8 rounded-[40px] shadow-sm border border-blue-100">
+                                    <h3 class="font-black text-xs mb-6 text-blue-900 uppercase italic tracking-widest flex items-center gap-3">
+                                        <i class="fas fa-file-pdf text-red-500 text-lg"></i> Kho tài liệu
+                                    </h3>
+                                    
+                                    <div id="document-container" class="space-y-4"></div>
+
+                                    <div id="lesson-insight" class="mt-8 p-5 bg-blue-50 rounded-[25px] text-[11px] text-blue-800 font-bold italic border-l-4 border-blue-900 leading-relaxed shadow-sm">
+                                        </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <footer class="bg-white border-t py-10 text-center flex-none mt-20">
-                <div class="font-black text-blue-900 uppercase text-sm mb-1 tracking-widest italic">Toán Thầy Thành</div>
-                <div class="text-gray-400 text-[10px] font-bold italic uppercase">Dạy học từ tâm - Nâng tầm kiến thức</div>
+            <footer class="bg-white border-t py-12 text-center flex-none mt-20">
+                <div class="max-w-xs mx-auto mb-4 opacity-20">
+                    <div class="h-px bg-blue-900"></div>
+                </div>
+                <div class="font-black text-blue-900 uppercase text-sm mb-1 tracking-[0.3em] italic">Toán Thầy Thành</div>
+                <div class="text-gray-400 text-[10px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
             </footer>
         </main>
     </div>
@@ -93,14 +122,18 @@
         <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
             <div class="text-right hidden md:block">
                 <div class="text-blue-900 font-black text-xs uppercase leading-tight">{fullname}</div>
-                <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">{role_text}</div>
+                <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest italic">{role_text}</div>
             </div>
-            <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-blue-900">
-            <div class="dropdown-user shadow-2xl" id="dropdownUser">
+            <div class="relative">
+                <img src="logo.png" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm">
+                <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+            </div>
+            <div class="dropdown-user" id="dropdownUser">
                 {admin_option}
-                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3"></i> Hồ sơ</a>
-                <div class="border-t my-1"></div>
-                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i> Đăng xuất</a>
+                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 opacity-50"></i> Hồ sơ cá nhân</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-graduation-cap mr-3 opacity-50"></i> Khóa học của tôi</a>
+                <div class="border-t my-1 mx-4"></div>
+                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3 opacity-70"></i> Đăng xuất</a>
             </div>
         </div>
     </script>
@@ -118,10 +151,69 @@
             const userSection = document.getElementById('user-section');
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">QUẢN TRỊ VIÊN</a>` : '';
-                template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
+                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">QUẢN TRỊ HỆ THỐNG</a>` : '';
+                template = template.replace(/{fullname}/g, user.fullname)
+                                   .replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
+                                   .replace(/{admin_option}/g, adminOption);
                 userSection.innerHTML = template;
             } else { window.location.href = 'login.html'; }
+        }
+
+        async function fetchLessonData(id) {
+            const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
+            if (error || !lesson) return;
+
+            document.getElementById('lesson-title').innerText = lesson.title;
+            document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang được cập nhật...";
+            document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Chúc các em học tốt!");
+            
+            if (lesson.video_url) {
+                let vid = lesson.video_url.includes('v=') ? lesson.video_url.split('v=')[1].split('&')[0] : lesson.video_url.split('/').pop();
+                document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}?autoplay=0`;
+            }
+
+            // Lấy tên chuyên đề
+            const { data: topicData } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', lesson.topic_id).single();
+            if(topicData) {
+                document.getElementById('lesson-topic-name').innerText = topicData.topic_name;
+                loadSidebar(topicData.course_id);
+            }
+
+            // --- XỬ LÝ TÀI LIỆU (MẢNG JSON) ---
+            const docContainer = document.getElementById('document-container');
+            docContainer.innerHTML = ""; 
+
+            if (lesson.documents) {
+                try {
+                    const docs = typeof lesson.documents === 'string' ? JSON.parse(lesson.documents) : lesson.documents;
+                    if (Array.isArray(docs) && docs.length > 0) {
+                        docs.forEach(file => {
+                            const btnHtml = `
+                                <div class="p-5 bg-gray-50 rounded-[25px] border border-gray-100 hover:border-blue-200 transition-all group">
+                                    <div class="text-[9px] font-black text-gray-400 uppercase truncate mb-3 tracking-wider flex items-center gap-2">
+                                        <i class="fas fa-file-alt"></i> ${file.name}
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <a href="${file.url}" target="_blank" class="flex items-center justify-center py-3 bg-blue-900 text-white rounded-xl hover:bg-blue-800 transition-all font-bold shadow-sm">
+                                            <i class="fas fa-eye mr-2 text-[10px]"></i>
+                                            <span class="text-[9px] uppercase">Xem</span>
+                                        </a>
+                                        <a href="${file.url}" download="${file.name}" class="flex items-center justify-center py-3 bg-white text-red-600 rounded-xl hover:bg-red-50 transition-all font-bold border border-red-100">
+                                            <i class="fas fa-download mr-2 text-[10px]"></i>
+                                            <span class="text-[9px] uppercase">Tải</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            docContainer.insertAdjacentHTML('beforeend', btnHtml);
+                        });
+                    }
+                } catch (e) {
+                    docContainer.innerHTML = `<div class="text-[10px] text-red-500 font-bold uppercase italic">Lỗi định dạng File</div>`;
+                }
+            } else {
+                docContainer.innerHTML = `<div class="p-10 bg-gray-50 text-gray-400 text-[10px] text-center rounded-[30px] border border-dashed font-bold uppercase italic tracking-[0.2em]">Chưa có tài liệu</div>`;
+            }
         }
 
         async function loadSidebar(courseId) {
@@ -132,12 +224,12 @@
                 const topicLessons = lessons.filter(l => l.topic_id === topic.id);
                 return `
                     <div class="mb-1">
-                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-3 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between">
-                            ${topic.topic_name} <i class="fas fa-chevron-down text-[8px]"></i>
+                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-4 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between items-center group">
+                            ${topic.topic_name} <i class="fas fa-chevron-down text-[7px] opacity-30 group-hover:opacity-100"></i>
                         </div>
                         <div class="submenu show">
                             ${topicLessons.map(l => `
-                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-3 pl-6 text-[11px] font-bold rounded-xl cursor-pointer flex items-center gap-3 transition-all hover:bg-white uppercase">
+                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-4 pl-8 text-[11px] font-bold rounded-2xl cursor-pointer flex items-center gap-3 transition-all hover:bg-gray-50 uppercase tracking-tighter">
                                     <i class="fas fa-play-circle ${l.id == currentLessonId ? 'text-blue-900' : 'text-gray-200'}"></i>
                                     <span class="truncate">${l.title}</span>
                                 </div>
@@ -147,54 +239,9 @@
             }).join('');
         }
 
-        async function fetchLessonData(id) {
-            const { data: lesson } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
-            if (!lesson) return;
-
-            document.getElementById('lesson-title').innerText = lesson.title;
-            document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang cập nhật...";
-            document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Hãy tập trung nhé!");
-            
-            if (lesson.video_url) {
-                let vid = lesson.video_url.includes('v=') ? lesson.video_url.split('v=')[1].split('&')[0] : lesson.video_url.split('/').pop();
-                document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}?autoplay=1`;
-            }
-
-            // LẤY TÊN CHUYÊN ĐỀ TỪ BẢNG TOPICS
-            const { data: topicData } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', lesson.topic_id).single();
-            if(topicData) {
-                document.getElementById('lesson-topic-name').innerText = topicData.topic_name;
-                loadSidebar(topicData.course_id);
-            }
-
-            // XỬ LÝ 2 Ô TÀI LIỆU
-            const docSection = document.getElementById('document-section');
-            if (lesson.documents) {
-                let docPath = lesson.documents.trim();
-                let fullUrl = docPath.startsWith('http') ? docPath : `${SB_URL}/storage/v1/object/public/documents/${docPath}`;
-
-                docSection.innerHTML = `
-                    <a href="${fullUrl}" target="_blank" class="flex items-center p-3 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold shadow-md">
-                        <i class="fas fa-eye mr-3"></i>
-                        <span class="text-[10px] uppercase tracking-wider">Xem tài liệu ngay</span>
-                    </a>
-                    <a href="${fullUrl}" download class="flex items-center p-3 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100">
-                        <i class="fas fa-download mr-3"></i>
-                        <span class="text-[10px] uppercase tracking-wider">Tải tài liệu về máy</span>
-                    </a>`;
-            } else {
-                docSection.innerHTML = `<div class="p-4 bg-gray-50 text-gray-400 text-[10px] text-center rounded-2xl border border-dashed font-bold uppercase italic">Chưa có tài liệu</div>`;
-            }
-        }
-
-        function changeLesson(id) {
-            currentLessonId = id;
-            window.history.pushState({}, '', `?id=${id}`);
-            fetchLessonData(id);
-        }
-
+        function changeLesson(id) { currentLessonId = id; window.history.pushState({}, '', `?id=${id}`); fetchLessonData(id); }
         function toggleUserMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
-        function logout() { if(confirm("Đăng xuất?")) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; } }
+        function logout() { if(confirm("Thầy muốn đăng xuất ạ?")) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; } }
 
         window.onload = () => { checkLogin(); if(currentLessonId) fetchLessonData(currentLessonId); };
         window.onclick = (e) => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
