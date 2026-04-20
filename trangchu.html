@@ -41,11 +41,10 @@
         /* Banner full */
         .swiper { width: 100%; }
         .swiper-slide img {
-    width: 100%;        /* Rộng hết cỡ theo khung trang */
-    height: auto;       /* Cao tự do theo tỉ lệ ảnh -> KHÔNG BỊ CẮT */
+    width: 100%;        /* Rộng hết cỡ trang */
+    height: auto;       /* Cao tự động nhảy theo ảnh -> KHÔNG BỊ CẮT */
     display: block;
-    object-position: center; 
-    /* Không dùng object-fit: cover ở đây nếu muốn thấy hết ảnh */
+    object-fit: contain;
 }
 
         /* Menu */
