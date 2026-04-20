@@ -137,15 +137,34 @@
         async function loadMyCourses() {
             const courseContainer = document.getElementById('course-grid');
             try {
-                const user = JSON.parse(localStorage.getItem('user'));
-                const userId = user?.id?.toString().trim(); // Xử lý định dạng ID uuid
+                // 1. KIỂM TRA DỮ LIỆU ĐĂNG NHẬP (Cực kỳ quan trọng)
+                const rawData = localStorage.getItem('user');
+                console.log("Dữ liệu thô từ LocalStorage:", rawData);
 
-                if (!userId) {
-                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold">LỖI: KHÔNG XÁC ĐỊNH ĐƯỢC NGƯỜI DÙNG.</p>`;
+                if (!rawData) {
+                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold uppercase p-10 bg-white rounded-3xl shadow-sm">
+                        Lỗi: Em chưa đăng nhập hoặc phiên làm việc đã hết hạn.<br>
+                        <a href="login.html" class="text-blue-600 underline mt-2 block">Quay lại trang đăng nhập</a>
+                    </p>`;
                     return;
                 }
 
-                // 1. Lấy danh sách ID khóa học học sinh đã đăng ký
+                const user = JSON.parse(rawData);
+                // Tìm ID (Thử nhiều trường hợp nếu Thầy lưu cấu trúc khác nhau)
+                const userId = user.id || user.uid || (user.data && user.data.id);
+
+                if (!userId) {
+                    console.error("User object:", user);
+                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold uppercase p-10 bg-white rounded-3xl shadow-sm">
+                        Lỗi: Không tìm thấy mã định danh (ID) trong dữ liệu đăng nhập.<br>
+                        <span class="text-gray-400 text-xs font-medium">Thầy kiểm tra lại hàm lưu dữ liệu ở trang Login nhé!</span>
+                    </p>`;
+                    return;
+                }
+
+                console.log("Đã xác định được ID người dùng:", userId);
+
+                // 2. TRUY VẤN BẢNG ĐĂNG KÝ (course_enrollments)
                 const { data: enrolls, error: err1 } = await supabaseClient
                     .from('course_enrollments')
                     .select('course_id')
@@ -167,7 +186,7 @@
 
                 const listIds = enrolls.map(item => item.course_id);
 
-                // 2. Truy vấn thông tin chi tiết khóa học, dùng đúng cột thumbnail_url
+                // 3. TRUY VẤN CHI TIẾT KHÓA HỌC (Sử dụng thumbnail_url)
                 const { data: courses, error: err2 } = await supabaseClient
                     .from('courses')
                     .select('id, course_name, description, thumbnail_url')
@@ -175,7 +194,7 @@
 
                 if (err2) throw err2;
 
-                // 3. Hiển thị danh sách khóa học lên màn hình
+                // 4. HIỂN THỊ
                 courseContainer.innerHTML = courses.map(course => `
                     <div class="bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                         <div class="aspect-video overflow-hidden bg-gray-100">
@@ -186,8 +205,7 @@
                         <div class="p-8">
                             <div class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">Toán Thầy Thành</div>
                             <h3 class="text-xl font-black text-blue-900 mb-3 uppercase tracking-tighter line-clamp-1">${course.course_name}</h3>
-                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học Toán cùng Thầy Thành để bứt phá điểm số.'}</p>
-                            
+                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học cùng Thầy Thành để bứt phá điểm số.'}</p>
                             <a href="lesson-detail.html?id=${course.id}" class="inline-flex items-center justify-center w-full py-4 bg-blue-900 text-white rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-800 transition-colors shadow-lg">
                                 Vào học ngay <i class="fas fa-arrow-right ml-2 text-[9px]"></i>
                             </a>
@@ -198,9 +216,8 @@
             } catch (err) {
                 console.error("Lỗi chi tiết:", err);
                 courseContainer.innerHTML = `<div class="col-span-full text-center p-10 bg-red-50 rounded-3xl">
-                    <p class="text-red-500 font-bold uppercase">Lỗi kết nối dữ liệu!</p>
+                    <p class="text-red-500 font-bold uppercase">LỖI KẾT NỐI HỆ THỐNG</p>
                     <p class="text-gray-500 text-xs mt-2">${err.message}</p>
-                    <p class="text-blue-800 text-[10px] mt-4 font-bold">Thầy hãy kiểm tra xem đã bật Policy (RLS) cho bảng chưa nhé!</p>
                 </div>`;
             }
         }
