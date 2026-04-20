@@ -139,7 +139,42 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
-        let currentLessonId = urlParams.get('id');
+let currentLessonId = urlParams.get('id');
+const courseIdParam = urlParams.get('course_id'); // ← thêm dòng này
+
+window.onload = async () => {
+    checkLogin();
+    if (currentLessonId) {
+        fetchLessonData(currentLessonId);
+    } else if (courseIdParam) {
+        // Tìm bài học đầu tiên của khóa học này
+        const { data: firstTopic } = await supabaseClient
+            .from('topics')
+            .select('id')
+            .eq('course_id', courseIdParam)
+            .order('id', { ascending: true })
+            .limit(1)
+            .single();
+
+        if (firstTopic) {
+            const { data: firstLesson } = await supabaseClient
+                .from('lessons')
+                .select('id')
+                .eq('topic_id', firstTopic.id)
+                .order('id', { ascending: true })
+                .limit(1)
+                .single();
+
+            if (firstLesson) {
+                currentLessonId = String(firstLesson.id);
+                window.history.replaceState({}, '', `?id=${firstLesson.id}`);
+                fetchLessonData(firstLesson.id);
+            }
+        }
+    } else {
+        document.getElementById('lesson-title').innerText = 'Vui lòng chọn bài học';
+    }
+};
 
         // =====================
         // KIỂM TRA ĐĂNG NHẬP
