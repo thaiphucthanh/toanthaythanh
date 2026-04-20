@@ -143,6 +143,7 @@
         const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+        
         const urlParams = new URLSearchParams(window.location.search);
         let currentLessonId = urlParams.get('id');
 
@@ -159,56 +160,61 @@
             } else { window.location.href = 'login.html'; }
         }
 
-       async function fetchLessonData(id) {
+        async function fetchLessonData(id) {
             try {
-                // 1. Ép kiểu ID về số nguyên (vì lessons.id của Thầy là int4)
                 const lessonId = parseInt(id);
                 if (isNaN(lessonId)) return;
 
+                // 1. Tải dữ liệu bài học
                 const { data: lesson, error } = await supabaseClient
                     .from('lessons')
                     .select('*')
                     .eq('id', lessonId)
                     .single();
 
-                if (error || !lesson) return;
+                if (error || !lesson) {
+                    document.getElementById('lesson-title').innerText = "Không tìm thấy bài học";
+                    return;
+                }
 
-                // 2. Hiển thị Tiêu đề và Nội dung
+                // 2. Hiển thị nội dung văn bản
                 document.getElementById('lesson-title').innerText = lesson.title;
-                document.getElementById('lesson-content').innerHTML = lesson.content || "Đang cập nhật nội dung...";
+                document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang được cập nhật...";
                 document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Chúc các em học tốt!");
                 
-                // 3. Hiển thị Video YouTube
+                // 3. Xử lý Video YouTube
+                const videoFrame = document.getElementById('video-frame');
                 if (lesson.video_url) {
                     let vid = "";
                     if (lesson.video_url.includes('v=')) vid = lesson.video_url.split('v=')[1].split('&')[0];
                     else if (lesson.video_url.includes('youtu.be/')) vid = lesson.video_url.split('youtu.be/')[1];
                     else vid = lesson.video_url.split('/').pop();
-                    document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}`;
+                    videoFrame.src = `https://www.youtube.com/embed/${vid}`;
+                } else {
+                    videoFrame.src = ""; // Xóa video nếu không có link
                 }
 
-                // 4. HIỂN THỊ TÀI LIỆU (Cột documents kiểu jsonb)
+                // 4. HIỂN THỊ TÀI LIỆU & NÚT TẢI
                 const docContainer = document.getElementById('document-container');
                 docContainer.innerHTML = ""; 
                 if (lesson.documents) {
+                    // Kiểm tra xem documents là string hay object
                     const docs = typeof lesson.documents === 'string' ? JSON.parse(lesson.documents) : lesson.documents;
-                    if (Array.isArray(docs)) {
+                    if (Array.isArray(docs) && docs.length > 0) {
                         docs.forEach(file => {
                             docContainer.insertAdjacentHTML('beforeend', `
-                                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-3 hover:border-blue-300 transition-all">
-                                    <div class="text-[10px] font-bold text-blue-900 uppercase truncate mb-2">${file.name}</div>
+                                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-3 hover:border-blue-300 transition-all group">
+                                    <div class="text-[10px] font-bold text-blue-900 uppercase truncate mb-2 group-hover:text-blue-600">${file.name}</div>
                                     <div class="flex gap-2">
-                                        <a href="${file.url}" target="_blank" class="flex-1 py-2 bg-blue-900 text-white text-center rounded-lg text-[9px] font-black uppercase">Xem</a>
-                                        <a href="${file.url}" download class="flex-1 py-2 bg-white text-red-600 border border-red-100 text-center rounded-lg text-[9px] font-black uppercase">Tải về</a>
+                                        <a href="${file.url}" target="_blank" class="flex-1 py-2 bg-blue-900 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-blue-800 transition-colors">Xem</a>
+                                        <a href="${file.url}" download="${file.name}" class="flex-1 py-2 bg-white text-red-600 border border-red-100 text-center rounded-lg text-[9px] font-black uppercase hover:bg-red-50 transition-colors">Tải về</a>
                                     </div>
                                 </div>`);
                         });
-                    }
-                } else {
-                    docContainer.innerHTML = `<div class="text-center text-[10px] text-gray-400 italic">Chưa có tài liệu</div>`;
-                }
+                    } else { showNoDoc(docContainer); }
+                } else { showNoDoc(docContainer); }
 
-                // 5. Lấy tên Chuyên đề và Load Sidebar (Dựa vào topic_id là UUID)
+                // 5. Tải Chuyên đề và Sidebar
                 const { data: topicData } = await supabaseClient
                     .from('topics')
                     .select('topic_name, course_id')
@@ -217,73 +223,74 @@
                 
                 if(topicData) {
                     document.getElementById('lesson-topic-name').innerText = topicData.topic_name;
-                    loadSidebar(topicData.course_id); // Gọi hàm load thanh chuyên đề
+                    loadSidebar(topicData.course_id); 
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Lỗi fetchLessonData:", e); }
         }
 
         async function loadSidebar(courseId) {
-            // Lấy tất cả chuyên đề của khóa học này
-            const { data: topics } = await supabaseClient.from('topics').select('*').eq('course_id', courseId).order('order_index', {ascending: true});
-            // Lấy tất cả bài giảng
-            const { data: allLessons } = await supabaseClient.from('lessons').select('id, title, topic_id').order('id', {ascending: true});
-            
-            const sidebar = document.getElementById('sidebar-content');
-            if (!topics || !allLessons) return;
+            try {
+                // Chỉ lấy chuyên đề của khóa học hiện tại
+                const { data: topics } = await supabaseClient.from('topics').select('*').eq('course_id', courseId).order('id', {ascending: true});
+                // Chỉ lấy bài giảng thuộc về các chuyên đề này
+                const { data: lessons } = await supabaseClient.from('lessons').select('id, title, topic_id').order('id', {ascending: true});
+                
+                const sidebar = document.getElementById('sidebar-content');
+                if (!topics) return;
 
-            sidebar.innerHTML = topics.map(topic => {
-                const topicLessons = allLessons.filter(l => l.topic_id === topic.id);
-                return `
-                    <div class="mb-2">
-                        <div class="p-3 font-black text-[10px] text-blue-900 uppercase tracking-widest bg-gray-50 rounded-xl mb-1">
-                            ${topic.topic_name}
-                        </div>
-                        <div class="space-y-1">
-                            ${topicLessons.map(l => `
-                                <div onclick="changeLesson('${l.id}')" class="p-3 pl-6 text-[11px] font-bold rounded-xl cursor-pointer flex items-center gap-2 ${l.id == currentLessonId ? 'bg-blue-100 text-blue-900 border-l-4 border-blue-900' : 'hover:bg-gray-50 text-gray-500'}">
-                                    <i class="fas ${l.id == currentLessonId ? 'fa-play-circle' : 'fa-lock-open'} text-[9px]"></i>
-                                    <span class="truncate">${l.title}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-            }).join('');
+                sidebar.innerHTML = topics.map(topic => {
+                    const topicLessons = lessons ? lessons.filter(l => l.topic_id === topic.id) : [];
+                    return `
+                        <div class="mb-1">
+                            <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-4 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between items-center group">
+                                ${topic.topic_name} <i class="fas fa-chevron-down text-[7px] opacity-30 group-hover:opacity-100"></i>
+                            </div>
+                            <div class="submenu show">
+                                ${topicLessons.map(l => `
+                                    <div onclick="changeLesson('${l.id}')" class="lesson-item ${String(l.id) === String(currentLessonId) ? 'active' : ''} p-4 pl-8 text-[11px] font-bold rounded-2xl cursor-pointer flex items-center gap-3 transition-all hover:bg-gray-50 uppercase tracking-tighter">
+                                        <i class="fas fa-play-circle ${String(l.id) === String(currentLessonId) ? 'text-blue-900' : 'text-gray-200'}"></i>
+                                        <span class="truncate">${l.title}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (e) { console.error("Lỗi loadSidebar:", e); }
         }
 
-        // Hàm phụ để hiển thị khi không có tài liệu
         function showNoDoc(container) {
-            container.innerHTML = `<div class="p-10 bg-gray-50 text-gray-400 text-[10px] text-center rounded-[30px] border border-dashed font-bold uppercase italic tracking-[0.2em]">Chưa có tài liệu</div>`;
+            container.innerHTML = `<div class="p-6 bg-gray-50 text-gray-400 text-[10px] text-center rounded-[30px] border border-dashed font-bold uppercase italic">Chưa có tài liệu</div>`;
         }
 
-        async function loadSidebar(courseId) {
-            const { data: topics } = await supabaseClient.from('topics').select('*').eq('course_id', courseId).order('id', {ascending: true});
-            const { data: lessons } = await supabaseClient.from('lessons').select('*').order('id', {ascending: true});
-            const sidebar = document.getElementById('sidebar-content');
-            sidebar.innerHTML = topics.map(topic => {
-                const topicLessons = lessons.filter(l => l.topic_id === topic.id);
-                return `
-                    <div class="mb-1">
-                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-4 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between items-center group">
-                            ${topic.topic_name} <i class="fas fa-chevron-down text-[7px] opacity-30 group-hover:opacity-100"></i>
-                        </div>
-                        <div class="submenu show">
-                            ${topicLessons.map(l => `
-                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-4 pl-8 text-[11px] font-bold rounded-2xl cursor-pointer flex items-center gap-3 transition-all hover:bg-gray-50 uppercase tracking-tighter">
-                                    <i class="fas fa-play-circle ${l.id == currentLessonId ? 'text-blue-900' : 'text-gray-200'}"></i>
-                                    <span class="truncate">${l.title}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-            }).join('');
+        function changeLesson(id) { 
+            currentLessonId = id; 
+            window.history.pushState({}, '', `?id=${id}`); 
+            fetchLessonData(id); 
+            // Cuộn lên đầu trang khi đổi bài
+            document.querySelector('main').scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        function changeLesson(id) { currentLessonId = id; window.history.pushState({}, '', `?id=${id}`); fetchLessonData(id); }
         function toggleUserMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
-        function logout() { if(confirm("Thầy muốn đăng xuất ạ?")) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; } }
+        
+        function logout() { 
+            if(confirm("Thầy muốn đăng xuất ạ?")) { 
+                localStorage.removeItem('user'); 
+                window.location.href = 'login.html'; 
+            } 
+        }
 
-        window.onload = () => { checkLogin(); if(currentLessonId) fetchLessonData(currentLessonId); };
-        window.onclick = (e) => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+        window.onload = () => { 
+            checkLogin(); 
+            if(currentLessonId) {
+                fetchLessonData(currentLessonId); 
+            } else {
+                document.getElementById('lesson-title').innerText = "Vui lòng chọn bài học";
+            }
+        };
+
+        window.onclick = (e) => { 
+            if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); 
+        };
     </script>
 </body>
 </html>
