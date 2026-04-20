@@ -167,10 +167,13 @@
 
                 // 1. Tải dữ liệu bài học
                 const { data: lesson, error } = await supabaseClient
-                    .from('lessons')
-                    .select('*')
-                    .eq('id', lessonId)
-                    .single();
+    .from('lessons')
+    .select('*')
+    .eq('id', lessonId)
+    .single();
+
+console.log("LESSON DATA:", lesson); // ← thêm dòng này
+console.log("ERROR:", error);
 
                 if (error || !lesson) {
                     document.getElementById('lesson-title').innerText = "Không tìm thấy bài học";
