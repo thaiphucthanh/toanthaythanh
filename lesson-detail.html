@@ -172,9 +172,12 @@
     .eq('id', lessonId)
     .single();
 
-console.log("LESSON DATA:", lesson); // ← thêm dòng này
-console.log("ERROR:", error);
-
+console.log("=== DEBUG ===");
+console.log("lessonId:", lessonId, typeof lessonId);
+console.log("lesson:", JSON.stringify(lesson));
+console.log("video_url:", lesson?.video_url);
+console.log("documents:", lesson?.documents);
+console.log("error:", error);
                 if (error || !lesson) {
                     document.getElementById('lesson-title').innerText = "Không tìm thấy bài học";
                     return;
