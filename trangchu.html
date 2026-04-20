@@ -42,7 +42,7 @@
         .swiper { width: 100%; }
         .swiper-slide img {
             width: 100%;
-            height: auto;
+            height: 100%;
             display: block;
             object-fit: contain; /* giữ nguyên tỷ lệ, không cắt */
         }
@@ -169,13 +169,7 @@
 
     <!-- NỘI DUNG CHÍNH -->
     <main>
-        <div class="khung-trang py-12">
-            <h2 class="text-3xl font-black text-blue-900 mb-8 border-l-8 border-yellow-400 pl-4 uppercase tracking-tight">
-                Bài giảng mới nhất
-            </h2>
-            <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            </div>
-        </div>
+        <!-- Nội dung sẽ được thêm sau -->
     </main>
 
     <!-- FOOTER -->
@@ -277,51 +271,6 @@
             }
         }
 
-        // Load bài giảng mới nhất
-        async function loadLatestLessons() {
-            const grid = document.getElementById('video-grid');
-            try {
-                const { data: lessons, error } = await supabaseClient
-                    .from('lessons')
-                    .select('id, title, content, topic_id')
-                    .order('id', { ascending: false })
-                    .limit(6);
-
-                if (error) throw error;
-
-                if (!lessons || lessons.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full text-center py-16 bg-white rounded-[30px] border-2 border-dashed border-gray-200">
-                            <i class="fas fa-book-open text-4xl text-gray-200 mb-4 block"></i>
-                            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest italic">Chưa có bài giảng nào</p>
-                        </div>`;
-                    return;
-                }
-
-                grid.innerHTML = lessons.map(l => `
-                    <a href="lesson-detail.html?id=${l.id}" class="lesson-card">
-                        <div class="lesson-card-thumb">
-                            <div class="play-btn">
-                                <i class="fas fa-play" style="margin-left: 3px;"></i>
-                            </div>
-                        </div>
-                        <div class="lesson-card-body">
-                            <div class="lesson-card-title">${l.title || 'Bài giảng'}</div>
-                            <div class="lesson-card-desc">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem bài giảng ngay cùng Thầy Thành'}</div>
-                        </div>
-                        <div class="lesson-card-footer">
-                            <span class="lesson-card-tag">Toán Thầy Thành</span>
-                            <div class="lesson-card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </div>
-                    </a>
-                `).join('');
-
-            } catch (e) {
-                console.error('Lỗi load bài giảng:', e);
-                grid.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm p-10">Không thể tải bài giảng: ${e.message}</div>`;
-            }
-        }
-
         function toggleUserMenu(event) {
             event.stopPropagation();
             document.getElementById('dropdownUser')?.classList.toggle('active');
@@ -336,7 +285,6 @@
 
         window.onload = () => {
             checkLogin();
-            loadLatestLessons();
         };
 
         window.onclick = (e) => {
