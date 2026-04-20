@@ -171,20 +171,56 @@
         }
 
         async function addNewLesson() {
-            const title = prompt("Nhập tên bài học:");
-            if (!title) return;
-            const insight = prompt("Nhập insight (nguyện vọng/nỗi đau của HS):");
-            const video = prompt("Dán Link Video (Youtube):");
-
-            const { error } = await supabaseClient.from('lessons').insert([{
-                topic_id: topicId,
-                title: title,
-                insight: insight,
-                video_url: video
-            }]);
-
-            if (error) alert(error.message); else fetchLessons();
+    // Tạo một khung nhập liệu (Popup) để chọn file
+    const { value: formValues } = await Swal.fire({
+        title: 'Thêm bài học mới',
+        html:
+            '<input id="swal-title" class="swal2-input" placeholder="Tên bài học">' +
+            '<input id="swal-file" type="file" class="swal2-file" accept=".pdf">',
+        focusConfirm: false,
+        preConfirm: () => {
+            return {
+                title: document.getElementById('swal-title').value,
+                file: document.getElementById('swal-file').files[0]
+            }
         }
+    });
+
+    if (!formValues || !formValues.title) return;
+
+    let publicUrl = null;
+
+    // Nếu Thầy có chọn file, hệ thống tự đẩy lên Supabase Storage
+    if (formValues.file) {
+        const file = formValues.file;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        // Đẩy file lên kho chứa 'documents'
+        let { error: uploadError } = await supabaseClient.storage
+            .from('documents')
+            .upload(filePath, file);
+
+        if (uploadError) {
+            alert("Lỗi upload file: " + uploadError.message);
+            return;
+        }
+
+        // Lấy đường dẫn file vừa upload để lưu vào bảng lessons
+        const { data } = supabaseClient.storage.from('documents').getPublicUrl(filePath);
+        publicUrl = data.publicUrl;
+    }
+
+    // Lưu vào bảng lessons (cột documents trong sơ đồ của Thầy)
+    const { error } = await supabaseClient.from('lessons').insert([{
+        topic_id: topicId,
+        title: formValues.title,
+        documents: publicUrl // Lưu link nội bộ của Supabase
+    }]);
+
+    if (error) alert(error.message); else fetchLessons();
+}
 
         async function deleteLesson(id) {
             if(confirm('Xóa bài học này?')) {
