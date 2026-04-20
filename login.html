@@ -101,13 +101,15 @@
                     console.error("Chi tiết lỗi:", error);
                 } else {
                     // 4. Nếu đúng: Lưu thông tin vào localStorage để các trang khác nhận diện
-                    const userData = {
-                        fullname: data.fullname,
-                        role: data.role,
-                        avatar: data.link_fb || 'logo.png' 
-                    };
-                    
-                    localStorage.setItem('user', JSON.stringify(userData));
+                    const userToSave = {
+                                            id: data.id,           // ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT (Mã UUID)
+                                            fullname: data.fullname,
+                                            role: data.role,
+                                            sdt: data.sdt
+                                        };
+                                        
+                                        // Lưu vào LocalStorage
+                                        localStorage.setItem('user', JSON.stringify(userToSave));
                     
                     alert(`Chào mừng ${data.fullname} đã quay trở lại học tập!`);
                     
