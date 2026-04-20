@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyên đề & Bài học - Toán Thầy Thành</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Styles Menu Bar của Thầy */
+        .dropdown-user {
+            position: absolute; top: 120%; right: 0; width: 220px;
+            background: white; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none; flex-direction: column; padding: 10px 0;
+            z-index: 100; border: 1px solid #f0f0f0;
+        }
+        .dropdown-user.active { display: flex; }
+        .item-dropdown {
+            padding: 12px 20px; font-size: 14px; font-weight: 600;
+            color: #374151; transition: all 0.2s; display: flex; align-items: center;
+        }
+        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
+        .divider { height: 1px; background: #eee; margin: 5px 0; }
+        
+        .thanh-menu-ngang { background: #1e3a8a; color: white; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+        .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; }
+        .item-menu { font-weight: bold; font-size: 15px; }
+        .cum-logo { display: flex; align-items: center; gap: 10px; }
+        .anh-dai-dien-logo { width: 50px; height: 50px; border-radius: 50%; }
+        .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-thuong-hieu-nho { font-size: 14px; color: #6b7280; font-weight: bold; }
+
+        /* Style Accordion chuyên đề */
+        .chuyen-de-item.active .icon-chevron { transform: rotate(180deg); }
+        .danh-sach-bai-hoc { display: none; }
+        .chuyen-de-item.active + .danh-sach-bai-hoc { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <header class="bg-white shadow-md sticky top-0 z-[1000]">
+        <div class="khung-trang flex items-center justify-between py-4">
+            <a href="trangchu.html" class="cum-logo">
+                <img src="logo.png" class="anh-dai-dien-logo border border-blue-100">
+                <div>
+                    <div class="ten-thuong-hieu-to tracking-tighter uppercase">Toán</div>
+                    <div class="ten-thuong-hieu-nho uppercase tracking-widest text-[10px]">Thầy Thành</div>
+                </div>
+            </a>
+            <div class="vung-tim-kiem hidden md:block flex-1 max-w-md mx-10">
+                <input type="text" placeholder="Tìm bài học..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="cum-tai-khoan relative" id="user-section">
+                </div>
+        </div>
+
+        <nav class="thanh-menu-ngang">
+            <div class="khung-trang">
+                <ul class="danh-sach-menu">
+                    <li><a href="trangchu.html" class="item-menu opacity-80 hover:opacity-100">Trang chủ</a></li>
+                    <li><a href="khoa-hoc-cua-toi.html" class="item-menu opacity-100 border-b-2 border-yellow-400 pb-1">Khóa học của tôi</a></li>
+                    <li><a href="#" class="item-menu opacity-80 hover:opacity-100">Tài liệu ôn thi</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="khung-trang py-12">
+        <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <nav class="flex text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 gap-2">
+                    <a href="khoa-hoc-cua-toi.html" class="hover:text-blue-900">Khóa học</a>
+                    <span>/</span>
+                    <span class="text-blue-900">Chuyên đề bài học</span>
+                </nav>
+                <h1 id="course-name" class="text-3xl font-black text-blue-900 uppercase tracking-tight">Đang tải...</h1>
+            </div>
+            <div class="text-sm font-bold text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-100 shadow-sm">
+                <i class="fas fa-book-reader mr-2 text-blue-900"></i> Lộ trình học tập của Thầy Thành
+            </div>
+        </div>
+
+        <div id="topic-container" class="max-w-4xl space-y-4">
+            <div class="text-center py-20">
+                <i class="fas fa-spinner animate-spin text-4xl text-blue-900 mb-4"></i>
+                <p class="font-bold text-xs text-gray-400 uppercase tracking-widest">Đang sắp xếp chuyên đề...</p>
+            </div>
+        </div>
+    </main>
