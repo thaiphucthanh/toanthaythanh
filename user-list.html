@@ -3,26 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh sách người dùng - Admin HDC Study</title>
+    <title>Danh sách học viên - HDC Study</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+        /* Giữ nguyên các class sidebar cũ của Thầy */
         .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
         .sidebar-item:hover { background: rgba(255,255,255,0.1); }
-        .active-menu { background: #facc15 !important; color: #1e3a8a !important; shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
-        .rotate-180 { transform: rotate(180deg); }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-100 flex h-screen overflow-hidden">
+<body class="bg-gray-50 flex h-screen overflow-hidden">
 
     <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
         <div class="p-6 flex items-center gap-3 border-b border-blue-800">
@@ -35,7 +31,7 @@
             </a>
         </div>
 
-        <nav class="flex-1 mt-4 overflow-y-auto">
+        <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
             <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
                 <i class="fas fa-home w-5 text-blue-300"></i>
                 <span class="font-bold">Trang Welcome</span>
@@ -53,8 +49,8 @@
                     <a href="user-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
                         <i class="fas fa-list-ul mr-2"></i> Danh sách người dùng
                     </a>
-                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
-                        <i class="fas fa-user-plus mr-2 opacity-70"></i> Thêm mới
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-user-plus mr-2"></i> Thêm mới
                     </a>
                 </div>
             </div>
@@ -68,81 +64,64 @@
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
                 <div id="course-menu" class="submenu">
-                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
-                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
-                    </a>
-                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">
-                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
-                    </a>
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Thêm khóa học mới</a>
                 </div>
             </div>
-
-            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3">
-                <i class="fas fa-edit w-5 text-blue-300"></i>
-                <span class="font-bold">Thi Online</span>
-            </a>
         </nav>
-
-        <div class="p-4 border-t border-blue-800">
-            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-colors">
-                <i class="fas fa-arrow-left"></i>
-                <span class="text-sm font-bold">Quay lại trang chủ</span>
-            </a>
-        </div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
-            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Danh sách người dùng</h2>
+            <h2 class="text-xl font-black text-blue-900 uppercase">Danh sách học viên</h2>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-blue-900 hidden md:block text-right">
-                    Chào Thầy Thành<br>
-                    <span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>
-                </span>
-                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 bg-white p-0.5">
+                <span class="text-sm font-bold text-blue-900">Chào Thầy Thành</span>
+                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 p-0.5">
             </div>
         </header>
 
-        <div class="p-8 overflow-y-auto bg-gray-50 flex-1 custom-scrollbar">
-            <div class="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
-                <div class="relative w-full md:w-96">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Tìm tên hoặc SĐT..." 
-                           class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 outline-none shadow-sm">
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
+            <div class="bg-white rounded-[30px] shadow-sm border border-gray-100 overflow-hidden">
+                
+                <div class="p-6 border-b border-gray-50 flex flex-wrap gap-4 justify-between items-center">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Tìm theo tên, email hoặc SĐT..." 
+                               class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium">
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="fetchUsers()" class="p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center gap-2">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                            <span>Tải lại dữ liệu</span>
+                        </button>
+                        
+                        <a href="add-user.html" class="p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20">
+                            <i class="fas fa-plus"></i>
+                            <span>Thêm mới</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="flex gap-2 w-full md:w-auto">
-                    <button class="bg-white border border-gray-200 px-4 py-3 rounded-2xl font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2 shadow-sm">
-                        <i class="fas fa-filter"></i> Lọc
-                    </button>
-                    <a href="add-user.html" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 flex items-center gap-2 shadow-lg shadow-blue-900/20">
-                        <i class="fas fa-plus"></i> Thêm học sinh
-                    </a>
-                </div>
-            </div>
 
-            <div class="bg-white rounded-[30px] shadow-sm overflow-hidden border border-gray-100">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left" id="user-table">
+                    <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 border-b border-gray-100">
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Học viên / Email</th>
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Số điện thoại</th>
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Quyền</th>
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest">Trạng thái</th>
-                                <th class="p-5 text-xs font-black text-blue-900 uppercase tracking-widest text-center text-red-500">Thao tác</th>
+                            <tr class="bg-gray-50/50">
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest pl-8">Thông tin</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Liên hệ</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Vai trò</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Trạng thái</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="user-table-body">
-                            <tr>
-                                <td colspan="5" class="p-10 text-center">
-                                    <div class="flex flex-col items-center justify-center gap-3 text-blue-900 font-bold">
-                                        <i class="fas fa-circle-notch animate-spin text-3xl"></i>
-                                        <span>Đang kết nối accounts...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="user-table-body" class="divide-y divide-gray-50">
+                            </tbody>
                     </table>
+                </div>
+
+                <div id="loading" class="p-20 text-center">
+                    <i class="fas fa-circle-notch animate-spin text-4xl text-blue-900"></i>
+                    <p class="mt-4 text-gray-400 font-medium">Đang tải dữ liệu...</p>
                 </div>
             </div>
         </div>
@@ -154,93 +133,86 @@
         const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function fetchUsers() {
-            const tbody = document.getElementById('user-table-body');
-            try {
-                const { data: users, error } = await supabaseClient
-                    .from('accounts')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+        let allUsers = [];
 
-                if (error) throw error;
-                if (!users || users.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 uppercase font-bold">Chưa có học viên nào</td></tr>`;
-                    return;
-                }
-                renderTable(users);
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Lỗi kết nối: ${err.message}</td></tr>`;
+        async function fetchUsers() {
+            const icon = document.getElementById('refresh-icon');
+            const loading = document.getElementById('loading');
+            const tbody = document.getElementById('user-table-body');
+            
+            icon.classList.add('animate-spin');
+            loading.classList.remove('hidden');
+            tbody.innerHTML = '';
+
+            const { data, error } = await supabaseClient
+                .from('accounts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            icon.classList.remove('animate-spin');
+            loading.classList.add('hidden');
+
+            if (error) {
+                alert('Lỗi: ' + error.message);
+                return;
             }
+
+            allUsers = data;
+            renderTable(allUsers);
         }
 
         function renderTable(users) {
             const tbody = document.getElementById('user-table-body');
-            tbody.innerHTML = '';
-            
-            users.forEach(user => {
-                const displayName = user.fullname || user.name || 'N/A';
-                const initial = displayName.charAt(0).toUpperCase();
-                const status = user.status || 'active';
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-50 hover:bg-blue-50/50 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm shadow-md">${initial}</div>
-                            <div>
-                                <div class="font-bold text-gray-900 text-sm uppercase">${displayName}</div>
-                                <div class="text-[10px] text-gray-400 font-medium">${user.email || 'N/A'}</div>
-                            </div>
-                        </div>
+            tbody.innerHTML = users.map(user => `
+                <tr class="hover:bg-blue-50/30 transition-colors">
+                    <td class="p-5 pl-8">
+                        <div class="font-bold text-blue-900">${user.fullname}</div>
+                        <div class="text-xs text-gray-400">${user.email}</div>
                     </td>
-                    <td class="p-5 text-sm font-semibold text-gray-600">${user.phone || user.sdt || '---'}</td>
-                    <td class="p-5">
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black rounded-full uppercase">${user.role || 'Học sinh'}</span>
+                    <td class="p-5 text-sm">
+                        <div class="font-semibold text-gray-600">SĐT: ${user.sdt || '---'}</div>
+                        ${user.link_fb ? `<a href="${user.link_fb}" target="_blank" class="text-blue-500 text-xs hover:underline italic">Link Facebook</a>` : ''}
                     </td>
                     <td class="p-5">
-                        <span class="flex items-center gap-1.5 ${status === 'active' ? 'text-green-600' : 'text-red-400'} text-[10px] font-black uppercase">
-                            <span class="w-2 h-2 ${status === 'active' ? 'bg-green-600 animate-pulse' : 'bg-red-400'} rounded-full"></span>
-                            ${status === 'active' ? 'Đang học' : 'Đã khóa'}
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${getRoleClass(user.role)}">
+                            ${translateRole(user.role)}
                         </span>
                     </td>
-                    <td class="p-5">
-                        <div class="flex justify-center gap-2">
-                            <a href="edit-user.html?id=${user.id}" title="Chỉnh sửa" class="w-8 h-8 rounded-lg bg-gray-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-edit text-xs"></i>
-                            </a>
-                            <button onclick="toggleStatus('${user.id}', '${status}')" title="${status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}" class="w-8 h-8 rounded-lg bg-gray-100 ${status === 'active' ? 'text-orange-500' : 'text-green-600'} flex items-center justify-center hover:opacity-70 transition-all shadow-sm">
-                                <i class="fas ${status === 'active' ? 'fa-user-slash' : 'fa-user-check'} text-xs"></i>
-                            </button>
-                            <button onclick="deleteUser('${user.id}', '${displayName}')" title="Xóa vĩnh viễn" class="w-8 h-8 rounded-lg bg-gray-100 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-trash text-xs"></i>
-                            </button>
-                        </div>
+                    <td class="p-5 text-xs font-bold text-green-600 uppercase">Hoạt động</td>
+                    <td class="p-5 text-center">
+                        <button onclick="deleteUser('${user.id}')" class="text-red-500 hover:text-red-700 p-2">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                </tr>
+            `).join('');
         }
 
-        async function toggleStatus(id, currentStatus) {
-            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            const { error } = await supabaseClient.from('accounts').update({ status: newStatus }).eq('id', id);
-            if (error) alert(error.message); else fetchUsers();
+        function translateRole(role) {
+            const roles = { 'admin': 'Quản trị', 'student': 'Học sinh', 'teacher': 'Giáo viên' };
+            return roles[role] || role;
         }
 
-        async function deleteUser(id, name) {
-            if (confirm(`Thầy muốn xóa tài khoản của ${name}?`)) {
-                const { error } = await supabaseClient.from('accounts').delete().eq('id', id);
-                if (error) alert(error.message); else fetchUsers();
-            }
+        function getRoleClass(role) {
+            if (role === 'admin') return 'bg-purple-100 text-purple-700';
+            if (role === 'teacher') return 'bg-blue-100 text-blue-700';
+            return 'bg-gray-100 text-gray-600';
         }
 
-        function filterTable() {
-            let input = document.getElementById("search-input").value.toUpperCase();
-            let rows = document.getElementById("user-table-body").getElementsByTagName("tr");
-            for (let i = 0; i < rows.length; i++) {
-                let text = rows[i].textContent || rows[i].innerText;
-                rows[i].style.display = text.toUpperCase().indexOf(input) > -1 ? "" : "none";
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(u => 
+                u.fullname.toLowerCase().includes(keyword) || 
+                u.email.toLowerCase().includes(keyword) || 
+                (u.sdt && u.sdt.includes(keyword))
+            );
+            renderTable(filtered);
+        });
+
+        async function deleteUser(id) {
+            if(confirm('Xóa tài khoản này?')) {
+                await supabaseClient.from('accounts').delete().eq('id', id);
+                fetchUsers();
             }
         }
 
@@ -251,7 +223,7 @@
             if (arrow) arrow.classList.toggle('rotate-180');
         }
 
-        window.onload = fetchUsers;
+        fetchUsers();
     </script>
 </body>
 </html>
