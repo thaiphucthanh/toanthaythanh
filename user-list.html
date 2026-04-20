@@ -16,6 +16,11 @@
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
         .rotate-180 { transform: rotate(180deg); }
+
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 30px; width: 400px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -130,6 +135,22 @@
         </div>
     </main>
 
+    <div id="enrollModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-black text-blue-900 uppercase mb-2">Cấp quyền học</h3>
+            <p class="text-[10px] font-bold text-gray-400 mb-6 uppercase">Học sinh: <span id="target-user-name" class="text-blue-600 italic">...</span></p>
+            
+            <label class="block text-[10px] font-black uppercase mb-2 text-blue-900">Chọn khóa học tặng em:</label>
+            <select id="course-select" class="w-full p-4 bg-gray-100 border-none rounded-2xl text-sm font-bold mb-8 outline-none focus:ring-2 focus:ring-blue-500">
+                </select>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold uppercase text-[10px]">Hủy</button>
+                <button id="btn-submit-enroll" onclick="submitEnrollment()" class="flex-1 py-3 bg-blue-900 text-white rounded-xl font-bold uppercase text-[10px] hover:bg-blue-800 transition-all">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
@@ -137,6 +158,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allUsers = [];
+        let selectedUserId = null;
 
         async function fetchUsers() {
             const icon = document.getElementById('refresh-icon');
@@ -177,8 +199,12 @@
                         </span>
                     </td>
                     <td class="p-5">
-                        <div class="flex items-center justify-center gap-2">
-                            <button onclick="toggleStatus('${user.id}', '${user.status}')" class="p-2 ${user.status === 'active' ? 'text-green-600' : 'text-red-600'} hover:bg-gray-100 rounded-lg">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="openEnrollModal('${user.id}', '${user.fullname}')" class="p-2 text-green-600 hover:bg-green-100 rounded-lg title="Cấp quyền khóa học">
+                                <i class="fas fa-plus-circle text-lg"></i>
+                            </button>
+                            
+                            <button onclick="toggleStatus('${user.id}', '${user.status}')" class="p-2 ${user.status === 'active' ? 'text-blue-600' : 'text-red-400'} hover:bg-gray-100 rounded-lg">
                                 <i class="fas ${user.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off'} text-lg"></i>
                             </button>
                             <button onclick="editUser('${user.id}')" class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg">
@@ -192,6 +218,61 @@
                 </tr>
             `).join('');
         }
+
+        // --- CÁC HÀM XỬ LÝ CẤP QUYỀN KHÓA HỌC ---
+        async function openEnrollModal(userId, fullName) {
+            selectedUserId = userId;
+            document.getElementById('target-user-name').innerText = fullName;
+            document.getElementById('enrollModal').style.display = 'block';
+
+            // Load danh sách khóa học
+            const { data: courses, error } = await supabaseClient.from('courses').select('id, course_name');
+            if (error) { alert("Lỗi tải khóa học"); return; }
+            
+            const select = document.getElementById('course-select');
+            select.innerHTML = courses.map(c => `<option value="${c.id}">${c.course_name}</option>`).join('');
+        }
+
+        function closeModal() {
+            document.getElementById('enrollModal').style.display = 'none';
+        }
+
+        async function submitEnrollment() {
+            const courseId = document.getElementById('course-select').value;
+            const btn = document.getElementById('btn-submit-enroll');
+            btn.innerText = "Đang xử lý...";
+            btn.disabled = true;
+
+            // Kiểm tra xem đã có chưa
+            const { data: existing } = await supabaseClient
+                .from('course_enrollments')
+                .select('*')
+                .eq('user_id', selectedUserId)
+                .eq('course_id', courseId)
+                .single();
+
+            if (existing) {
+                alert("Học sinh này đã được cấp khóa học này rồi!");
+                btn.innerText = "Xác nhận";
+                btn.disabled = false;
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('course_enrollments')
+                .insert([{ user_id: selectedUserId, course_id: courseId }]);
+
+            btn.innerText = "Xác nhận";
+            btn.disabled = false;
+
+            if (error) {
+                alert("Lỗi: " + error.message);
+            } else {
+                alert("Cấp quyền thành công!");
+                closeModal();
+            }
+        }
+        // --- KẾT THÚC ---
 
         function translateRole(role) {
             const roles = { 'admin': 'Quản trị', 'student': 'Học sinh', 'teacher': 'Giáo viên' };
