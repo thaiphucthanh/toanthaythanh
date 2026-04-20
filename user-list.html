@@ -15,6 +15,7 @@
         .sidebar-item:hover { background: rgba(255,255,255,0.1); }
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
+        .rotate-180 { transform: rotate(180deg); }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -63,18 +64,23 @@
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
                 <div id="course-menu" class="submenu">
-                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">Danh sách khóa học</a>
-                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 transition-colors">Thêm khóa học mới</a>
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Thêm khóa học mới</a>
                 </div>
             </div>
+
+            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3 mt-1">
+                <i class="fas fa-edit w-5 text-blue-300"></i>
+                <span class="font-bold">Thi Online</span>
+            </a>
         </nav>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b text-blue-900">
-            <h2 class="text-xl font-black uppercase tracking-tight">Quản lý người dùng</h2>
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase">Danh sách tài khoản</h2>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold">Chào Thầy Thành</span>
+                <span class="text-sm font-bold text-blue-900">Chào Thầy Thành</span>
                 <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 p-0.5">
             </div>
         </header>
@@ -86,16 +92,16 @@
                     <div class="relative w-full md:w-96">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="text" id="search-input" placeholder="Tìm tên, email, sdt..." 
-                               class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm">
+                               class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium">
                     </div>
                     
                     <div class="flex gap-2">
-                        <button onclick="fetchUsers()" class="p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center gap-2 text-sm">
+                        <button onclick="fetchUsers()" class="p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center gap-2">
                             <i class="fas fa-sync-alt" id="refresh-icon"></i>
                             <span>Tải lại dữ liệu</span>
                         </button>
-                        <a href="add-user.html" class="p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20 text-sm">
-                            <i class="fas fa-plus text-xs"></i>
+                        <a href="add-user.html" class="p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20">
+                            <i class="fas fa-plus"></i>
                             <span>Thêm mới</span>
                         </a>
                     </div>
@@ -104,21 +110,19 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50/50 border-b border-gray-100">
-                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest pl-8">Học viên / Email</th>
-                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">SĐT / Facebook</th>
+                            <tr class="bg-gray-50/50">
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest pl-8">Học viên</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Liên hệ</th>
                                 <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Vai trò</th>
                                 <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="user-table-body" class="divide-y divide-gray-50">
-                            </tbody>
+                        <tbody id="user-table-body" class="divide-y divide-gray-50"></tbody>
                     </table>
                 </div>
 
                 <div id="loading" class="p-20 text-center">
                     <i class="fas fa-circle-notch animate-spin text-4xl text-blue-900"></i>
-                    <p class="mt-4 text-gray-400 font-medium text-sm italic">Đang cập nhật danh sách từ HDC Study...</p>
                 </div>
             </div>
         </div>
@@ -136,7 +140,6 @@
             const icon = document.getElementById('refresh-icon');
             const loading = document.getElementById('loading');
             const tbody = document.getElementById('user-table-body');
-            
             icon.classList.add('animate-spin');
             loading.classList.remove('hidden');
             tbody.innerHTML = '';
@@ -157,35 +160,29 @@
         function renderTable(users) {
             const tbody = document.getElementById('user-table-body');
             tbody.innerHTML = users.map(user => `
-                <tr class="hover:bg-blue-50/20 transition-colors">
+                <tr class="hover:bg-blue-50/30 transition-colors">
                     <td class="p-5 pl-8">
                         <div class="font-bold text-blue-900">${user.fullname}</div>
-                        <div class="text-[11px] text-gray-400 font-medium">${user.email}</div>
+                        <div class="text-xs text-gray-400">${user.email}</div>
                     </td>
                     <td class="p-5">
-                        <div class="text-xs font-bold text-gray-600">${user.sdt || '---'}</div>
-                        ${user.link_fb ? `<a href="${user.link_fb}" target="_blank" class="text-blue-500 text-[10px] font-bold hover:underline">Facebook <i class="fas fa-external-link-alt ml-1"></i></a>` : ''}
+                        <div class="text-xs font-bold text-gray-600">SĐT: ${user.sdt || '---'}</div>
+                        ${user.link_fb ? `<a href="${user.link_fb}" target="_blank" class="text-blue-500 text-[10px] hover:underline font-bold italic">Link Facebook</a>` : ''}
                     </td>
                     <td class="p-5">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${getRoleClass(user.role)}">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${getRoleClass(user.role)}">
                             ${translateRole(user.role)}
                         </span>
                     </td>
                     <td class="p-5">
                         <div class="flex items-center justify-center gap-2">
-                            <button onclick="toggleStatus('${user.id}', '${user.status}')" 
-                                    class="p-2 rounded-xl transition-all ${user.status === 'active' ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}"
-                                    title="${user.status === 'active' ? 'Đang hoạt động - Bấm để khóa' : 'Đang khóa - Bấm để mở'}">
+                            <button onclick="toggleStatus('${user.id}', '${user.status}')" class="p-2 ${user.status === 'active' ? 'text-green-600' : 'text-red-600'} hover:bg-gray-100 rounded-lg">
                                 <i class="fas ${user.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off'} text-lg"></i>
                             </button>
-
-                            <button onclick="editUser('${user.id}')" 
-                                    class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all" title="Chỉnh sửa">
+                            <button onclick="editUser('${user.id}')" class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg">
                                 <i class="fas fa-user-edit"></i>
                             </button>
-
-                            <button onclick="deleteUser('${user.id}')" 
-                                    class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all" title="Xóa tài khoản">
+                            <button onclick="deleteUser('${user.id}')" class="p-2 text-red-500 hover:bg-red-100 rounded-lg">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -205,7 +202,6 @@
             return 'bg-gray-100 text-gray-600';
         }
 
-        // TÌM KIẾM
         document.getElementById('search-input').addEventListener('input', (e) => {
             const kw = e.target.value.toLowerCase();
             const filtered = allUsers.filter(u => 
@@ -216,27 +212,20 @@
             renderTable(filtered);
         });
 
-        // BẬT TẮT TRẠNG THÁI
-        async function toggleStatus(id, currentStatus) {
-            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            const { error } = await supabaseClient.from('accounts').update({ status: newStatus }).eq('id', id);
-            if (error) alert('Lỗi: ' + error.message);
-            else fetchUsers();
+        async function toggleStatus(id, current) {
+            const next = current === 'active' ? 'inactive' : 'active';
+            await supabaseClient.from('accounts').update({ status: next }).eq('id', id);
+            fetchUsers();
         }
 
-        // CHỈNH SỬA (Sẽ chuyển hướng sang trang edit hoặc hiện modal)
-        function editUser(id) {
-            alert('Thầy Thành muốn chỉnh sửa User ID: ' + id + '\n(Tính năng chuyển trang edit đang cập nhật)');
-        }
-
-        // XÓA
         async function deleteUser(id) {
-            if(confirm('Thầy có chắc chắn muốn xóa vĩnh viễn tài khoản này?')) {
-                const { error } = await supabaseClient.from('accounts').delete().eq('id', id);
-                if (error) alert('Lỗi: ' + error.message);
-                else fetchUsers();
+            if(confirm('Xóa vĩnh viễn tài khoản này?')) {
+                await supabaseClient.from('accounts').delete().eq('id', id);
+                fetchUsers();
             }
         }
+
+        function editUser(id) { alert('Chỉnh sửa ID: ' + id); }
 
         function toggleSubmenu(id, element) {
             const menu = document.getElementById(id);
