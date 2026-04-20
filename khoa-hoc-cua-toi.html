@@ -42,7 +42,7 @@
             <a href="trangchu.html" class="cum-logo">
                 <img src="logo.png" class="anh-dai-dien-logo border border-blue-100">
                 <div>
-                    <div class="ten-thuong-hieu-to tracking-tighter uppercase">Toán</div>
+                    <div class="ten-thuong-hieu-to tracking-tighter uppercase italic">Toán</div>
                     <div class="ten-thuong-hieu-nho uppercase tracking-widest text-[10px]">Thầy Thành</div>
                 </div>
             </a>
@@ -71,7 +71,7 @@
         <div class="flex justify-between items-end mb-10">
             <div>
                 <h2 class="text-3xl font-black text-blue-900 border-l-8 border-yellow-400 pl-4 uppercase tracking-tight">Khóa học của tôi</h2>
-                <p id="welcome-message" class="text-gray-500 font-medium mt-2 ml-4 italic">Đang tải thông tin học tập...</p>
+                <p id="welcome-message" class="text-gray-500 font-medium mt-2 ml-4 italic">Đang tải dữ liệu học tập...</p>
             </div>
         </div>
 
@@ -117,7 +117,6 @@
             }
             userLocal = JSON.parse(data);
             
-            // Cập nhật giao diện Header
             const userSection = document.getElementById('user-section');
             document.getElementById('welcome-message').innerText = `Chào mừng ${userLocal.fullname} quay trở lại học tập!`;
             
@@ -138,20 +137,19 @@
         async function loadMyCourses() {
             const courseContainer = document.getElementById('course-grid');
             try {
-                // 1. Lấy thông tin user từ localStorage
                 const user = JSON.parse(localStorage.getItem('user'));
-                if (!user || !user.id) {
-                    console.error("Không tìm thấy ID người dùng");
+                const userId = user?.id?.toString().trim(); // Xử lý định dạng ID uuid
+
+                if (!userId) {
+                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold">LỖI: KHÔNG XÁC ĐỊNH ĐƯỢC NGƯỜI DÙNG.</p>`;
                     return;
                 }
 
-                console.log("Đang tải khóa học cho User ID:", user.id);
-
-                // 2. Lấy danh sách ID các khóa học từ bảng course_enrollments
+                // 1. Lấy danh sách ID khóa học học sinh đã đăng ký
                 const { data: enrolls, error: err1 } = await supabaseClient
                     .from('course_enrollments')
                     .select('course_id')
-                    .eq('user_id', user.id);
+                    .eq('user_id', userId);
 
                 if (err1) throw err1;
 
@@ -161,16 +159,15 @@
                             <i class="fas fa-book-reader text-5xl text-gray-200 mb-4"></i>
                             <div class="text-gray-400 font-bold italic uppercase tracking-widest px-10">
                                 Em chưa được cấp quyền khóa học nào.<br>
-                                <span class="text-blue-900 not-italic text-sm lowercase">Liên hệ Thầy Thành để được vào lớp nhé!</span>
+                                <span class="text-blue-900 not-italic text-sm">Hãy liên hệ Thầy Thành để được vào lớp nhé!</span>
                             </div>
                         </div>`;
                     return;
                 }
 
-                // 3. Gom danh sách ID
                 const listIds = enrolls.map(item => item.course_id);
 
-                // 4. Lấy chi tiết khóa học (Sửa image_url thành thumbnail_url theo sơ đồ của Thầy)
+                // 2. Truy vấn thông tin chi tiết khóa học, dùng đúng cột thumbnail_url
                 const { data: courses, error: err2 } = await supabaseClient
                     .from('courses')
                     .select('id, course_name, description, thumbnail_url')
@@ -178,7 +175,7 @@
 
                 if (err2) throw err2;
 
-                // 5. Hiển thị dữ liệu
+                // 3. Hiển thị danh sách khóa học lên màn hình
                 courseContainer.innerHTML = courses.map(course => `
                     <div class="bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                         <div class="aspect-video overflow-hidden bg-gray-100">
@@ -189,7 +186,7 @@
                         <div class="p-8">
                             <div class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">Toán Thầy Thành</div>
                             <h3 class="text-xl font-black text-blue-900 mb-3 uppercase tracking-tighter line-clamp-1">${course.course_name}</h3>
-                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học cùng Thầy Thành để bứt phá điểm số.'}</p>
+                            <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học Toán cùng Thầy Thành để bứt phá điểm số.'}</p>
                             
                             <a href="lesson-detail.html?id=${course.id}" class="inline-flex items-center justify-center w-full py-4 bg-blue-900 text-white rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-800 transition-colors shadow-lg">
                                 Vào học ngay <i class="fas fa-arrow-right ml-2 text-[9px]"></i>
@@ -201,8 +198,9 @@
             } catch (err) {
                 console.error("Lỗi chi tiết:", err);
                 courseContainer.innerHTML = `<div class="col-span-full text-center p-10 bg-red-50 rounded-3xl">
-                    <p class="text-red-500 font-bold italic uppercase">Lỗi kết nối dữ liệu!</p>
-                    <p class="text-gray-500 text-xs mt-2">Thầy hãy kiểm tra xem đã tắt RLS cho bảng hoặc thêm Policy chưa nhé.</p>
+                    <p class="text-red-500 font-bold uppercase">Lỗi kết nối dữ liệu!</p>
+                    <p class="text-gray-500 text-xs mt-2">${err.message}</p>
+                    <p class="text-blue-800 text-[10px] mt-4 font-bold">Thầy hãy kiểm tra xem đã bật Policy (RLS) cho bảng chưa nhé!</p>
                 </div>`;
             }
         }
@@ -213,7 +211,7 @@
         }
 
         function logout() {
-            if(confirm("Thầy/Em muốn đăng xuất hệ thống?")) {
+            if(confirm("Thầy muốn đăng xuất hệ thống?")) {
                 localStorage.removeItem('user');
                 window.location.href = 'trangchu.html';
             }
