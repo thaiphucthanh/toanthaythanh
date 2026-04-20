@@ -8,9 +8,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        
+        /* Cấu trúc giúp Footer luôn ở dưới đáy */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            background-color: #f9fafb;
+        }
+        main {
+            flex: 1; /* Tự động dãn để đẩy footer xuống */
+        }
 
-        /* CSS cho Menu Bar & Dropdown */
+        /* Menu & Dropdown */
         .dropdown-user {
             position: absolute; top: 120%; right: 0; width: 220px;
             background: white; border-radius: 15px;
@@ -27,7 +41,7 @@
         .divider { height: 1px; background: #eee; margin: 5px 0; }
         
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
-        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; width: 100%; }
         .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; }
         .item-menu { font-weight: bold; font-size: 15px; }
         .cum-logo { display: flex; align-items: center; gap: 10px; }
@@ -35,13 +49,13 @@
         .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
         .ten-thuong-hieu-nho { font-size: 14px; color: #6b7280; font-weight: bold; }
 
-        /* Hiệu ứng Accordion cho Chuyên đề */
+        /* Accordion Chuyên đề */
         .chuyen-de-item.active .icon-chevron { transform: rotate(180deg); }
         .danh-sach-bai-hoc { display: none; }
         .chuyen-de-item.active + .danh-sach-bai-hoc { display: block; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
 
     <header class="bg-white shadow-md sticky top-0 z-[1000]">
         <div class="khung-trang flex items-center justify-between py-4">
@@ -55,8 +69,7 @@
             <div class="vung-tim-kiem hidden md:block flex-1 max-w-md mx-10">
                 <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <div class="cum-tai-khoan relative" id="user-section">
-                </div>
+            <div class="cum-tai-khoan relative" id="user-section"></div>
         </div>
 
         <nav class="thanh-menu-ngang">
@@ -71,26 +84,23 @@
     </header>
 
     <main class="khung-trang py-12">
-        <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-                <nav class="flex text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 gap-2">
-                    <a href="khoa-hoc-cua-toi.html" class="hover:text-blue-900">Khóa học</a>
-                    <span>/</span>
-                    <span class="text-blue-900 font-black">Nội dung bài học</span>
-                </nav>
-                <h1 id="course-name" class="text-3xl font-black text-blue-900 uppercase tracking-tight italic">Đang tải khóa học...</h1>
-            </div>
+        <div class="mb-10">
+            <nav class="flex text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 gap-2">
+                <a href="khoa-hoc-cua-toi.html" class="hover:text-blue-900">Khóa học</a>
+                <span>/</span>
+                <span class="text-blue-900 font-black">Nội dung bài học</span>
+            </nav>
+            <h1 id="course-name" class="text-3xl font-black text-blue-900 uppercase tracking-tight italic">Đang tải khóa học...</h1>
         </div>
 
         <div id="topic-container" class="max-w-4xl space-y-4">
             <div class="text-center py-20">
                 <i class="fas fa-spinner animate-spin text-4xl text-blue-900"></i>
-                <p class="text-gray-400 mt-4 font-bold text-xs uppercase tracking-widest">Đang tải chuyên đề...</p>
             </div>
         </div>
     </main>
 
-    <footer class="bg-white border-t p-8 text-center mt-20">
+    <footer class="bg-white border-t py-10 text-center w-full mt-auto">
         <div class="font-black text-blue-900 uppercase text-sm tracking-widest mb-1">Toán Thầy Thành</div>
         <div class="text-gray-400 text-[10px] font-bold italic">Dạy học từ tâm - Nâng tầm kiến thức</div>
     </footer>
@@ -121,58 +131,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const courseId = urlParams.get('id');
 
-        // KIỂM TRA ĐĂNG NHẬP & HIỂN THỊ MENU TÀI KHOẢN
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             const userSection = document.getElementById('user-section');
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = user.role === 'admin' ? `
-                    <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">
-                        <i class="fas fa-user-shield mr-3"></i> THẦY THÀNH
-                    </a>
-                    <div class="divider"></div>` : '';
-                
-                template = template.replace(/{fullname}/g, user.fullname)
-                                   .replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
-                                   .replace(/{admin_option}/g, adminOption);
+                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i> THẦY THÀNH</a><div class="divider"></div>` : '';
+                template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
                 userSection.innerHTML = template;
-            } else {
-                window.location.href = 'login.html';
-            }
+            } else { window.location.href = 'login.html'; }
         }
 
-        // TẢI DỮ LIỆU TOPIC VÀ LESSON
         async function loadContent() {
             if (!courseId) return;
-
-            // Lấy tên khóa học hiển thị lên tiêu đề
             const { data: course } = await supabaseClient.from('courses').select('course_name').eq('id', courseId).single();
             if (course) document.getElementById('course-name').innerText = course.course_name;
 
-            // Lấy danh sách chuyên đề của khóa học này
             const { data: topics } = await supabaseClient.from('topics').select('*').eq('course_id', courseId).order('id', { ascending: true });
-            
-            // Lấy danh sách tất cả bài học
             const { data: lessons } = await supabaseClient.from('lessons').select('*').order('id', { ascending: true });
 
             const container = document.getElementById('topic-container');
             if (!topics || topics.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 italic text-center py-10">Nội dung đang được Thầy Thành cập nhật...</p>`;
+                container.innerHTML = `<p class="text-gray-400 italic text-center py-10">Sắp có bài giảng mới!</p>`;
                 return;
             }
 
             container.innerHTML = topics.map(topic => {
-                // Lọc bài học thuộc chuyên đề này dựa trên topic_id
                 const topicLessons = lessons.filter(l => l.topic_id === topic.id);
-                
                 return `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
                         <div onclick="this.parentElement.classList.toggle('active')" class="chuyen-de-item p-5 flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-all">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-blue-900 text-white rounded-xl flex items-center justify-center font-black shadow-lg">
-                                    <i class="fas fa-folder-open text-xs"></i>
-                                </div>
+                                <div class="w-10 h-10 bg-blue-900 text-white rounded-xl flex items-center justify-center font-black shadow-lg"><i class="fas fa-folder-open text-xs"></i></div>
                                 <h3 class="font-black text-blue-900 uppercase tracking-tight">${topic.topic_name}</h3>
                             </div>
                             <div class="flex items-center gap-4">
@@ -180,45 +170,28 @@
                                 <i class="fas fa-chevron-down text-gray-300 icon-chevron transition-transform duration-300"></i>
                             </div>
                         </div>
-
                         <div class="danh-sach-bai-hoc border-t border-gray-50 bg-gray-50/30">
                             ${topicLessons.length > 0 ? topicLessons.map(lesson => `
                                 <div onclick="location.href='lesson-detail.html?id=${lesson.id}'" class="p-4 flex items-center justify-between hover:bg-white cursor-pointer transition-all border-b border-gray-50 last:border-0 pl-16 group">
                                     <div class="flex items-center gap-4">
-                                        <div class="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center group-hover:border-blue-500">
-                                            <i class="fas fa-play text-[10px] text-gray-300 group-hover:text-blue-500"></i>
-                                        </div>
+                                        <div class="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center group-hover:border-blue-500"><i class="fas fa-play text-[10px] text-gray-300 group-hover:text-blue-500"></i></div>
                                         <div>
                                             <div class="text-sm font-bold text-gray-700 group-hover:text-blue-900">${lesson.title}</div>
-                                            <div class="text-[10px] text-gray-400 font-medium italic">${lesson.insight || 'Kiến thức độc quyền của Thầy Thành'}</div>
+                                            <div class="text-[10px] text-gray-400 font-medium italic">${lesson.insight || 'Kiến thức cốt lõi cùng Thầy Thành'}</div>
                                         </div>
                                     </div>
-                                    <span class="text-[10px] font-bold text-blue-900 opacity-0 group-hover:opacity-100 uppercase tracking-widest mr-4 transition-all">Học ngay <i class="fas fa-arrow-right ml-1"></i></span>
+                                    <span class="text-[10px] font-bold text-blue-900 opacity-0 group-hover:opacity-100 uppercase tracking-widest mr-4 transition-all">Vào học <i class="fas fa-arrow-right ml-1"></i></span>
                                 </div>
-                            `).join('') : '<p class="p-4 text-xs text-gray-400 italic pl-16">Bài giảng đang được chuẩn bị!</p>'}
+                            `).join('') : '<p class="p-4 text-xs text-gray-400 italic pl-16">Chưa có bài học!</p>'}
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
-        // Các hàm phụ trợ Menu
-        function toggleUserMenu(e) { 
-            e.stopPropagation(); 
-            document.getElementById('dropdownUser')?.classList.toggle('active'); 
-        }
-
-        function logout() { 
-            if(confirm("Thầy muốn đăng xuất?")) { 
-                localStorage.removeItem('user'); 
-                window.location.href = 'trangchu.html'; 
-            } 
-        }
-
+        function toggleUserMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
+        function logout() { if(confirm("Đăng xuất?")) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; } }
         window.onload = () => { checkLogin(); loadContent(); };
-        window.onclick = (e) => { 
-            if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); 
-        };
+        window.onclick = (e) => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
     </script>
 </body>
 </html>
