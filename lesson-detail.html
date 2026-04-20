@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background-color: #f9fafb; }
+        html, body { height: 100%; margin: 0; }
+        body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; background-color: #f9fafb; overflow: hidden; }
         .sidebar-scroll::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
@@ -22,7 +23,7 @@
 </head>
 <body>
 
-    <header class="bg-white shadow-sm z-[1000]">
+    <header class="bg-white shadow-sm z-[1000] flex-none">
         <div class="px-6 py-3 flex items-center justify-between">
             <a href="trangchu.html" class="flex items-center gap-2">
                 <img src="logo.png" class="w-10 h-10 rounded-full border">
@@ -43,40 +44,48 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <aside class="w-80 bg-white border-r flex flex-col shadow-inner z-40">
+        <aside class="w-80 bg-white border-r flex flex-col shadow-inner z-40 flex-none">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="font-black text-blue-900 text-xs uppercase tracking-widest">Nội dung học tập</h3>
-                <i class="fas fa-book-reader text-blue-300"></i>
             </div>
             <nav id="sidebar-content" class="flex-1 overflow-y-auto sidebar-scroll p-2 space-y-1">
                 <div class="text-center py-10"><i class="fas fa-spinner animate-spin text-blue-900"></i></div>
             </nav>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-6 md:p-10">
-            <div class="max-w-5xl mx-auto">
-                <div class="bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video relative border-8 border-white mb-8">
-                    <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
-                            <div id="lesson-category" class="text-blue-600 font-bold uppercase text-[10px] tracking-widest mb-2">HDC Study</div>
-                            <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight">Đang tải...</h1>
-                            <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4 font-medium"></div>
-                        </div>
+        <main class="flex-1 overflow-y-auto flex flex-col scroll-smooth bg-gray-50">
+            <div class="p-6 md:p-10 flex-1">
+                <div class="max-w-5xl mx-auto">
+                    <div class="bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video relative border-8 border-white mb-8 italic font-black">
+                        <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
                     </div>
-                    <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-[30px] shadow-sm border border-blue-100 sticky top-0">
-                            <h3 class="font-black text-sm mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
-                                <i class="fas fa-file-pdf text-red-500"></i> Tài liệu đính kèm
-                            </h3>
-                            <div id="document-section"></div>
-                            <div id="lesson-insight" class="mt-6 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold italic leading-snug"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
+                                <div id="lesson-topic-name" class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">ĐANG TẢI CHUYÊN ĐỀ...</div>
+                                <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight uppercase">Tiêu đề bài học</h1>
+                                <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4"></div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-1">
+                            <div class="bg-white p-6 rounded-[30px] shadow-sm border border-blue-100 sticky top-4">
+                                <h3 class="font-black text-sm mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
+                                    <i class="fas fa-file-pdf text-red-500"></i> TÀI LIỆU BÀI GIẢNG
+                                </h3>
+                                <div id="document-section" class="space-y-3"></div>
+                                <div id="lesson-insight" class="mt-6 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold italic border-l-4 border-blue-900 leading-snug"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <footer class="bg-white border-t py-10 text-center flex-none mt-20">
+                <div class="font-black text-blue-900 uppercase text-sm mb-1 tracking-widest italic">Toán Thầy Thành</div>
+                <div class="text-gray-400 text-[10px] font-bold italic uppercase">Dạy học từ tâm - Nâng tầm kiến thức</div>
+            </footer>
         </main>
     </div>
 
@@ -86,11 +95,10 @@
                 <div class="text-blue-900 font-black text-xs uppercase leading-tight">{fullname}</div>
                 <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">{role_text}</div>
             </div>
-            <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-blue-900 object-cover">
+            <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-blue-900">
             <div class="dropdown-user shadow-2xl" id="dropdownUser">
                 {admin_option}
                 <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3"></i> Hồ sơ</a>
-                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3"></i> Khóa học của tôi</a>
                 <div class="border-t my-1"></div>
                 <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i> Đăng xuất</a>
             </div>
@@ -110,7 +118,7 @@
             const userSection = document.getElementById('user-section');
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">Quản trị</a>` : '';
+                let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">QUẢN TRỊ VIÊN</a>` : '';
                 template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
                 userSection.innerHTML = template;
             } else { window.location.href = 'login.html'; }
@@ -124,13 +132,13 @@
                 const topicLessons = lessons.filter(l => l.topic_id === topic.id);
                 return `
                     <div class="mb-1">
-                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-3 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between uppercase">
-                            ${topic.topic_name} <i class="fas fa-chevron-down"></i>
+                        <div onclick="this.nextElementSibling.classList.toggle('show')" class="p-3 font-black text-[10px] text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-900 flex justify-between">
+                            ${topic.topic_name} <i class="fas fa-chevron-down text-[8px]"></i>
                         </div>
                         <div class="submenu show">
                             ${topicLessons.map(l => `
-                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-3 pl-6 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-3 transition-all">
-                                    <i class="fas fa-play-circle ${l.id == currentLessonId ? 'text-blue-900' : 'text-gray-300'}"></i>
+                                <div onclick="changeLesson('${l.id}')" class="lesson-item ${l.id == currentLessonId ? 'active' : ''} p-3 pl-6 text-[11px] font-bold rounded-xl cursor-pointer flex items-center gap-3 transition-all hover:bg-white uppercase">
+                                    <i class="fas fa-play-circle ${l.id == currentLessonId ? 'text-blue-900' : 'text-gray-200'}"></i>
                                     <span class="truncate">${l.title}</span>
                                 </div>
                             `).join('')}
@@ -145,39 +153,38 @@
 
             document.getElementById('lesson-title').innerText = lesson.title;
             document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang cập nhật...";
-            document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Chúc bạn học tốt!");
+            document.getElementById('lesson-insight').innerHTML = "💡 " + (lesson.insight || "Hãy tập trung nhé!");
             
             if (lesson.video_url) {
                 let vid = lesson.video_url.includes('v=') ? lesson.video_url.split('v=')[1].split('&')[0] : lesson.video_url.split('/').pop();
-                document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}`;
+                document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}?autoplay=1`;
             }
 
-            // --- XỬ LÝ LINK TỪ SUPABASE STORAGE ---
+            // LẤY TÊN CHUYÊN ĐỀ TỪ BẢNG TOPICS
+            const { data: topicData } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', lesson.topic_id).single();
+            if(topicData) {
+                document.getElementById('lesson-topic-name').innerText = topicData.topic_name;
+                loadSidebar(topicData.course_id);
+            }
+
+            // XỬ LÝ 2 Ô TÀI LIỆU
             const docSection = document.getElementById('document-section');
-            if (lesson.documents && lesson.documents.trim() !== "") {
-                let finalLink = lesson.documents.trim();
-                
-                // Nếu link KHÔNG bắt đầu bằng http, chúng ta coi đó là tên file trong storage
-                // Ở đây tôi giả sử Thầy để bucket tên là 'documents'
-                if (!finalLink.startsWith('http')) {
-                    const { data } = supabaseClient.storage.from('documents').getPublicUrl(finalLink);
-                    if (data) finalLink = data.publicUrl;
-                }
+            if (lesson.documents) {
+                let docPath = lesson.documents.trim();
+                let fullUrl = docPath.startsWith('http') ? docPath : `${SB_URL}/storage/v1/object/public/documents/${docPath}`;
 
                 docSection.innerHTML = `
-                    <a href="${finalLink}" target="_blank" class="flex items-center p-4 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100 shadow-sm">
-                        <i class="fas fa-file-pdf mr-3 text-xl"></i>
-                        <div class="flex flex-col">
-                            <span class="text-[10px] uppercase opacity-70">Tài liệu học tập</span>
-                            <span class="text-xs uppercase tracking-tight">Nhấn để xem ngay</span>
-                        </div>
+                    <a href="${fullUrl}" target="_blank" class="flex items-center p-3 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold shadow-md">
+                        <i class="fas fa-eye mr-3"></i>
+                        <span class="text-[10px] uppercase tracking-wider">Xem tài liệu ngay</span>
+                    </a>
+                    <a href="${fullUrl}" download class="flex items-center p-3 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100">
+                        <i class="fas fa-download mr-3"></i>
+                        <span class="text-[10px] uppercase tracking-wider">Tải tài liệu về máy</span>
                     </a>`;
             } else {
-                docSection.innerHTML = `<div class="p-4 bg-gray-50 text-gray-400 text-[10px] text-center rounded-2xl border border-dashed italic">Chưa có tài liệu</div>`;
+                docSection.innerHTML = `<div class="p-4 bg-gray-50 text-gray-400 text-[10px] text-center rounded-2xl border border-dashed font-bold uppercase italic">Chưa có tài liệu</div>`;
             }
-
-            const { data: topic } = await supabaseClient.from('topics').select('course_id').eq('id', lesson.topic_id).single();
-            if(topic) loadSidebar(topic.course_id);
         }
 
         function changeLesson(id) {
