@@ -189,16 +189,30 @@
         }
 
         async function addNewLesson() {
-    // Tạo một khung nhập liệu (Popup) để chọn file
     const { value: formValues } = await Swal.fire({
-        title: 'Thêm bài học mới',
-        html:
-            '<input id="swal-title" class="swal2-input" placeholder="Tên bài học">' +
-            '<input id="swal-file" type="file" class="swal2-file" accept=".pdf">',
-        focusConfirm: false,
+        title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
+        html: `
+            <div class="text-left space-y-3">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tiêu đề bài học</label>
+                <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Ví dụ: Bài 1 - Ôn tập">
+                
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Link YouTube</label>
+                <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Dán link vào đây...">
+                
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Insight</label>
+                <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 mb-3" placeholder="Nỗi đau của học sinh..."></textarea>
+                
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tải lên PDF (Tùy chọn)</label>
+                <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700" accept=".pdf">
+            </div>
+        `,
+        confirmButtonText: 'Lưu bài học',
+        confirmButtonColor: '#1e3a8a',
         preConfirm: () => {
             return {
                 title: document.getElementById('swal-title').value,
+                video: document.getElementById('swal-video').value,
+                insight: document.getElementById('swal-insight').value,
                 file: document.getElementById('swal-file').files[0]
             }
         }
@@ -206,38 +220,41 @@
 
     if (!formValues || !formValues.title) return;
 
-    let publicUrl = null;
+    Swal.fire({ title: 'Đang xử lý...', didOpen: () => Swal.showLoading() });
 
-    // Nếu Thầy có chọn file, hệ thống tự đẩy lên Supabase Storage
+    let finalDocs = []; // Mảng chứa tài liệu để lưu vào jsonb
+
     if (formValues.file) {
-        const file = formValues.file;
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        // Đẩy file lên kho chứa 'documents'
-        let { error: uploadError } = await supabaseClient.storage
+        const fileName = `${Date.now()}-${formValues.file.name}`;
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
             .from('documents')
-            .upload(filePath, file);
+            .upload(fileName, formValues.file);
 
         if (uploadError) {
-            alert("Lỗi upload file: " + uploadError.message);
+            Swal.fire('Lỗi upload!', uploadError.message, 'error');
             return;
         }
 
-        // Lấy đường dẫn file vừa upload để lưu vào bảng lessons
-        const { data } = supabaseClient.storage.from('documents').getPublicUrl(filePath);
-        publicUrl = data.publicUrl;
+        const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+        // Tạo cấu trúc JSON cho tài liệu
+        finalDocs.push({ name: formValues.file.name, url: urlData.publicUrl });
     }
 
-    // Lưu vào bảng lessons (cột documents trong sơ đồ của Thầy)
-    const { error } = await supabaseClient.from('lessons').insert([{
+    // Lưu vào bảng lessons theo sơ đồ ER của Thầy
+    const { error: insertError } = await supabaseClient.from('lessons').insert([{
         topic_id: topicId,
         title: formValues.title,
-        documents: publicUrl // Lưu link nội bộ của Supabase
+        video_url: formValues.video,
+        insight: formValues.insight,
+        documents: finalDocs // Lưu mảng JSON vào cột jsonb
     }]);
 
-    if (error) alert(error.message); else fetchLessons();
+    if (insertError) {
+        Swal.fire('Lỗi lưu!', insertError.message, 'error');
+    } else {
+        Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, showConfirmButton: false });
+        fetchLessons();
+    }
 }
 
         async function deleteLesson(id) {
