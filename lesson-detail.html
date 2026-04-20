@@ -10,20 +10,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background-color: #f9fafb; }
         
-        /* Sidebar Scrollbar */
         .sidebar-scroll::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
         
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
-        .khung-trang { max-width: 1400px; margin: 0 auto; width: 100%; }
-
         .lesson-item.active { background-color: #eff6ff; color: #1e3a8a; border-left: 4px solid #1e3a8a; }
         .lesson-item.active i { color: #1e3a8a; }
         
         .submenu { display: none; }
         .submenu.show { display: block; }
 
-        /* Dropdown tài khoản */
         .dropdown-user {
             position: absolute; top: 120%; right: 0; width: 220px;
             background: white; border-radius: 15px;
@@ -47,9 +43,7 @@
                     <div class="text-gray-400 font-bold text-[8px] tracking-widest uppercase">Thầy Thành</div>
                 </div>
             </a>
-
-            <div class="cum-tai-khoan relative" id="user-section">
-                </div>
+            <div class="cum-tai-khoan relative" id="user-section"></div>
         </div>
 
         <nav class="thanh-menu-ngang px-6 py-2">
@@ -81,8 +75,8 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-6">
                         <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
-                            <div id="lesson-category" class="text-blue-600 font-bold uppercase text-[10px] tracking-widest mb-2">Đang tải...</div>
-                            <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight">Tiêu đề bài giảng</h1>
+                            <div id="lesson-category" class="text-blue-600 font-bold uppercase text-[10px] tracking-widest mb-2">Toán Thầy Thành</div>
+                            <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-4 tracking-tight">Đang tải...</h1>
                             <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4"></div>
                         </div>
                     </div>
@@ -126,28 +120,20 @@
         const urlParams = new URLSearchParams(window.location.search);
         let currentLessonId = urlParams.get('id');
 
-        // 1. Kiểm tra đăng nhập và hiển thị đúng tên người dùng
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             const userSection = document.getElementById('user-section');
             if (user) {
                 let template = document.getElementById('user-logged-template').innerHTML;
                 let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">Quản trị viên</a>` : '';
-                
-                template = template
-                    .replace(/{fullname}/g, user.fullname)
-                    .replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
-                    .replace(/{admin_option}/g, adminOption);
-                
+                template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
                 userSection.innerHTML = template;
             } else { window.location.href = 'login.html'; }
         }
 
-        // 2. Tải Sidebar theo đúng khóa học hiện tại
         async function loadSidebar(courseId) {
             const { data: topics } = await supabaseClient.from('topics').select('*').eq('course_id', courseId).order('id', {ascending: true});
             const { data: lessons } = await supabaseClient.from('lessons').select('*').order('id', {ascending: true});
-
             const sidebar = document.getElementById('sidebar-content');
             sidebar.innerHTML = topics.map(topic => {
                 const topicLessons = lessons.filter(l => l.topic_id === topic.id);
@@ -164,30 +150,32 @@
                                 </div>
                             `).join('')}
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
-        // 3. Tải nội dung bài học
         async function fetchLessonData(id) {
             const { data: lesson } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
             if (!lesson) return;
 
             document.getElementById('lesson-title').innerText = lesson.title;
-            document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang được Thầy cập nhật...";
-            document.getElementById('lesson-insight').innerHTML = "💡 Insight: " + (lesson.insight || "Hãy tập trung học tập nhé!");
+            document.getElementById('lesson-content').innerHTML = lesson.content || "Nội dung đang cập nhật...";
+            document.getElementById('lesson-insight').innerHTML = "💡 Insight: " + (lesson.insight || "Cố gắng lên nhé!");
             
             if (lesson.video_url) {
                 let vid = lesson.video_url.includes('v=') ? lesson.video_url.split('v=')[1].split('&')[0] : lesson.video_url.split('/').pop();
                 document.getElementById('video-frame').src = `https://www.youtube.com/embed/${vid}`;
             }
 
-            // Xử lý nút Tài liệu
+            // --- FIX LỖI LINK TÀI LIỆU TẠI ĐÂY ---
             const docSection = document.getElementById('document-section');
-            if (lesson.documents) {
+            if (lesson.documents && lesson.documents.trim() !== "") {
+                let rawLink = lesson.documents.trim();
+                // Nếu link không bắt đầu bằng http, tự thêm vào để tránh lỗi 404 trang nội bộ
+                let finalLink = (rawLink.startsWith('http')) ? rawLink : 'https://' + rawLink;
+
                 docSection.innerHTML = `
-                    <a href="${lesson.documents}" target="_blank" class="flex items-center p-4 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100">
+                    <a href="${finalLink}" target="_blank" rel="noopener noreferrer" class="flex items-center p-4 bg-red-50 text-red-700 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-bold border border-red-100">
                         <i class="fas fa-file-pdf mr-3 text-xl"></i>
                         <span class="text-xs uppercase">Xem tài liệu chi tiết</span>
                     </a>`;
@@ -208,10 +196,7 @@
         function toggleUserMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
         function logout() { if(confirm("Đăng xuất?")) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; } }
 
-        window.onload = () => {
-            checkLogin();
-            if(currentLessonId) fetchLessonData(currentLessonId);
-        };
+        window.onload = () => { checkLogin(); if(currentLessonId) fetchLessonData(currentLessonId); };
         window.onclick = (e) => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
     </script>
 </body>
