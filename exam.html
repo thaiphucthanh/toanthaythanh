@@ -216,9 +216,90 @@
     }
 
     // --- 4. HÀM XEM CHI TIẾT ---
-    function viewDetail(id) {
-        Swal.fire('Tính năng đang hoàn thiện', 'ID câu hỏi: ' + id, 'info');
+    async function viewDetail(id) {
+    // 1. Hiển thị loading trong khi lấy dữ liệu từ database
+    Swal.fire({
+        title: 'Đang tải chi tiết...',
+        didOpen: () => Swal.showLoading(),
+        allowOutsideClick: false
+    });
+
+    // 2. Lấy dữ liệu chi tiết của câu hỏi dựa trên ID
+    const { data: q, error } = await supabaseClient
+        .from('questions')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error || !q) {
+        Swal.fire('Lỗi', 'Không thể lấy thông tin câu hỏi!', 'error');
+        return;
     }
+
+    // 3. Xử lý logic hiển thị nội dung dựa trên loại câu hỏi
+    let extraContent = '';
+    
+    if (q.question_type === 'choice' && q.options) {
+        extraContent = `
+            <div class="mt-4 grid grid-cols-2 gap-2 text-left">
+                <div class="p-2 border rounded ${q.correct_answer === 'A' ? 'bg-green-100 border-green-500' : 'bg-gray-50'}"><b>A:</b> ${q.options.a}</div>
+                <div class="p-2 border rounded ${q.correct_answer === 'B' ? 'bg-green-100 border-green-500' : 'bg-gray-50'}"><b>B:</b> ${q.options.b}</div>
+                <div class="p-2 border rounded ${q.correct_answer === 'C' ? 'bg-green-100 border-green-500' : 'bg-gray-50'}"><b>C:</b> ${q.options.c}</div>
+                <div class="p-2 border rounded ${q.correct_answer === 'D' ? 'bg-green-100 border-green-500' : 'bg-gray-50'}"><b>D:</b> ${q.options.d}</div>
+            </div>
+            <div class="mt-2 text-left text-green-700 font-bold">👉 Đáp án đúng: ${q.correct_answer}</div>
+        `;
+    } else if (q.question_type === 'true_false' && q.tf_options) {
+        extraContent = `<div class="mt-4 space-y-2 text-left">
+            <b class="text-orange-600 uppercase text-[10px]">Các mệnh đề Đúng/Sai:</b>
+            ${q.tf_options.map(opt => `
+                <div class="flex justify-between p-2 border-b text-sm">
+                    <span>${opt.label}</span>
+                    <span class="font-bold ${opt.is_true ? 'text-green-600' : 'text-red-600'}">${opt.is_true ? 'ĐÚNG' : 'SAI'}</span>
+                </div>
+            `).join('')}
+        </div>`;
+    } else if (q.question_type === 'short_answer') {
+        extraContent = `
+            <div class="mt-4 p-3 bg-purple-50 rounded-xl border border-purple-200 text-left">
+                <b class="text-purple-700">Đáp án ngắn:</b> <span class="font-black">${q.correct_answer}</span>
+            </div>
+        `;
+    }
+
+    // 4. Hiển thị Modal chi tiết
+    Swal.fire({
+        title: '<span class="text-blue-900 uppercase font-black">Chi tiết câu hỏi</span>',
+        width: '700px',
+        html: `
+            <div class="text-left space-y-4 py-2">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase italic">Nội dung đề bài:</span>
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-lg font-medium text-gray-800">
+                        ${q.content}
+                    </div>
+                </div>
+
+                ${extraContent}
+
+                <div class="mt-4">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase italic">Lời giải chi tiết:</span>
+                    <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 text-sm italic text-gray-700">
+                        ${q.solution_guide || 'Chưa có lời giải chi tiết.'}
+                    </div>
+                </div>
+            </div>
+        `,
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#1e3a8a',
+        didOpen: () => {
+            // Quan trọng: Bắt MathJax render lại sau khi Modal mở ra
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+    });
+}
 
     // --- 5. HÀM SIDEBAR ---
     function toggleSubmenu(id, element) {
