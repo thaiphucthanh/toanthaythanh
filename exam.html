@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý thi Online - HDC Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .active-menu { background: #facc15 !important; color: #1e3a8a !important; }
+        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+        .submenu.show { max-height: 500px; margin-top: 5px; }
+        .rotate-180 { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+                <div>
+                    <div class="font-black text-lg leading-tight text-white uppercase">HDC Study</div>
+                    <div class="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Quản lý thi Online</div>
+                </div>
+            </a>
+        </div>
+        <nav class="flex-1 mt-4 overflow-y-auto">
+            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+                <i class="fas fa-home w-5 text-blue-300"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
+            
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-users w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý người dùng</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="user-menu" class="submenu">
+                    <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 italic">Danh sách người dùng</a>
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 italic">Thêm mới</a>
+                </div>
+            </div>
+
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="course-menu" class="submenu">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 italic">Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400 italic">Thêm mới</a>
+                </div>
+            </div>
+
+            <a href="exam.html" class="sidebar-item p-4 flex items-center gap-3 mt-1 active-menu">
+                <i class="fas fa-edit w-5"></i>
+                <span class="font-bold">Quản lý thi Online</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase">Ngân hàng đề thi HDC</h2>
+            <div class="flex gap-4">
+                <button onclick="openAddQuestionModal()" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-plus mr-2"></i>Thêm câu hỏi mới
+                </button>
+            </div>
+        </header>
+
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h3 class="text-lg font-black text-blue-900 uppercase tracking-tight">Danh sách câu hỏi</h3>
+                        <p class="text-sm text-gray-500">Thầy có thể quản lý trắc nghiệm và tự luận tại đây</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
+                                <th class="p-5 pl-8">Loại câu hỏi</th>
+                                <th class="p-5">Nội dung đề bài</th>
+                                <th class="p-5">Mức độ</th>
+                                <th class="p-5 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="question-table-body" class="divide-y divide-gray-50">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        // Hàm mở Modal thêm câu hỏi (Sử dụng SweetAlert2 để giữ Sidebar không bị mất)
+        async function openAddQuestionModal() {
+            const { value: formValues } = await Swal.fire({
+                title: '<span class="text-blue-900 font-black uppercase">Thêm câu hỏi mới</span>',
+                width: '800px',
+                html: `
+                    <div class="text-left space-y-4 p-2">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Loại câu hỏi</label>
+                                <select id="swal-type" class="w-full p-3 rounded-xl border border-gray-200" onchange="window.updateFormType(this.value)">
+                                    <option value="choice">Trắc nghiệm (4 lựa chọn)</option>
+                                    <option value="true_false">Trắc nghiệm Đúng/Sai</option>
+                                    <option value="short_answer">Trả lời ngắn</option>
+                                    <option value="essay">Tự luận</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Mức độ</label>
+                                <select id="swal-level" class="w-full p-3 rounded-xl border border-gray-200">
+                                    <option value="easy">Nhận biết</option>
+                                    <option value="medium">Thông hiểu</option>
+                                    <option value="hard">Vận dụng</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase">Nội dung câu hỏi</label>
+                            <textarea id="swal-content" class="w-full p-3 rounded-xl border border-gray-200 h-24" placeholder="Nhập đề bài..."></textarea>
+                        </div>
+
+                        <div id="swal-dynamic-area">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input id="swal-a" placeholder="A. Đáp án" class="p-2 border rounded-lg">
+                                <input id="swal-b" placeholder="B. Đáp án" class="p-2 border rounded-lg">
+                                <input id="swal-c" placeholder="C. Đáp án" class="p-2 border rounded-lg">
+                                <input id="swal-d" placeholder="D. Đáp án" class="p-2 border rounded-lg">
+                                <select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold">
+                                    <option value="A">Đúng: A</option><option value="B">Đúng: B</option>
+                                    <option value="C">Đúng: C</option><option value="D">Đúng: D</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase">Lời giải chi tiết</label>
+                            <textarea id="swal-solution" class="w-full p-3 rounded-xl border border-gray-200 h-20"></textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu vào hệ thống',
+                confirmButtonColor: '#1e3a8a',
+                didOpen: () => {
+                    // Hàm phụ để thay đổi nội dung Modal khi chọn loại câu hỏi khác nhau
+                    window.updateFormType = (type) => {
+                        const area = document.getElementById('swal-dynamic-area');
+                        if(type === 'choice') {
+                            area.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="swal-a" placeholder="A" class="p-2 border rounded-lg"><input id="swal-b" placeholder="B" class="p-2 border rounded-lg"><input id="swal-c" placeholder="C" class="p-2 border rounded-lg"><input id="swal-d" placeholder="D" class="p-2 border rounded-lg"><select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
+                        } else if(type === 'short_answer') {
+                            area.innerHTML = `<input id="swal-short" placeholder="Nhập đáp án số hoặc chữ ngắn..." class="w-full p-3 border rounded-xl font-bold text-blue-600">`;
+                        } else if(type === 'true_false') {
+                            area.innerHTML = `<p class="text-[10px] italic text-orange-500">Mặc định: Nhập 4 ý đúng sai vào nội dung, cách nhau bằng dấu gạch ngang.</p>`;
+                        } else {
+                            area.innerHTML = `<p class="text-[10px] italic text-blue-500">Loại tự luận: Học sinh sẽ trình bày bằng văn bản hoặc hình ảnh.</p>`;
+                        }
+                    }
+                },
+                preConfirm: () => {
+                    // Thu thập dữ liệu từ Modal
+                    const type = document.getElementById('swal-type').value;
+                    let data = {
+                        question_type: type,
+                        level: document.getElementById('swal-level').value,
+                        content: document.getElementById('swal-content').value,
+                        solution_guide: document.getElementById('swal-solution').value
+                    };
+                    if(type === 'choice') {
+                        data.options = { a: document.getElementById('swal-a').value, b: document.getElementById('swal-b').value, c: document.getElementById('swal-c').value, d: document.getElementById('swal-d').value };
+                        data.correct_answer = document.getElementById('swal-correct').value;
+                    }
+                    return data;
+                }
+            });
+
+            if (formValues) {
+                const { error } = await supabaseClient.from('questions').insert([formValues]);
+                if(error) Swal.fire('Lỗi', error.message, 'error');
+                else { 
+                    Swal.fire('Thành công', 'Đã thêm vào ngân hàng!', 'success');
+                    fetchQuestions();
+                }
+            }
+        }
+
+        // Các hàm phụ hỗ trợ Sidebar
+        function toggleSubmenu(id, element) {
+            const menu = document.getElementById(id);
+            const arrow = element.querySelector('.arrow-icon');
+            menu.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+
+        async function fetchQuestions() {
+            // Logic load danh sách câu hỏi từ bảng 'questions' hiện lên table-body
+        }
+
+        fetchQuestions();
+    </script>
+</body>
+</html>
