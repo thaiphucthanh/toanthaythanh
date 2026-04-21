@@ -10,17 +10,53 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
-    .sidebar-item:hover { background: rgba(255,255,255,0.1); }
-    .active-menu { background: #facc15 !important; color: #1e3a8a !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    .submenu { display: none; flex-direction: column; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
-    .submenu.show { display: flex; margin-top: 5px; }
-    .submenu a { transition: all 0.2s; border-left: 3px solid transparent; }
-    .submenu a:hover { border-left: 3px solid #facc15; background: rgba(250, 204, 21, 0.1); padding-left: 3.5rem; }
+    
+    .sidebar-item { 
+      cursor: pointer; 
+      transition: all 0.3s; 
+      border-radius: 15px; 
+      margin: 0 10px; 
+    }
+    .sidebar-item:hover { 
+      background: rgba(255,255,255,0.1); 
+    }
+    .active-menu { 
+      background: #facc15 !important; 
+      color: #1e3a8a !important; 
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+    }
+    .submenu { 
+      display: none; 
+      flex-direction: column; 
+      overflow: hidden; 
+      transition: all 0.3s ease-out; 
+      background: rgba(0,0,0,0.2); 
+    }
+    .submenu.show { 
+      display: flex; 
+      margin-top: 5px; 
+    }
+    .submenu a { 
+      transition: all 0.2s; 
+      border-left: 3px solid transparent; 
+    }
+    .submenu a:hover { 
+      border-left: 3px solid #facc15; 
+      background: rgba(250, 204, 21, 0.1); 
+      padding-left: 3.5rem; 
+    }
     .rotate-180 { transform: rotate(180deg); }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-2 { 
+      display: -webkit-box; 
+      -webkit-line-clamp: 2; 
+      -webkit-box-orient: vertical; 
+      overflow: hidden; 
+    }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { 
+      background: rgba(255, 255, 255, 0.1); 
+      border-radius: 10px; 
+    }
   </style>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -34,7 +70,8 @@
   </script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
-  <!-- Sidebar giữ nguyên như cũ -->
+
+  <!-- Sidebar -->
   <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
     <div class="p-6 flex items-center gap-3 border-b border-blue-800">
       <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -45,11 +82,14 @@
         </div>
       </a>
     </div>
+    
     <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
       <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
         <i class="fas fa-home w-5"></i>
         <span class="font-bold">Trang Welcome</span>
       </a>
+
+      <!-- Quản lý người dùng -->
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
           <div class="flex items-center gap-3">
@@ -67,6 +107,8 @@
           </a>
         </div>
       </div>
+
+      <!-- Quản lý khóa học -->
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
           <div class="flex items-center gap-3">
@@ -84,15 +126,17 @@
           </a>
         </div>
       </div>
+
+      <!-- Quản lý thi Online -->
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
           <div class="flex items-center gap-3">
             <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
             <span class="font-bold">Quản lý thi Online</span>
           </div>
-          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
         </div>
-        <div id="exam-menu" class="submenu show flex flex-col bg-black/20 rounded-lg mt-1 ml-2 overflow-hidden">
+        <div id="exam-menu" class="submenu">
           <a href="exam.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
             <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
           </a>
@@ -105,6 +149,7 @@
         </div>
       </div>
     </nav>
+
     <div class="p-4 border-t border-blue-800">
       <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
         <i class="fas fa-arrow-left"></i>
@@ -113,10 +158,12 @@
     </div>
   </aside>
 
+  <!-- Main Content -->
   <main class="flex-1 flex flex-col overflow-hidden">
     <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
       <h2 class="text-xl font-black text-blue-900 uppercase">Ngân hàng đề thi Thầy Thành</h2>
-      <button onclick="openQuestionModal()" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">
+      <button onclick="openQuestionModal()" 
+              class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">
         <i class="fas fa-plus mr-2"></i>Thêm câu hỏi mới
       </button>
     </header>
@@ -127,6 +174,7 @@
           <h3 class="text-lg font-black text-blue-900 uppercase tracking-tight">Danh sách câu hỏi</h3>
           <p class="text-sm text-gray-500 italic">Quản lý trắc nghiệm, tự luận chuyển cấp, và chuyên đề học tập</p>
         </div>
+        
         <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -153,11 +201,11 @@
     let allCourses = [];
     let allTopics = [];
 
-    // Hàm load danh sách Courses và Topics
+    // Load danh sách khóa học và chuyên đề
     async function loadCoursesAndTopics() {
       const { data: courses } = await supabaseClient.from('courses').select('id, course_name').order('course_name');
       const { data: topics } = await supabaseClient.from('topics').select('id, course_id, topic_name').order('order_index');
-
+      
       allCourses = courses || [];
       allTopics = topics || [];
     }
@@ -207,8 +255,8 @@
           'hard': '<span class="text-red-500 font-bold">● Vận dụng</span>'
         };
 
-        const courseName = q.courses?.course_name || q.course || '';
-        const topicName = q.topics?.topic_name || q.topic || '';
+        const courseName = q.courses?.course_name || '';
+        const topicName = q.topics?.topic_name || '';
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-blue-50/30 transition-colors border-b border-gray-50";
@@ -224,15 +272,9 @@
           <td class="p-5 text-[11px] uppercase">${levelLabels[q.level] || q.level}</td>
           <td class="p-5">
             <div class="flex justify-center gap-2">
-              <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
-                <i class="fas fa-trash-alt text-[10px]"></i>
-              </button>
-              <button onclick='editQuestion(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition-all flex items-center justify-center">
-                <i class="fas fa-edit text-[10px]"></i>
-              </button>
-              <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center">
-                <i class="fas fa-eye text-[10px]"></i>
-              </button>
+              <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>
+              <button onclick='editQuestion(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-edit text-[10px]"></i></button>
+              <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-eye text-[10px]"></i></button>
             </div>
           </td>
         `;
@@ -244,39 +286,65 @@
 
     function updateAddForm(type, data = null) {
       const area = document.getElementById('q-dynamic-area');
+      if (!area) return;
+
       if (type === 'choice') {
-        area.innerHTML = `...` ; // giữ nguyên như cũ
+        area.innerHTML = `
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            ${['a', 'b', 'c', 'd'].map(l => `
+              <div class="flex items-center gap-2">
+                <span class="font-bold uppercase text-blue-900">${l}:</span>
+                <input id="opt-${l}" value="${data?.options?.[l] || ''}" class="flex-1 p-2 border rounded-xl outline-none focus:border-blue-500">
+              </div>
+            `).join('')}
+            <div class="col-span-2 mt-2">
+              <label class="text-[10px] font-bold text-gray-400 uppercase">Đáp án đúng</label>
+              <select id="q-correct" class="w-full p-2 border rounded-xl font-bold">
+                ${['A', 'B', 'C', 'D'].map(l => `<option value="${l}" ${data?.correct_answer === l ? 'selected' : ''}>Đáp án ${l}</option>`).join('')}
+              </select>
+            </div>
+          </div>`;
       } else if (type === 'true_false') {
-        // giữ nguyên
+        area.innerHTML = `
+          <div id="tf-container" class="space-y-2">
+            ${(data?.tf_options || [{label: '', is_true: true}]).map((opt, i) => `
+              <div class="flex gap-2 items-center">
+                <input class="tf-label flex-1 p-2 border rounded-xl text-sm" value="${opt.label}" placeholder="Ý ${i+1}...">
+                <select class="tf-status p-2 border rounded-xl text-sm font-bold">
+                  <option value="true" ${opt.is_true ? 'selected' : ''}>Đúng</option>
+                  <option value="false" ${!opt.is_true ? 'selected' : ''}>Sai</option>
+                </select>
+              </div>
+            `).join('')}
+          </div>`;
       } else if (type === 'short_answer') {
-        // giữ nguyên
+        area.innerHTML = `
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Đáp án (Dùng | để ngăn cách các đáp án đúng)</label>
+          <input id="q-correct-short" value="${data?.correct_answer || ''}" placeholder="VD: 10|mười" class="w-full p-2 border rounded-xl font-bold mt-1">`;
       } else {
         area.innerHTML = `<p class="text-center text-gray-400 text-xs italic">Loại tự luận chuyển cấp không cần cấu hình đáp án trắc nghiệm.</p>`;
       }
     }
 
-    // Hàm load Topics theo Course
     function loadTopicsForCourse(courseId) {
       const topicSelect = document.getElementById('q-topic');
       if (!topicSelect) return;
-
       topicSelect.innerHTML = '<option value="">Chọn chuyên đề...</option>';
 
-      const filteredTopics = allTopics.filter(t => t.course_id === courseId);
-      filteredTopics.forEach(topic => {
-        const option = document.createElement('option');
-        option.value = topic.id;
-        option.textContent = topic.topic_name;
-        topicSelect.appendChild(option);
+      const filtered = allTopics.filter(t => t.course_id === courseId);
+      filtered.forEach(topic => {
+        const opt = document.createElement('option');
+        opt.value = topic.id;
+        opt.textContent = topic.topic_name;
+        topicSelect.appendChild(opt);
       });
     }
 
     async function openQuestionModal(editData = null) {
       const isEdit = !!editData;
+      await loadCoursesAndTopics();
 
-      await loadCoursesAndTopics(); // Load dữ liệu trước khi mở modal
-
-      let courseOptions = allCourses.map(c => 
+      const courseOptions = allCourses.map(c => 
         `<option value="${c.id}" ${isEdit && editData.course_id === c.id ? 'selected' : ''}>${c.course_name}</option>`
       ).join('');
 
@@ -308,7 +376,7 @@
 
               <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Loại kỳ thi</label>
-                <select id="q-exam-type" class="w-full p-2 border rounded-xl font-bold text-blue-700">
+                <select id="q-exam-type" class="w-full p-2 border rounded-xl font-bold">
                   <option value="hk1-mid" ${isEdit && editData.exam_type === 'hk1-mid' ? 'selected' : ''}>📘 HK1 - Giữa kỳ</option>
                   <option value="hk1-final" ${isEdit && editData.exam_type === 'hk1-final' ? 'selected' : ''}>📕 HK1 - Cuối kỳ</option>
                   <option value="hk2-mid" ${isEdit && editData.exam_type === 'hk2-mid' ? 'selected' : ''}>📘 HK2 - Giữa kỳ</option>
@@ -327,14 +395,14 @@
                 </select>
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase">Chuyên đề (Topic)</label>
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Chuyên đề</label>
                 <select id="q-topic" class="w-full p-2 border rounded-xl font-bold">
                   <option value="">Chọn chuyên đề...</option>
                 </select>
               </div>
             </div>
 
-            <textarea id="q-content" placeholder="Nội dung câu hỏi (Latex dùng $ $)..." class="w-full p-3 border rounded-xl h-24">${isEdit ? editData.content : ''}</textarea>
+            <textarea id="q-content" placeholder="Nội dung câu hỏi (Latex dùng $ $)..." class="w-full p-3 border rounded-xl h-24">${isEdit ? (editData.content || '') : ''}</textarea>
             
             <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed"></div>
             
@@ -342,21 +410,22 @@
           </div>`,
         didOpen: () => {
           updateAddForm(isEdit ? editData.question_type : 'choice', editData);
-          
-          // Nếu đang sửa, load topic tương ứng
           if (isEdit && editData.course_id) {
-            document.getElementById('q-course').value = editData.course_id;
-            loadTopicsForCourse(editData.course_id);
+            const courseSelect = document.getElementById('q-course');
+            if (courseSelect) {
+              courseSelect.value = editData.course_id;
+              loadTopicsForCourse(editData.course_id);
+            }
             setTimeout(() => {
               if (editData.topic_id) {
-                document.getElementById('q-topic').value = editData.topic_id;
+                const topicSelect = document.getElementById('q-topic');
+                if (topicSelect) topicSelect.value = editData.topic_id;
               }
             }, 300);
           }
         },
         preConfirm: () => {
           const type = document.getElementById('q-type').value;
-          
           const payload = {
             question_type: type,
             level: document.getElementById('q-level').value,
@@ -368,14 +437,23 @@
           };
 
           if (type === 'choice') {
-            payload.options = { /* giữ nguyên */ };
+            payload.options = {
+              a: document.getElementById('opt-a').value,
+              b: document.getElementById('opt-b').value,
+              c: document.getElementById('opt-c').value,
+              d: document.getElementById('opt-d').value
+            };
             payload.correct_answer = document.getElementById('q-correct').value;
           } else if (type === 'true_false') {
-            // giữ nguyên
+            const labels = document.querySelectorAll('.tf-label');
+            const stats = document.querySelectorAll('.tf-status');
+            payload.tf_options = Array.from(labels).map((el, i) => ({
+              label: el.value,
+              is_true: stats[i].value === 'true'
+            }));
           } else if (type === 'short_answer') {
             payload.correct_answer = document.getElementById('q-correct-short').value;
           }
-
           return payload;
         }
       });
@@ -393,13 +471,56 @@
       }
     }
 
-    // Các hàm còn lại (viewDetail, deleteQuestion, editQuestion, toggleSubmenu) giữ nguyên như code trước
+    async function viewDetail(id) {
+      const { data: q } = await supabaseClient.from('questions').select(`
+        *, 
+        courses:course_id(course_name), 
+        topics:topic_id(topic_name)
+      `).eq('id', id).single();
+      
+      if (!q) return;
 
-    async function viewDetail(id) { /* giữ nguyên code cũ */ }
-    async function deleteQuestion(id) { /* giữ nguyên */ }
-    function editQuestion(data) { openQuestionModal(data); }
-    function toggleSubmenu(id, el) { /* giữ nguyên */ }
+      let extraHtml = '';
+      if (q.question_type === 'choice' && q.options) {
+        extraHtml = `<div class="grid grid-cols-2 gap-2 mt-4 text-left">${['a','b','c','d'].map(l => `
+          <div class="p-2 border rounded ${q.correct_answer === l.toUpperCase() ? 'bg-green-100 border-green-500 font-bold' : 'bg-gray-50'}">
+            ${l.toUpperCase()}: ${q.options[l]}
+          </div>`).join('')}</div>`;
+      }
 
+      Swal.fire({
+        title: 'Chi tiết câu hỏi',
+        width: '700px',
+        html: `<div class="text-left">
+          <div class="p-4 bg-gray-100 rounded-xl">${q.content}</div>
+          ${extraHtml}
+          <div class="mt-4 p-4 bg-blue-50 rounded-xl text-xs"><b>Lời giải:</b> ${q.solution_guide || 'Chưa có'}</div>
+        </div>`,
+        didOpen: () => { if (window.MathJax) MathJax.typesetPromise(); }
+      });
+    }
+
+    async function deleteQuestion(id) {
+      const res = await Swal.fire({ title: 'Xóa câu hỏi này?', icon: 'warning', showCancelButton: true });
+      if (res.isConfirmed) {
+        await supabaseClient.from('questions').delete().eq('id', id);
+        fetchQuestions();
+      }
+    }
+
+    function editQuestion(data) {
+      openQuestionModal(data);
+    }
+
+    function toggleSubmenu(id, el) {
+      const submenu = document.getElementById(id);
+      submenu.classList.toggle('show');
+      
+      const arrow = el.querySelector('.arrow-icon');
+      if (arrow) arrow.classList.toggle('rotate-180');
+    }
+
+    // Khởi động
     document.addEventListener('DOMContentLoaded', () => {
       loadCoursesAndTopics();
       fetchQuestions();
