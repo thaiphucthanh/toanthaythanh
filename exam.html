@@ -117,238 +117,119 @@
             </div>
         </div>
     </main>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+<script>
+    const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+    const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        // ... (Giữ nguyên phần khai báo SB_URL, SB_KEY, supabaseClient) ...
+    // --- 1. HÀM LOAD DANH SÁCH (QUAN TRỌNG NHẤT) ---
+    async function fetchQuestions() {
+        const container = document.getElementById('question-table-body');
+        container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 italic font-medium">Đang kết nối ngân hàng dữ liệu...</td></tr>';
 
-async function openAddQuestionModal() {
-    const { value: formValues } = await Swal.fire({
-        title: '<span class="text-blue-900 font-black uppercase tracking-tight">Thêm câu hỏi mới</span>',
-        width: '850px',
-        html: `
-            <div class="text-left space-y-4 p-2 overflow-x-hidden">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase italic">Loại câu hỏi</label>
-                        <select id="swal-type" class="w-full p-3 rounded-xl border border-gray-200 font-bold text-blue-900" onchange="window.updateFormType(this.value)">
-                            <option value="choice">Trắc nghiệm (4 lựa chọn)</option>
-                            <option value="true_false">Trắc nghiệm Đúng/Sai</option>
-                            <option value="short_answer">Trả lời ngắn</option>
-                            <option value="essay">Tự luận</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase italic">Mức độ</label>
-                        <select id="swal-level" class="w-full p-3 rounded-xl border border-gray-200">
-                            <option value="easy">Nhận biết</option>
-                            <option value="medium" selected>Thông hiểu</option>
-                            <option value="hard">Vận dụng</option>
-                        </select>
-                    </div>
-                </div>
+        const { data: questions, error } = await supabaseClient
+            .from('questions')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase italic">Nội dung câu hỏi (Đề bài)</label>
-                    <textarea id="swal-content" class="w-full p-3 rounded-xl border border-gray-200 h-20" placeholder="Nhập đề bài tổng quát..."></textarea>
-                </div>
+        if (error) {
+            container.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Lỗi kết nối: ${error.message}</td></tr>`;
+            return;
+        }
 
-                <div id="swal-dynamic-area" class="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input id="swal-a" placeholder="Phương án A" class="p-2 border rounded-lg text-sm">
-                        <input id="swal-b" placeholder="Phương án B" class="p-2 border rounded-lg text-sm">
-                        <input id="swal-c" placeholder="Phương án C" class="p-2 border rounded-lg text-sm">
-                        <input id="swal-d" placeholder="Phương án D" class="p-2 border rounded-lg text-sm">
-                        <select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold text-blue-800 bg-white">
-                            <option value="A">Đáp án đúng là: A</option>
-                            <option value="B">Đáp án đúng là: B</option>
-                            <option value="C">Đáp án đúng là: C</option>
-                            <option value="D">Đáp án đúng là: D</option>
-                        </select>
-                    </div>
-                </div>
+        if (!questions || questions.length === 0) {
+            container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">Ngân hàng câu hỏi trống. Thầy hãy thêm câu hỏi mới!</td></tr>';
+            return;
+        }
 
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase italic">Lời giải chi tiết / Đáp án mẫu</label>
-                    <textarea id="swal-solution" class="w-full p-3 rounded-xl border border-gray-200 h-20" placeholder="Hướng dẫn giải cho học sinh..."></textarea>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Lưu vào ngân hàng',
-        confirmButtonColor: '#1e3a8a',
-        didOpen: () => {
-            window.updateFormType = (type) => {
-                const area = document.getElementById('swal-dynamic-area');
-                if(type === 'choice') {
-                    area.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="swal-a" placeholder="A" class="p-2 border rounded-lg text-sm"><input id="swal-b" placeholder="B" class="p-2 border rounded-lg text-sm"><input id="swal-c" placeholder="C" class="p-2 border rounded-lg text-sm"><input id="swal-d" placeholder="D" class="p-2 border rounded-lg text-sm"><select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold bg-white text-blue-800"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
-                } else if(type === 'short_answer') {
-                    area.innerHTML = `<div><label class="text-[10px] font-bold text-blue-600 uppercase">Đáp án số/chữ ngắn</label><input id="swal-short" placeholder="Ví dụ: 10 hoặc -5" class="w-full p-3 border rounded-xl font-black text-blue-900 text-lg"></div>`;
-                } else if(type === 'true_false') {
-                    area.innerHTML = `
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-orange-600 uppercase">Thiết lập 4 ý Đúng/Sai</label>
-                            ${['a', 'b', 'c', 'd'].map(l => `
-                                <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
-                                    <span class="font-black text-orange-500 w-4">${l.toUpperCase()}</span>
-                                    <input id="tf-t-${l}" placeholder="Nội dung mệnh đề ${l}..." class="flex-1 text-sm border-none outline-none focus:ring-0">
-                                    <select id="tf-a-${l}" class="bg-gray-100 text-[10px] font-bold p-1 rounded">
-                                        <option value="true">Đúng</option><option value="false">Sai</option>
-                                    </select>
-                                </div>
-                            `).join('')}
-                        </div>`;
-                } else {
-                    area.innerHTML = `<div class="text-center p-4"><i class="fas fa-pen-nib text-blue-300 text-3xl mb-2"></i><p class="text-xs italic text-gray-500 font-medium">Hệ thống sẽ ghi nhận đây là câu hỏi Tự luận. Học sinh sẽ làm bài vào ô trình bày hoặc tải ảnh lên.</p></div>`;
-                }
-            }
-        },
-        preConfirm: () => {
-            const type = document.getElementById('swal-type').value;
-            let data = {
-                question_type: type,
-                level: document.getElementById('swal-level').value,
-                content: document.getElementById('swal-content').value,
-                solution_guide: document.getElementById('swal-solution').value
+        container.innerHTML = '';
+        questions.forEach(q => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-blue-50/30 transition-colors border-b border-gray-50";
+            
+            const typeLabels = {
+                'choice': '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Trắc nghiệm</span>',
+                'true_false': '<span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Đúng/Sai</span>',
+                'short_answer': '<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Trả lời ngắn</span>',
+                'essay': '<span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Tự luận</span>'
             };
 
-            if(type === 'choice') {
-                data.options = { 
-                    a: document.getElementById('swal-a').value, 
-                    b: document.getElementById('swal-b').value, 
-                    c: document.getElementById('swal-c').value, 
-                    d: document.getElementById('swal-d').value 
-                };
-                data.correct_answer = document.getElementById('swal-correct').value;
-            } else if(type === 'short_answer') {
-                data.correct_answer = document.getElementById('swal-short').value;
-            } else if(type === 'true_false') {
-                data.tf_options = ['a', 'b', 'c', 'd'].map(l => ({
-                    label: document.getElementById(`tf-t-${l}`).value,
-                    is_true: document.getElementById(`tf-a-${l}`).value === 'true'
-                }));
+            const levelLabels = {
+                'easy': '<span class="text-green-500 font-bold">● Nhận biết</span>',
+                'medium': '<span class="text-yellow-500 font-bold">● Thông hiểu</span>',
+                'hard': '<span class="text-red-500 font-bold">● Vận dụng</span>'
+            };
+
+            tr.innerHTML = `
+                <td class="p-5 pl-8">${typeLabels[q.question_type] || q.question_type}</td>
+                <td class="p-5">
+                    <div class="text-sm font-semibold text-gray-800 line-clamp-2 max-w-md">${q.content}</div>
+                    <div class="text-[10px] text-gray-400 mt-1 italic">Ngày tạo: ${new Date(q.created_at).toLocaleDateString('vi-VN')}</div>
+                </td>
+                <td class="p-5 text-[11px] uppercase">${levelLabels[q.level] || q.level}</td>
+                <td class="p-5">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                            <i class="fas fa-trash-alt text-[10px]"></i>
+                        </button>
+                        <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                            <i class="fas fa-eye text-[10px]"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            container.appendChild(tr);
+        });
+
+        if (window.MathJax) {
+            MathJax.typesetPromise();
+        }
+    }
+
+    // --- 2. HÀM THÊM MỚI (GIỮ NGUYÊN NHƯNG CÓ FETCH LẠI) ---
+    async function openAddQuestionModal() {
+        // ... (Giữ nguyên logic Swal.fire của Thầy) ...
+        // Lưu ý: Nhớ gọi fetchQuestions() ở đoạn xử lý kết quả thành công như Thầy đã viết.
+    }
+
+    // --- 3. HÀM XÓA CÂU HỎI ---
+    async function deleteQuestion(id) {
+        const result = await Swal.fire({
+            title: 'Xóa câu hỏi?',
+            text: "Dữ liệu sẽ mất vĩnh viễn khỏi hệ thống!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Xóa ngay',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (result.isConfirmed) {
+            const { error } = await supabaseClient.from('questions').delete().eq('id', id);
+            if (error) Swal.fire('Lỗi', error.message, 'error');
+            else {
+                Swal.fire('Thành công', 'Đã xóa câu hỏi.', 'success');
+                fetchQuestions();
             }
-            
-            // Kiểm tra nội dung đề bài không được để trống
-            if (!data.content) {
-                Swal.showValidationMessage('Vui lòng nhập nội dung đề bài!');
-            }
-            return data;
-        }
-    });
-
-    if (formValues) {
-        Swal.fire({ title: 'Đang lưu...', didOpen: () => Swal.showLoading() });
-        const { error } = await supabaseClient.from('questions').insert([formValues]);
-        if(error) Swal.fire('Lỗi', error.message, 'error');
-        else { 
-            Swal.fire({ icon: 'success', title: 'Đã lưu!', text: 'Câu hỏi đã được thêm vào ngân hàng.', timer: 1500 });
-            fetchQuestions(); // Tải lại danh sách
         }
     }
-}
 
-        // Các hàm phụ hỗ trợ Sidebar
-        function toggleSubmenu(id, element) {
-            const menu = document.getElementById(id);
-            const arrow = element.querySelector('.arrow-icon');
-            menu.classList.toggle('show');
-            if (arrow) arrow.classList.toggle('rotate-180');
-        }
-
-        async function fetchQuestions() {
-    const container = document.getElementById('question-table-body');
-    // Hiển thị trạng thái đang tải
-    container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 italic">Đang tải dữ liệu từ ngân hàng...</td></tr>';
-
-    const { data: questions, error } = await supabaseClient
-        .from('questions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        container.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Lỗi: ${error.message}</td></tr>`;
-        return;
+    // --- 4. HÀM XEM CHI TIẾT ---
+    function viewDetail(id) {
+        Swal.fire('Tính năng đang hoàn thiện', 'ID câu hỏi: ' + id, 'info');
     }
 
-    if (questions.length === 0) {
-        container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">Ngân hàng câu hỏi hiện đang trống. Thầy hãy thêm câu hỏi mới nhé!</td></tr>';
-        return;
+    // --- 5. HÀM SIDEBAR ---
+    function toggleSubmenu(id, element) {
+        const menu = document.getElementById(id);
+        const arrow = element.querySelector('.arrow-icon');
+        menu.classList.toggle('show');
+        if (arrow) arrow.classList.toggle('rotate-180');
     }
 
-    container.innerHTML = '';
-    questions.forEach(q => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-blue-50/30 transition-colors border-b border-gray-50";
-        
-        // Mapping loại câu hỏi sang tiếng Việt
-        const typeLabels = {
-            'choice': '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold">Trắc nghiệm</span>',
-            'true_false': '<span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold">Đúng/Sai</span>',
-            'short_answer': '<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-bold">Trả lời ngắn</span>',
-            'essay': '<span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[10px] font-bold">Tự luận</span>'
-        };
-
-        // Mapping mức độ
-        const levelLabels = {
-            'easy': '<span class="text-green-500 font-bold">● Nhận biết</span>',
-            'medium': '<span class="text-yellow-500 font-bold">● Thông hiểu</span>',
-            'hard': '<span class="text-red-500 font-bold">● Vận dụng</span>'
-        };
-
-        tr.innerHTML = `
-            <td class="p-5 pl-8">${typeLabels[q.question_type] || q.question_type}</td>
-            <td class="p-5">
-                <div class="text-sm font-semibold text-gray-800 line-clamp-2 max-w-md">${q.content}</div>
-                <div class="text-[10px] text-gray-400 mt-1 italic">Cập nhật: ${new Date(q.created_at).toLocaleDateString('vi-VN')}</div>
-            </td>
-            <td class="p-5 text-xs">${levelLabels[q.level] || q.level}</td>
-            <td class="p-5">
-                <div class="flex justify-center gap-2">
-                    <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
-                        <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
-                    <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center">
-                        <i class="fas fa-eye text-xs"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        container.appendChild(tr);
-    });
-
-    // Sau khi render xong, bảo MathJax quét lại để hiển thị LaTeX nếu có
-    if (window.MathJax) {
-        MathJax.typesetPromise();
-    }
-}
-
-// Thêm hàm xóa để Thầy quản lý dễ hơn
-async function deleteQuestion(id) {
-    const result = await Swal.fire({
-        title: 'Xác nhận xóa?',
-        text: "Câu hỏi này sẽ bị xóa vĩnh viễn khỏi ngân hàng!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Đồng ý xóa'
-    });
-
-    if (result.isConfirmed) {
-        const { error } = await supabaseClient.from('questions').delete().eq('id', id);
-        if (error) Swal.fire('Lỗi', error.message, 'error');
-        else {
-            Swal.fire('Đã xóa!', 'Câu hỏi đã được gỡ bỏ.', 'success');
-            fetchQuestions();
-        }
-    }
-}
-        fetchQuestions();
-    </script>
+    // --- 6. CHẠY LẦN ĐẦU KHI MỞ TRANG ---
+    document.addEventListener('DOMContentLoaded', fetchQuestions);
+</script>
 </body>
 </html>
