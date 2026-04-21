@@ -211,80 +211,75 @@
 
         function editQuestion(data) { openQuestionModal(data); }
 
-        async function openQuestionModal(editData = null) {
-            const isEdit = !!editData;
-            const { value: formValues } = await Swal.fire({
-                title: isEdit ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới',
-                width: '800px',
-                html: `
-                    <div class="text-left space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <select id="q-type" class="p-2 border rounded-xl" onchange="updateAddForm(this.value)">
+        // Thêm vào trong phần script của trang exam.html
+async function openQuestionModal(editData = null) {
+    const isEdit = !!editData;
+    const { value: formValues } = await Swal.fire({
+        title: isEdit ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới',
+        width: '850px',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Phân loại & Mức độ</label>
+                        <div class="flex gap-2">
+                            <select id="q-type" class="flex-1 p-2 border rounded-xl" onchange="updateAddForm(this.value)">
                                 <option value="choice" ${isEdit && editData.question_type==='choice'?'selected':''}>Trắc nghiệm</option>
                                 <option value="true_false" ${isEdit && editData.question_type==='true_false'?'selected':''}>Đúng/Sai</option>
                                 <option value="short_answer" ${isEdit && editData.question_type==='short_answer'?'selected':''}>Trả lời ngắn</option>
-                                <option value="essay" ${isEdit && editData.question_type==='essay'?'selected':''}>Tự luận</option>
+                                <option value="essay" ${isEdit && editData.question_type==='essay'?'selected':''}>Tự luận (Chuyển cấp)</option>
                             </select>
-                            <select id="q-level" class="p-2 border rounded-xl">
+                            <select id="q-level" class="w-1/3 p-2 border rounded-xl">
                                 <option value="easy" ${isEdit && editData.level==='easy'?'selected':''}>Nhận biết</option>
                                 <option value="medium" ${isEdit && editData.level==='medium'?'selected':''}>Thông hiểu</option>
                                 <option value="hard" ${isEdit && editData.level==='hard'?'selected':''}>Vận dụng</option>
                             </select>
                         </div>
-                        <textarea id="q-content" placeholder="Nội dung câu hỏi..." class="w-full p-3 border rounded-xl h-24">${isEdit ? editData.content : ''}</textarea>
-                        <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed"></div>
-                        <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20">${isEdit ? (editData.solution_guide || '') : ''}</textarea>
-                    </div>`,
-                didOpen: () => {
-                    window.updateAddForm = (val, data = null) => {
-                        const area = document.getElementById('q-dynamic-area');
-                        if (val === 'choice') {
-                            const opts = data?.options || {a:'', b:'', c:'', d:''};
-                            area.innerHTML = `<div class="grid grid-cols-2 gap-2">
-                                <input id="opt-a" value="${opts.a}" placeholder="A" class="p-2 border rounded">
-                                <input id="opt-b" value="${opts.b}" placeholder="B" class="p-2 border rounded">
-                                <input id="opt-c" value="${opts.c}" placeholder="C" class="p-2 border rounded">
-                                <input id="opt-d" value="${opts.d}" placeholder="D" class="p-2 border rounded">
-                                <select id="opt-correct" class="col-span-2 p-2 border rounded font-bold">
-                                    <option value="A" ${data?.correct_answer === 'A' ? 'selected' : ''}>Đáp án A đúng</option>
-                                    <option value="B" ${data?.correct_answer === 'B' ? 'selected' : ''}>Đáp án B đúng</option>
-                                    <option value="C" ${data?.correct_answer === 'C' ? 'selected' : ''}>Đáp án C đúng</option>
-                                    <option value="D" ${data?.correct_answer === 'D' ? 'selected' : ''}>Đáp án D đúng</option>
-                                </select></div>`;
-                        } else if (val === 'short_answer') {
-                            area.innerHTML = `<input id="q-ans" value="${data?.correct_answer || ''}" placeholder="Đáp án đúng" class="w-full p-2 border rounded">`;
-                        } else if (val === 'true_false') {
-                            const tf = data?.tf_options || [{},{},{},{}];
-                            area.innerHTML = `<div class="space-y-1">${['a','b','c','d'].map((i, idx) => `
-                                <div class="flex gap-2">
-                                    <input id="tf-t-${i}" value="${tf[idx]?.label || ''}" class="flex-1 p-1 border rounded text-xs" placeholder="Mệnh đề ${i.toUpperCase()}">
-                                    <select id="tf-v-${i}" class="text-xs border rounded"><option value="true" ${tf[idx]?.is_true?'selected':''}>Đúng</option><option value="false" ${tf[idx]?.is_true===false?'selected':''}>Sai</option></select>
-                                </div>`).join('')}</div>`;
-                        } else area.innerHTML = `<p class="text-xs text-center italic text-gray-400">Tự luận không cần đáp án</p>`;
-                    };
-                    updateAddForm(isEdit ? editData.question_type : 'choice', editData);
-                },
-                preConfirm: () => {
-                    const content = document.getElementById('q-content').value.trim();
-                    if (!content) return Swal.showValidationMessage('Vui lòng nhập nội dung!');
-                    const type = document.getElementById('q-type').value;
-                    const result = { question_type: type, level: document.getElementById('q-level').value, content, solution_guide: document.getElementById('q-solution').value };
-                    if (type === 'choice') {
-                        result.options = { a: document.getElementById('opt-a').value, b: document.getElementById('opt-b').value, c: document.getElementById('opt-c').value, d: document.getElementById('opt-d').value };
-                        result.correct_answer = document.getElementById('opt-correct').value;
-                    } else if (type === 'true_false') {
-                        result.tf_options = ['a','b','c','d'].map(i => ({ label: document.getElementById(`tf-t-${i}`).value, is_true: document.getElementById(`tf-v-${i}`).value === 'true' }));
-                    } else if (type === 'short_answer') result.correct_answer = document.getElementById('q-ans').value;
-                    return result;
-                }
-            });
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Định hướng kỳ thi</label>
+                        <div class="flex gap-2">
+                            <select id="q-semester" class="flex-1 p-2 border rounded-xl">
+                                <option value="1" ${isEdit && editData.semester==='1'?'selected':''}>Học kỳ 1</option>
+                                <option value="2" ${isEdit && editData.semester==='2'?'selected':''}>Học kỳ 2</option>
+                            </select>
+                            <select id="q-category" class="flex-1 p-2 border rounded-xl">
+                                <option value="mid" ${isEdit && editData.exam_category==='mid'?'selected':''}>Giữa kỳ</option>
+                                <option value="final" ${isEdit && editData.exam_category==='final'?'selected':''}>Cuối kỳ</option>
+                                <option value="entrance" ${isEdit && editData.exam_category==='entrance'?'selected':''}>Thi Chuyển cấp</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-            if (formValues) {
-                const { error } = isEdit ? await supabaseClient.from('questions').update(formValues).eq('id', editData.id) : await supabaseClient.from('questions').insert([formValues]);
-                if (error) Swal.fire('Lỗi', error.message, 'error');
-                else { fetchQuestions(); Swal.fire('Thành công!', '', 'success'); }
-            }
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Khóa học</label>
+                        <input id="q-course" value="${isEdit ? (editData.course || '') : ''}" placeholder="VD: Toán 9 - Luyện thi vào 10" class="w-full p-2 border rounded-xl">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Chuyên đề (Dùng để trộn đề theo bài)</label>
+                        <input id="q-topic" value="${isEdit ? (editData.topic || '') : ''}" placeholder="VD: Hệ thức lượng, Căn thức..." class="w-full p-2 border rounded-xl">
+                    </div>
+                </div>
+
+                <textarea id="q-content" placeholder="Nội dung câu hỏi..." class="w-full p-3 border rounded-xl h-24">${isEdit ? editData.content : ''}</textarea>
+                <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed"></div>
+                <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20">${isEdit ? (editData.solution_guide || '') : ''}</textarea>
+            </div>`,
+        preConfirm: () => {
+            // ... (Logic cũ)
+            const result = { 
+                // ... 
+                course: document.getElementById('q-course').value,
+                topic: document.getElementById('q-topic').value,
+                semester: document.getElementById('q-semester').value,
+                exam_category: document.getElementById('q-category').value
+            };
+            return result;
         }
+    });
+}
 
         async function viewDetail(id) {
             Swal.fire({ title: 'Đang tải...', didOpen: () => Swal.showLoading() });
