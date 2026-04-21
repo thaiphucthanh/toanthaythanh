@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Đề Thi Tuyển Sinh - Toán thầy Thành</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+    .active-menu { background: #facc15 !important; color: #1e3a8a !important; }
+    .submenu { display: none; flex-direction: column; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+    .submenu.show { display: flex; margin-top: 5px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+    <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+      <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+        <div>
+          <div class="font-black text-lg leading-tight text-white">TOÁN</div>
+          <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+        </div>
+      </a>
+    </div>
+    
+    <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
+      <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+        <i class="fas fa-home w-5"></i>
+        <span class="font-bold">Trang Welcome</span>
+      </a>
+
+      <div class="menu-parent">
+        <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-users w-5 text-blue-300"></i>
+            <span class="font-bold">Quản lý người dùng</span>
+          </div>
+          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+        </div>
+        <div id="user-menu" class="submenu">
+          <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Danh sách người dùng</a>
+          <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Thêm mới</a>
+        </div>
+      </div>
+
+      <div class="menu-parent">
+        <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-book w-5 text-blue-300"></i>
+            <span class="font-bold">Quản lý khóa học</span>
+          </div>
+          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+        </div>
+        <div id="course-menu" class="submenu">
+          <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Danh sách khóa học</a>
+          <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">Thêm khóa học mới</a>
+        </div>
+      </div>
+
+      <div class="menu-parent">
+        <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
+            <span class="font-bold">Quản lý thi Online</span>
+          </div>
+          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+        </div>
+        <div id="exam-menu" class="submenu show">
+          <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+            <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
+          </a>
+          <a href="exam-generate.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
+            <i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi
+          </a>
+          <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+            <i class="fas fa-poll opacity-70"></i> Kết quả làm bài
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="p-4 border-t border-blue-800">
+      <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
+        <i class="fas fa-arrow-left"></i>
+        <span class="text-sm font-bold">Quay lại trang chủ</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+      <h2 class="text-xl font-black text-blue-900 uppercase">Tạo Đề Thi Tuyển Sinh</h2>
+    </header>
+
+    <div class="p-8 flex-1 overflow-y-auto bg-gray-50">
+      <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm p-8">
+
+        <!-- Tên đề thi -->
+        <div class="mb-10">
+          <label class="block text-sm font-bold text-gray-600 mb-2">TÊN ĐỀ THI</label>
+          <input id="exam-name" type="text" 
+                 class="w-full p-5 border border-gray-300 rounded-2xl text-xl font-medium focus:outline-none focus:border-blue-600"
+                 placeholder="Ví dụ: Đề thi tuyển sinh lớp 10 năm 2026 - Môn Toán">
+        </div>
+
+        <!-- 5 Câu hỏi -->
+        <div id="question-slots" class="space-y-8"></div>
+
+        <!-- Nút chức năng -->
+        <div class="mt-12 flex gap-4">
+          <button onclick="previewExam()" 
+                  class="flex-1 bg-white border-2 border-blue-900 text-blue-900 py-5 rounded-2xl font-bold text-lg hover:bg-blue-50">
+            <i class="fas fa-eye mr-2"></i> XEM TRƯỚC ĐỀ THI
+          </button>
+          <button onclick="saveExam()" 
+                  class="flex-1 bg-blue-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-blue-800">
+            <i class="fas fa-save mr-2"></i> LƯU ĐỀ THI
+          </button>
+          <button onclick="downloadExam()" 
+                  class="flex-1 bg-green-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-green-700">
+            <i class="fas fa-download mr-2"></i> TẢI ĐỀ VỀ
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = supabase.createClient(
+      "https://rznyagxrshwwocsvrabe.supabase.co",
+      "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5"
+    );
+
+    let selectedQuestions = new Array(5).fill(null);
+
+    async function loadCourses() {
+      const { data: courses } = await supabase.from('courses').select('id, course_name').order('course_name');
+      createQuestionSlots(courses);
+    }
+
+    function createQuestionSlots(courses) {
+      const container = document.getElementById('question-slots');
+      container.innerHTML = '';
+
+      for (let i = 0; i < 5; i++) {
+        const div = document.createElement('div');
+        div.className = "border border-gray-200 rounded-3xl p-6 bg-white";
+        div.innerHTML = `
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-10 h-10 bg-blue-900 text-white rounded-2xl flex items-center justify-center font-bold text-xl">${i+1}</div>
+            <h4 class="text-xl font-semibold text-gray-800">Câu hỏi ${i+1}</h4>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-2">KHÓA HỌC</label>
+              <select id="course-${i}" onchange="loadTopics(${i}, this.value)" 
+                      class="w-full p-4 border border-gray-300 rounded-2xl focus:border-blue-600">
+                <option value="">Chọn khóa học</option>
+                ${courses.map(c => `<option value="${c.id}">${c.course_name}</option>`).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-2">CHUYÊN ĐỀ</label>
+              <select id="topic-${i}" onchange="generateRandomQuestion(${i})" 
+                      class="w-full p-4 border border-gray-300 rounded-2xl focus:border-blue-600">
+                <option value="">Chọn chuyên đề</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="content-${i}" class="mt-6 p-6 bg-gray-50 border border-dashed border-gray-300 rounded-2xl min-h-[110px] text-gray-700 leading-relaxed">
+            Chưa có câu hỏi. Hãy chọn khóa học và chuyên đề.
+          </div>
+
+          <button onclick="regenerateQuestion(${i})" 
+                  class="mt-4 text-blue-600 hover:text-blue-700 flex items-center gap-2 text-sm font-medium">
+            <i class="fas fa-sync-alt"></i> Trộn câu hỏi khác
+          </button>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    async function loadTopics(slotIndex, courseId) {
+      if (!courseId) return;
+      const { data: topics } = await supabase
+        .from('topics')
+        .select('id, topic_name')
+        .eq('course_id', courseId)
+        .order('order_index');
+
+      const select = document.getElementById(`topic-${slotIndex}`);
+      select.innerHTML = '<option value="">Chọn chuyên đề</option>';
+      topics.forEach(t => {
+        const opt = new Option(t.topic_name, t.id);
+        select.add(opt);
+      });
+    }
+
+    async function generateRandomQuestion(slotIndex) {
+      const topicId = document.getElementById(`topic-${slotIndex}`).value;
+      if (!topicId) return;
+
+      const { data: questions } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('topic_id', topicId);
+
+      if (!questions || questions.length === 0) {
+        Swal.fire('Thông báo', 'Chuyên đề này chưa có câu hỏi.', 'info');
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * questions.length);
+      const q = questions[randomIndex];
+      selectedQuestions[slotIndex] = q;
+
+      document.getElementById(`content-${slotIndex}`).innerHTML = `
+        <div class="font-medium">${q.content}</div>
+        <div class="text-xs text-gray-500 mt-3">Loại: ${q.question_type === 'choice' ? 'Trắc nghiệm' : 'Tự luận'}</div>
+      `;
+    }
+
+    function regenerateQuestion(slotIndex) {
+      const topicSelect = document.getElementById(`topic-${slotIndex}`);
+      if (topicSelect.value) {
+        generateRandomQuestion(slotIndex);
+      } else {
+        Swal.fire('Chưa chọn chuyên đề', 'Vui lòng chọn chuyên đề trước', 'warning');
+      }
+    }
+
+    function previewExam() {
+      const name = document.getElementById('exam-name').value.trim() || "Đề thi tuyển sinh";
+      let html = `<h3 class="text-xl font-bold mb-6">${name}</h3>`;
+
+      selectedQuestions.forEach((q, i) => {
+        if (q) {
+          html += `
+            <div class="mb-8">
+              <p class="font-bold mb-2">Câu ${i+1}:</p>
+              <p class="text-gray-700">${q.content}</p>
+            </div>`;
+        }
+      });
+
+      Swal.fire({
+        title: 'Xem trước đề thi',
+        html: html,
+        width: '800px',
+        confirmButtonText: 'Đóng'
+      });
+    }
+
+    function downloadExam() {
+      const name = document.getElementById('exam-name').value.trim() || "De_thi_tuyen_sinh";
+      let content = `${name}\n\n`;
+      
+      selectedQuestions.forEach((q, i) => {
+        if (q) content += `Câu ${i+1}: ${q.content}\n\n`;
+      });
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name.replace(/ /g, '_')}.txt`;
+      a.click();
+      Swal.fire('Đã tải!', 'Đề thi đã được tải về dưới dạng file .txt', 'success');
+    }
+
+    async function saveExam() {
+      const name = document.getElementById('exam-name').value.trim();
+      if (!name) return Swal.fire('Lỗi', 'Vui lòng nhập tên đề thi', 'warning');
+
+      const validQ = selectedQuestions.filter(q => q !== null);
+      if (validQ.length === 0) return Swal.fire('Lỗi', 'Chưa có câu hỏi nào', 'warning');
+
+      Swal.fire('Thành công!', `Đề thi "${name}" đã được lưu (${validQ.length}/5 câu)`, 'success');
+    }
+
+    function toggleSubmenu(id, el) {
+      document.getElementById(id).classList.toggle('show');
+      el.querySelector('.arrow-icon').classList.toggle('rotate-180');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadCourses);
+  </script>
+</body>
+</html>
