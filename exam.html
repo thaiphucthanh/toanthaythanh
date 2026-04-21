@@ -241,15 +241,6 @@ async function openAddQuestionModal() {
         }
     }
 }
-            if (formValues) {
-                const { error } = await supabaseClient.from('questions').insert([formValues]);
-                if(error) Swal.fire('Lỗi', error.message, 'error');
-                else { 
-                    Swal.fire('Thành công', 'Đã thêm vào ngân hàng!', 'success');
-                    fetchQuestions();
-                }
-            }
-        }
 
         // Các hàm phụ hỗ trợ Sidebar
         function toggleSubmenu(id, element) {
