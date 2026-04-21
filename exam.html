@@ -16,8 +16,9 @@
         .sidebar-item:hover { background: rgba(255,255,255,0.1); }
         .active-menu { background: #facc15 !important; color: #1e3a8a !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
-        .submenu.show { max-height: 500px; margin-top: 5px; }
+        /* Fix Sidebar thụt: Dùng display thay vì max-height */
+        .submenu { display: none; flex-direction: column; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
+        .submenu.show { display: flex; margin-top: 5px; }
         .submenu a { transition: all 0.2s; border-left: 3px solid transparent; }
         .submenu a:hover { border-left: 3px solid #facc15; background: rgba(250, 204, 21, 0.1); padding-left: 3.5rem; }
         
@@ -52,7 +53,7 @@
             </a>
         </div>
 
-        <nav class="flex-1 mt-4 overflow-y-auto">
+        <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
             <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
                 <i class="fas fa-home w-5"></i>
                 <span class="font-bold">Trang Welcome</span>
@@ -93,15 +94,16 @@
                     </a>
                 </div>
             </div>
+
             <div class="menu-parent">
                 <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
                         <span class="font-bold">Quản lý thi Online</span>
                     </div>
-                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
                 </div>
-                <div id="exam-menu" class="submenu flex flex-col bg-black/20 rounded-lg mt-1 ml-2 overflow-hidden transition-all">
+                <div id="exam-menu" class="submenu show flex flex-col bg-black/20 rounded-lg mt-1 ml-2 overflow-hidden">
                     <a href="exam.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
                         <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
                     </a>
@@ -126,20 +128,20 @@
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
             <h2 class="text-xl font-black text-blue-900 uppercase">Ngân hàng đề thi</h2>
-            <button onclick="openAddQuestionModal()" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">
+            <button onclick="openQuestionModal()" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">
                 <i class="fas fa-plus mr-2"></i>Thêm câu hỏi mới
             </button>
         </header>
 
-        <div class="p-8 flex-1 overflow-y-auto bg-gray-50">
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
             <div class="max-w-6xl mx-auto">
                 <div class="mb-6">
                     <h3 class="text-lg font-black text-blue-900 uppercase tracking-tight">Danh sách câu hỏi</h3>
-                    <p class="text-sm text-gray-500 italic">Quản lý trắc nghiệm, đúng sai và tự luận</p>
+                    <p class="text-sm text-gray-500 italic">Quản lý trắc nghiệm, đúng sai và trả lời ngắn</p>
                 </div>
 
                 <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
-                    <table class="w-full text-left">
+                    <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
                                 <th class="p-5 pl-8">Phân loại</th>
@@ -148,8 +150,7 @@
                                 <th class="p-5 text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="question-table-body" class="divide-y divide-gray-50">
-                            </tbody>
+                        <tbody id="question-table-body" class="divide-y divide-gray-50"></tbody>
                     </table>
                 </div>
             </div>
@@ -162,16 +163,11 @@
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        // 1. Fetch Questions
         async function fetchQuestions() {
             const container = document.getElementById('question-table-body');
-            container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 italic">Đang tải ngân hàng câu hỏi...</td></tr>';
+            container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 italic">Đang tải ngân hàng...</td></tr>';
 
-            const { data: questions, error } = await supabaseClient
-                .from('questions')
-                .select('*')
-                .order('created_at', { ascending: false });
-
+            const { data: questions, error } = await supabaseClient.from('questions').select('*').order('created_at', { ascending: false });
             if (error) {
                 container.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Lỗi: ${error.message}</td></tr>`;
                 return;
@@ -202,12 +198,9 @@
                     <td class="p-5 text-[11px] uppercase">${levelLabels[q.level] || q.level}</td>
                     <td class="p-5">
                         <div class="flex justify-center gap-2">
-                            <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
-                                <i class="fas fa-trash-alt text-[10px]"></i>
-                            </button>
-                            <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center">
-                                <i class="fas fa-eye text-[10px]"></i>
-                            </button>
+                            <button onclick="deleteQuestion('${q.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                            <button onclick='editQuestion(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-edit text-[10px]"></i></button>
+                            <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-eye text-[10px]"></i></button>
                         </div>
                     </td>
                 `;
@@ -216,11 +209,86 @@
             if (window.MathJax) MathJax.typesetPromise();
         }
 
-        // 2. View Detail (SweetAlert2 + MathJax)
+        function editQuestion(data) { openQuestionModal(data); }
+
+        async function openQuestionModal(editData = null) {
+            const isEdit = !!editData;
+            const { value: formValues } = await Swal.fire({
+                title: isEdit ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới',
+                width: '800px',
+                html: `
+                    <div class="text-left space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <select id="q-type" class="p-2 border rounded-xl" onchange="updateAddForm(this.value)">
+                                <option value="choice" ${isEdit && editData.question_type==='choice'?'selected':''}>Trắc nghiệm</option>
+                                <option value="true_false" ${isEdit && editData.question_type==='true_false'?'selected':''}>Đúng/Sai</option>
+                                <option value="short_answer" ${isEdit && editData.question_type==='short_answer'?'selected':''}>Trả lời ngắn</option>
+                                <option value="essay" ${isEdit && editData.question_type==='essay'?'selected':''}>Tự luận</option>
+                            </select>
+                            <select id="q-level" class="p-2 border rounded-xl">
+                                <option value="easy" ${isEdit && editData.level==='easy'?'selected':''}>Nhận biết</option>
+                                <option value="medium" ${isEdit && editData.level==='medium'?'selected':''}>Thông hiểu</option>
+                                <option value="hard" ${isEdit && editData.level==='hard'?'selected':''}>Vận dụng</option>
+                            </select>
+                        </div>
+                        <textarea id="q-content" placeholder="Nội dung câu hỏi..." class="w-full p-3 border rounded-xl h-24">${isEdit ? editData.content : ''}</textarea>
+                        <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed"></div>
+                        <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20">${isEdit ? (editData.solution_guide || '') : ''}</textarea>
+                    </div>`,
+                didOpen: () => {
+                    window.updateAddForm = (val, data = null) => {
+                        const area = document.getElementById('q-dynamic-area');
+                        if (val === 'choice') {
+                            const opts = data?.options || {a:'', b:'', c:'', d:''};
+                            area.innerHTML = `<div class="grid grid-cols-2 gap-2">
+                                <input id="opt-a" value="${opts.a}" placeholder="A" class="p-2 border rounded">
+                                <input id="opt-b" value="${opts.b}" placeholder="B" class="p-2 border rounded">
+                                <input id="opt-c" value="${opts.c}" placeholder="C" class="p-2 border rounded">
+                                <input id="opt-d" value="${opts.d}" placeholder="D" class="p-2 border rounded">
+                                <select id="opt-correct" class="col-span-2 p-2 border rounded font-bold">
+                                    <option value="A" ${data?.correct_answer === 'A' ? 'selected' : ''}>Đáp án A đúng</option>
+                                    <option value="B" ${data?.correct_answer === 'B' ? 'selected' : ''}>Đáp án B đúng</option>
+                                    <option value="C" ${data?.correct_answer === 'C' ? 'selected' : ''}>Đáp án C đúng</option>
+                                    <option value="D" ${data?.correct_answer === 'D' ? 'selected' : ''}>Đáp án D đúng</option>
+                                </select></div>`;
+                        } else if (val === 'short_answer') {
+                            area.innerHTML = `<input id="q-ans" value="${data?.correct_answer || ''}" placeholder="Đáp án đúng" class="w-full p-2 border rounded">`;
+                        } else if (val === 'true_false') {
+                            const tf = data?.tf_options || [{},{},{},{}];
+                            area.innerHTML = `<div class="space-y-1">${['a','b','c','d'].map((i, idx) => `
+                                <div class="flex gap-2">
+                                    <input id="tf-t-${i}" value="${tf[idx]?.label || ''}" class="flex-1 p-1 border rounded text-xs" placeholder="Mệnh đề ${i.toUpperCase()}">
+                                    <select id="tf-v-${i}" class="text-xs border rounded"><option value="true" ${tf[idx]?.is_true?'selected':''}>Đúng</option><option value="false" ${tf[idx]?.is_true===false?'selected':''}>Sai</option></select>
+                                </div>`).join('')}</div>`;
+                        } else area.innerHTML = `<p class="text-xs text-center italic text-gray-400">Tự luận không cần đáp án</p>`;
+                    };
+                    updateAddForm(isEdit ? editData.question_type : 'choice', editData);
+                },
+                preConfirm: () => {
+                    const content = document.getElementById('q-content').value.trim();
+                    if (!content) return Swal.showValidationMessage('Vui lòng nhập nội dung!');
+                    const type = document.getElementById('q-type').value;
+                    const result = { question_type: type, level: document.getElementById('q-level').value, content, solution_guide: document.getElementById('q-solution').value };
+                    if (type === 'choice') {
+                        result.options = { a: document.getElementById('opt-a').value, b: document.getElementById('opt-b').value, c: document.getElementById('opt-c').value, d: document.getElementById('opt-d').value };
+                        result.correct_answer = document.getElementById('opt-correct').value;
+                    } else if (type === 'true_false') {
+                        result.tf_options = ['a','b','c','d'].map(i => ({ label: document.getElementById(`tf-t-${i}`).value, is_true: document.getElementById(`tf-v-${i}`).value === 'true' }));
+                    } else if (type === 'short_answer') result.correct_answer = document.getElementById('q-ans').value;
+                    return result;
+                }
+            });
+
+            if (formValues) {
+                const { error } = isEdit ? await supabaseClient.from('questions').update(formValues).eq('id', editData.id) : await supabaseClient.from('questions').insert([formValues]);
+                if (error) Swal.fire('Lỗi', error.message, 'error');
+                else { fetchQuestions(); Swal.fire('Thành công!', '', 'success'); }
+            }
+        }
+
         async function viewDetail(id) {
             Swal.fire({ title: 'Đang tải...', didOpen: () => Swal.showLoading() });
             const { data: q, error } = await supabaseClient.from('questions').select('*').eq('id', id).single();
-            
             if (error || !q) return Swal.fire('Lỗi', 'Không tìm thấy câu hỏi', 'error');
 
             let extraHtml = '';
@@ -229,7 +297,7 @@
                     <div class="p-2 border rounded ${q.correct_answer === l.toUpperCase() ? 'bg-green-100 border-green-500 font-bold' : 'bg-gray-50'}">
                         ${l.toUpperCase()}: ${q.options[l]}
                     </div>`).join('')}</div>`;
-            } else if (q.question_type === 'true_false') {
+            } else if (q.question_type === 'true_false' && q.tf_options) {
                 extraHtml = `<div class="mt-4 space-y-2 text-left font-medium">${q.tf_options.map(opt => `
                     <div class="flex justify-between border-b pb-1">
                         <span>${opt.label}</span>
@@ -240,104 +308,19 @@
             Swal.fire({
                 title: '<span class="text-blue-900 font-black uppercase text-sm">Chi tiết câu hỏi</span>',
                 width: '750px',
-                html: `
-                    <div class="text-left">
-                        <div class="p-4 bg-gray-50 rounded-2xl border text-lg text-gray-800">${q.content}</div>
-                        ${extraHtml}
-                        <div class="mt-4 p-4 bg-blue-50 rounded-xl text-sm italic text-gray-600">
-                            <b>Hướng dẫn giải:</b> ${q.solution_guide || 'Đang cập nhật...'}
-                        </div>
-                    </div>
-                `,
+                html: `<div class="text-left"><div class="p-4 bg-gray-50 rounded-2xl border text-lg text-gray-800">${q.content}</div>${extraHtml}<div class="mt-4 p-4 bg-blue-50 rounded-xl text-sm italic text-gray-600"><b>Lời giải:</b> ${q.solution_guide || 'Chưa có'}</div></div>`,
                 confirmButtonText: 'Đóng',
                 confirmButtonColor: '#1e3a8a',
                 didOpen: () => { if (window.MathJax) MathJax.typesetPromise(); }
             });
         }
 
-        // 3. Delete Question
         async function deleteQuestion(id) {
-            const res = await Swal.fire({
-                title: 'Xác nhận xóa?',
-                text: "Dữ liệu sẽ không thể khôi phục!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'Xóa ngay'
-            });
+            const res = await Swal.fire({ title: 'Xác nhận xóa?', text: "Dữ liệu sẽ mất vĩnh viễn!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa ngay' });
             if (res.isConfirmed) {
                 await supabaseClient.from('questions').delete().eq('id', id);
                 fetchQuestions();
                 Swal.fire('Đã xóa!', '', 'success');
-            }
-        }
-
-        // 4. Open Add Modal (Dynamic Form)
-        async function openAddQuestionModal() {
-            const { value: formValues } = await Swal.fire({
-                title: 'Thêm câu hỏi mới',
-                width: '800px',
-                html: `
-                    <div class="text-left space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <select id="q-type" class="p-2 border rounded-xl" onchange="updateAddForm(this.value)">
-                                <option value="choice">Trắc nghiệm</option>
-                                <option value="true_false">Đúng/Sai</option>
-                                <option value="short_answer">Trả lời ngắn</option>
-                                <option value="essay">Tự luận</option>
-                            </select>
-                            <select id="q-level" class="p-2 border rounded-xl">
-                                <option value="easy">Nhận biết</option>
-                                <option value="medium">Thông hiểu</option>
-                                <option value="hard">Vận dụng</option>
-                            </select>
-                        </div>
-                        <textarea id="q-content" placeholder="Nội dung câu hỏi (Dùng $ $ cho công thức Toán)" class="w-full p-3 border rounded-xl h-24"></textarea>
-                        <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed">
-                            <div class="grid grid-cols-2 gap-2">
-                                <input id="opt-a" placeholder="A" class="p-2 border rounded">
-                                <input id="opt-b" placeholder="B" class="p-2 border rounded">
-                                <input id="opt-c" placeholder="C" class="p-2 border rounded">
-                                <input id="opt-d" placeholder="D" class="p-2 border rounded">
-                                <select id="opt-correct" class="col-span-2 p-2 border rounded font-bold"><option value="A">Đán án A đúng</option><option value="B">Đán án B đúng</option><option value="C">Đán án C đúng</option><option value="D">Đán án D đúng</option></select>
-                            </div>
-                        </div>
-                        <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20"></textarea>
-                    </div>
-                `,
-                didOpen: () => {
-                    window.updateAddForm = (val) => {
-                        const area = document.getElementById('q-dynamic-area');
-                        if (val === 'choice') area.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="opt-a" placeholder="A" class="p-2 border rounded"><input id="opt-b" placeholder="B" class="p-2 border rounded"><input id="opt-c" placeholder="C" class="p-2 border rounded"><input id="opt-d" placeholder="D" class="p-2 border rounded"><select id="opt-correct" class="col-span-2 p-2 border rounded font-bold"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
-                        else if (val === 'short_answer') area.innerHTML = `<input id="q-ans" placeholder="Đáp án đúng" class="w-full p-2 border rounded">`;
-                        else if (val === 'true_false') area.innerHTML = `<div class="space-y-1">${['a','b','c','d'].map(i => `<div class="flex gap-2"><input id="tf-t-${i}" class="flex-1 p-1 border rounded text-xs" placeholder="Mệnh đề ${i.toUpperCase()}"><select id="tf-v-${i}" class="text-xs border rounded"><option value="true">Đúng</option><option value="false">Sai</option></select></div>`).join('')}</div>`;
-                        else area.innerHTML = `<p class="text-xs text-center italic text-gray-400">Câu hỏi tự luận không cần nhập đáp án mẫu</p>`;
-                    }
-                },
-                preConfirm: () => {
-                    const type = document.getElementById('q-type').value;
-                    const result = {
-                        question_type: type,
-                        level: document.getElementById('q-level').value,
-                        content: document.getElementById('q-content').value,
-                        solution_guide: document.getElementById('q-solution').value
-                    };
-                    if (type === 'choice') {
-                        result.options = { a: document.getElementById('opt-a').value, b: document.getElementById('opt-b').value, c: document.getElementById('opt-c').value, d: document.getElementById('opt-d').value };
-                        result.correct_answer = document.getElementById('opt-correct').value;
-                    } else if (type === 'true_false') {
-                        result.tf_options = ['a','b','c','d'].map(i => ({ label: document.getElementById(`tf-t-${i}`).value, is_true: document.getElementById(`tf-v-${i}`).value === 'true' }));
-                    } else if (type === 'short_answer') {
-                        result.correct_answer = document.getElementById('q-ans').value;
-                    }
-                    return result;
-                }
-            });
-
-            if (formValues) {
-                const { error } = await supabaseClient.from('questions').insert([formValues]);
-                if (error) Swal.fire('Lỗi', error.message, 'error');
-                else { fetchQuestions(); Swal.fire('Thành công', '', 'success'); }
             }
         }
 
