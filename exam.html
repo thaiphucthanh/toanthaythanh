@@ -114,92 +114,133 @@
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        // Hàm mở Modal thêm câu hỏi (Sử dụng SweetAlert2 để giữ Sidebar không bị mất)
-        async function openAddQuestionModal() {
-            const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-900 font-black uppercase">Thêm câu hỏi mới</span>',
-                width: '800px',
-                html: `
-                    <div class="text-left space-y-4 p-2">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Loại câu hỏi</label>
-                                <select id="swal-type" class="w-full p-3 rounded-xl border border-gray-200" onchange="window.updateFormType(this.value)">
-                                    <option value="choice">Trắc nghiệm (4 lựa chọn)</option>
-                                    <option value="true_false">Trắc nghiệm Đúng/Sai</option>
-                                    <option value="short_answer">Trả lời ngắn</option>
-                                    <option value="essay">Tự luận</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Mức độ</label>
-                                <select id="swal-level" class="w-full p-3 rounded-xl border border-gray-200">
-                                    <option value="easy">Nhận biết</option>
-                                    <option value="medium">Thông hiểu</option>
-                                    <option value="hard">Vận dụng</option>
-                                </select>
-                            </div>
-                        </div>
+        // ... (Giữ nguyên phần khai báo SB_URL, SB_KEY, supabaseClient) ...
 
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Nội dung câu hỏi</label>
-                            <textarea id="swal-content" class="w-full p-3 rounded-xl border border-gray-200 h-24" placeholder="Nhập đề bài..."></textarea>
-                        </div>
-
-                        <div id="swal-dynamic-area">
-                            <div class="grid grid-cols-2 gap-2">
-                                <input id="swal-a" placeholder="A. Đáp án" class="p-2 border rounded-lg">
-                                <input id="swal-b" placeholder="B. Đáp án" class="p-2 border rounded-lg">
-                                <input id="swal-c" placeholder="C. Đáp án" class="p-2 border rounded-lg">
-                                <input id="swal-d" placeholder="D. Đáp án" class="p-2 border rounded-lg">
-                                <select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold">
-                                    <option value="A">Đúng: A</option><option value="B">Đúng: B</option>
-                                    <option value="C">Đúng: C</option><option value="D">Đúng: D</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Lời giải chi tiết</label>
-                            <textarea id="swal-solution" class="w-full p-3 rounded-xl border border-gray-200 h-20"></textarea>
-                        </div>
+async function openAddQuestionModal() {
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-blue-900 font-black uppercase tracking-tight">Thêm câu hỏi mới</span>',
+        width: '850px',
+        html: `
+            <div class="text-left space-y-4 p-2 overflow-x-hidden">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase italic">Loại câu hỏi</label>
+                        <select id="swal-type" class="w-full p-3 rounded-xl border border-gray-200 font-bold text-blue-900" onchange="window.updateFormType(this.value)">
+                            <option value="choice">Trắc nghiệm (4 lựa chọn)</option>
+                            <option value="true_false">Trắc nghiệm Đúng/Sai</option>
+                            <option value="short_answer">Trả lời ngắn</option>
+                            <option value="essay">Tự luận</option>
+                        </select>
                     </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Lưu vào hệ thống',
-                confirmButtonColor: '#1e3a8a',
-                didOpen: () => {
-                    // Hàm phụ để thay đổi nội dung Modal khi chọn loại câu hỏi khác nhau
-                    window.updateFormType = (type) => {
-                        const area = document.getElementById('swal-dynamic-area');
-                        if(type === 'choice') {
-                            area.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="swal-a" placeholder="A" class="p-2 border rounded-lg"><input id="swal-b" placeholder="B" class="p-2 border rounded-lg"><input id="swal-c" placeholder="C" class="p-2 border rounded-lg"><input id="swal-d" placeholder="D" class="p-2 border rounded-lg"><select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
-                        } else if(type === 'short_answer') {
-                            area.innerHTML = `<input id="swal-short" placeholder="Nhập đáp án số hoặc chữ ngắn..." class="w-full p-3 border rounded-xl font-bold text-blue-600">`;
-                        } else if(type === 'true_false') {
-                            area.innerHTML = `<p class="text-[10px] italic text-orange-500">Mặc định: Nhập 4 ý đúng sai vào nội dung, cách nhau bằng dấu gạch ngang.</p>`;
-                        } else {
-                            area.innerHTML = `<p class="text-[10px] italic text-blue-500">Loại tự luận: Học sinh sẽ trình bày bằng văn bản hoặc hình ảnh.</p>`;
-                        }
-                    }
-                },
-                preConfirm: () => {
-                    // Thu thập dữ liệu từ Modal
-                    const type = document.getElementById('swal-type').value;
-                    let data = {
-                        question_type: type,
-                        level: document.getElementById('swal-level').value,
-                        content: document.getElementById('swal-content').value,
-                        solution_guide: document.getElementById('swal-solution').value
-                    };
-                    if(type === 'choice') {
-                        data.options = { a: document.getElementById('swal-a').value, b: document.getElementById('swal-b').value, c: document.getElementById('swal-c').value, d: document.getElementById('swal-d').value };
-                        data.correct_answer = document.getElementById('swal-correct').value;
-                    }
-                    return data;
-                }
-            });
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase italic">Mức độ</label>
+                        <select id="swal-level" class="w-full p-3 rounded-xl border border-gray-200">
+                            <option value="easy">Nhận biết</option>
+                            <option value="medium" selected>Thông hiểu</option>
+                            <option value="hard">Vận dụng</option>
+                        </select>
+                    </div>
+                </div>
 
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase italic">Nội dung câu hỏi (Đề bài)</label>
+                    <textarea id="swal-content" class="w-full p-3 rounded-xl border border-gray-200 h-20" placeholder="Nhập đề bài tổng quát..."></textarea>
+                </div>
+
+                <div id="swal-dynamic-area" class="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="swal-a" placeholder="Phương án A" class="p-2 border rounded-lg text-sm">
+                        <input id="swal-b" placeholder="Phương án B" class="p-2 border rounded-lg text-sm">
+                        <input id="swal-c" placeholder="Phương án C" class="p-2 border rounded-lg text-sm">
+                        <input id="swal-d" placeholder="Phương án D" class="p-2 border rounded-lg text-sm">
+                        <select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold text-blue-800 bg-white">
+                            <option value="A">Đáp án đúng là: A</option>
+                            <option value="B">Đáp án đúng là: B</option>
+                            <option value="C">Đáp án đúng là: C</option>
+                            <option value="D">Đáp án đúng là: D</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase italic">Lời giải chi tiết / Đáp án mẫu</label>
+                    <textarea id="swal-solution" class="w-full p-3 rounded-xl border border-gray-200 h-20" placeholder="Hướng dẫn giải cho học sinh..."></textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Lưu vào ngân hàng',
+        confirmButtonColor: '#1e3a8a',
+        didOpen: () => {
+            window.updateFormType = (type) => {
+                const area = document.getElementById('swal-dynamic-area');
+                if(type === 'choice') {
+                    area.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="swal-a" placeholder="A" class="p-2 border rounded-lg text-sm"><input id="swal-b" placeholder="B" class="p-2 border rounded-lg text-sm"><input id="swal-c" placeholder="C" class="p-2 border rounded-lg text-sm"><input id="swal-d" placeholder="D" class="p-2 border rounded-lg text-sm"><select id="swal-correct" class="col-span-2 p-2 border rounded-lg font-bold bg-white text-blue-800"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
+                } else if(type === 'short_answer') {
+                    area.innerHTML = `<div><label class="text-[10px] font-bold text-blue-600 uppercase">Đáp án số/chữ ngắn</label><input id="swal-short" placeholder="Ví dụ: 10 hoặc -5" class="w-full p-3 border rounded-xl font-black text-blue-900 text-lg"></div>`;
+                } else if(type === 'true_false') {
+                    area.innerHTML = `
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-orange-600 uppercase">Thiết lập 4 ý Đúng/Sai</label>
+                            ${['a', 'b', 'c', 'd'].map(l => `
+                                <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
+                                    <span class="font-black text-orange-500 w-4">${l.toUpperCase()}</span>
+                                    <input id="tf-t-${l}" placeholder="Nội dung mệnh đề ${l}..." class="flex-1 text-sm border-none outline-none focus:ring-0">
+                                    <select id="tf-a-${l}" class="bg-gray-100 text-[10px] font-bold p-1 rounded">
+                                        <option value="true">Đúng</option><option value="false">Sai</option>
+                                    </select>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                } else {
+                    area.innerHTML = `<div class="text-center p-4"><i class="fas fa-pen-nib text-blue-300 text-3xl mb-2"></i><p class="text-xs italic text-gray-500 font-medium">Hệ thống sẽ ghi nhận đây là câu hỏi Tự luận. Học sinh sẽ làm bài vào ô trình bày hoặc tải ảnh lên.</p></div>`;
+                }
+            }
+        },
+        preConfirm: () => {
+            const type = document.getElementById('swal-type').value;
+            let data = {
+                question_type: type,
+                level: document.getElementById('swal-level').value,
+                content: document.getElementById('swal-content').value,
+                solution_guide: document.getElementById('swal-solution').value
+            };
+
+            if(type === 'choice') {
+                data.options = { 
+                    a: document.getElementById('swal-a').value, 
+                    b: document.getElementById('swal-b').value, 
+                    c: document.getElementById('swal-c').value, 
+                    d: document.getElementById('swal-d').value 
+                };
+                data.correct_answer = document.getElementById('swal-correct').value;
+            } else if(type === 'short_answer') {
+                data.correct_answer = document.getElementById('swal-short').value;
+            } else if(type === 'true_false') {
+                data.tf_options = ['a', 'b', 'c', 'd'].map(l => ({
+                    label: document.getElementById(`tf-t-${l}`).value,
+                    is_true: document.getElementById(`tf-a-${l}`).value === 'true'
+                }));
+            }
+            
+            // Kiểm tra nội dung đề bài không được để trống
+            if (!data.content) {
+                Swal.showValidationMessage('Vui lòng nhập nội dung đề bài!');
+            }
+            return data;
+        }
+    });
+
+    if (formValues) {
+        Swal.fire({ title: 'Đang lưu...', didOpen: () => Swal.showLoading() });
+        const { error } = await supabaseClient.from('questions').insert([formValues]);
+        if(error) Swal.fire('Lỗi', error.message, 'error');
+        else { 
+            Swal.fire({ icon: 'success', title: 'Đã lưu!', text: 'Câu hỏi đã được thêm vào ngân hàng.', timer: 1500 });
+            fetchQuestions(); // Tải lại danh sách
+        }
+    }
+}
             if (formValues) {
                 const { error } = await supabaseClient.from('questions').insert([formValues]);
                 if(error) Swal.fire('Lỗi', error.message, 'error');
