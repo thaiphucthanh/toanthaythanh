@@ -8,7 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+
+        /* Fix footer luôn sát đáy */
+        html, body { height: 100%; margin: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main { flex: 1; }
 
         .dropdown-user {
             position: absolute; top: 120%; right: 0; width: 220px;
@@ -21,21 +31,22 @@
         .item-dropdown {
             padding: 12px 20px; font-size: 14px; font-weight: 600;
             color: #374151; transition: all 0.2s; display: flex; align-items: center;
+            text-decoration: none;
         }
         .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
         .divider { height: 1px; background: #eee; margin: 5px 0; }
-        
+
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
         .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-        .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; }
-        .item-menu { font-weight: bold; font-size: 15px; }
-        .cum-logo { display: flex; align-items: center; gap: 10px; }
+        .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; margin: 0; }
+        .item-menu { font-weight: bold; font-size: 15px; color: white; text-decoration: none; }
+        .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .anh-dai-dien-logo { width: 50px; height: 50px; border-radius: 50%; }
         .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .ten-thuong-hieu-nho { font-size: 14px; color: #6b7280; font-weight: bold; }
+        .ten-thuong-hieu-nho { font-size: 10px; color: #6b7280; font-weight: bold; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
 
     <header class="bg-white shadow-md sticky top-0 z-[1000]">
         <div class="khung-trang flex items-center justify-between py-4">
@@ -43,12 +54,13 @@
                 <img src="logo.png" class="anh-dai-dien-logo border border-blue-100">
                 <div>
                     <div class="ten-thuong-hieu-to tracking-tighter uppercase italic">Toán</div>
-                    <div class="ten-thuong-hieu-nho uppercase tracking-widest text-[10px]">Thầy Thành</div>
+                    <div class="ten-thuong-hieu-nho uppercase tracking-widest">Thầy Thành</div>
                 </div>
             </a>
 
-            <div class="vung-tim-kiem hidden md:block flex-1 max-w-md mx-10">
-                <input type="text" id="search-course" placeholder="Tìm khóa học của bạn..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="hidden md:block flex-1 max-w-md mx-10">
+                <input type="text" id="search-course" placeholder="Tìm khóa học của bạn..."
+                    class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="cum-tai-khoan relative" id="user-section">
@@ -82,11 +94,11 @@
             </div>
         </div>
     </main>
-<!-- FOOTER -->
+
+    <!-- FOOTER -->
     <footer style="background: #1e3a8a; color: white; padding: 3rem 0 1.5rem;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2.5rem; margin-bottom: 2.5rem;">
-
                 <div>
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
                         <div style="width: 44px; height: 44px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #1e3a8a;">T</div>
@@ -130,7 +142,7 @@
             </div>
         </div>
     </footer>
-    
+
     <script id="user-logged-template" type="text/template">
         <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
             <div class="text-right hidden md:block">
@@ -138,7 +150,6 @@
                 <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest italic">{role_text}</div>
             </div>
             <img src="logo.png" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm">
-            
             <div class="dropdown-user shadow-2xl" id="dropdownUser">
                 {admin_option}
                 <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i> Thông tin cá nhân</a>
@@ -159,60 +170,34 @@
 
         function checkLogin() {
             const data = localStorage.getItem('user');
-            if (!data) {
-                window.location.href = 'login.html';
-                return null;
-            }
+            if (!data) { window.location.href = 'login.html'; return null; }
             userLocal = JSON.parse(data);
-            
-            const userSection = document.getElementById('user-section');
+
             document.getElementById('welcome-message').innerText = `Chào mừng ${userLocal.fullname} quay trở lại học tập!`;
-            
+
             let template = document.getElementById('user-logged-template').innerHTML;
             let adminOption = userLocal.role === 'admin' ? `
                 <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
                     <i class="fas fa-user-shield mr-3"></i> TRANG QUẢN TRỊ
-                </a>
-                <div class="divider"></div>` : '';
-            
-            template = template.replace('{fullname}', userLocal.fullname)
-                               .replace('{role_text}', userLocal.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
-                               .replace('{admin_option}', adminOption);
-            userSection.innerHTML = template;
+                </a><div class="divider"></div>` : '';
+            template = template
+                .replace('{fullname}', userLocal.fullname)
+                .replace('{role_text}', userLocal.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
+                .replace('{admin_option}', adminOption);
+            document.getElementById('user-section').innerHTML = template;
             return userLocal;
         }
 
         async function loadMyCourses() {
             const courseContainer = document.getElementById('course-grid');
             try {
-                // 1. KIỂM TRA DỮ LIỆU ĐĂNG NHẬP (Cực kỳ quan trọng)
-                const rawData = localStorage.getItem('user');
-                console.log("Dữ liệu thô từ LocalStorage:", rawData);
-
-                if (!rawData) {
-                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold uppercase p-10 bg-white rounded-3xl shadow-sm">
-                        Lỗi: Em chưa đăng nhập hoặc phiên làm việc đã hết hạn.<br>
-                        <a href="login.html" class="text-blue-600 underline mt-2 block">Quay lại trang đăng nhập</a>
-                    </p>`;
-                    return;
-                }
-
-                const user = JSON.parse(rawData);
-                // Tìm ID (Thử nhiều trường hợp nếu Thầy lưu cấu trúc khác nhau)
-                const userId = user.id || user.uid || (user.data && user.data.id);
-
+                const userId = userLocal.id || userLocal.uid || (userLocal.data && userLocal.data.id);
                 if (!userId) {
-                    console.error("User object:", user);
-                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold uppercase p-10 bg-white rounded-3xl shadow-sm">
-                        Lỗi: Không tìm thấy mã định danh (ID) trong dữ liệu đăng nhập.<br>
-                        <span class="text-gray-400 text-xs font-medium">Thầy kiểm tra lại hàm lưu dữ liệu ở trang Login nhé!</span>
-                    </p>`;
+                    courseContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold p-10 bg-white rounded-3xl">
+                        Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.</p>`;
                     return;
                 }
 
-                console.log("Đã xác định được ID người dùng:", userId);
-
-                // 2. TRUY VẤN BẢNG ĐĂNG KÝ (course_enrollments)
                 const { data: enrolls, error: err1 } = await supabaseClient
                     .from('course_enrollments')
                     .select('course_id')
@@ -223,7 +208,7 @@
                 if (!enrolls || enrolls.length === 0) {
                     courseContainer.innerHTML = `
                         <div class="col-span-full text-center py-20 bg-white rounded-[40px] border-2 border-dashed">
-                            <i class="fas fa-book-reader text-5xl text-gray-200 mb-4"></i>
+                            <i class="fas fa-book-reader text-5xl text-gray-200 mb-4 block"></i>
                             <div class="text-gray-400 font-bold italic uppercase tracking-widest px-10">
                                 Em chưa được cấp quyền khóa học nào.<br>
                                 <span class="text-blue-900 not-italic text-sm">Hãy liên hệ Thầy Thành để được vào lớp nhé!</span>
@@ -233,8 +218,6 @@
                 }
 
                 const listIds = enrolls.map(item => item.course_id);
-
-                // 3. TRUY VẤN CHI TIẾT KHÓA HỌC (Sử dụng thumbnail_url)
                 const { data: courses, error: err2 } = await supabaseClient
                     .from('courses')
                     .select('id, course_name, description, thumbnail_url')
@@ -242,19 +225,19 @@
 
                 if (err2) throw err2;
 
-                // 4. HIỂN THỊ
                 courseContainer.innerHTML = courses.map(course => `
                     <div class="bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                         <div class="aspect-video overflow-hidden bg-gray-100">
-                            <img src="${course.thumbnail_url || 'logo.png'}" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                            <img src="${course.thumbnail_url || 'logo.png'}"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                  onerror="this.src='logo.png'">
                         </div>
                         <div class="p-8">
                             <div class="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-2 italic">Toán Thầy Thành</div>
                             <h3 class="text-xl font-black text-blue-900 mb-3 uppercase tracking-tighter line-clamp-1">${course.course_name}</h3>
                             <p class="text-gray-500 text-xs line-clamp-2 mb-6 font-medium">${course.description || 'Học cùng Thầy Thành để bứt phá điểm số.'}</p>
-                            <a href="lesson-detail.html?course_id=${course.id}" class="inline-flex items-center justify-center w-full py-4 bg-blue-900 text-white rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-800 transition-colors shadow-lg">
+                            <a href="lesson-detail.html?course_id=${course.id}"
+                               class="inline-flex items-center justify-center w-full py-4 bg-blue-900 text-white rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-800 transition-colors shadow-lg">
                                 Vào học ngay <i class="fas fa-arrow-right ml-2 text-[9px]"></i>
                             </a>
                         </div>
@@ -262,9 +245,9 @@
                 `).join('');
 
             } catch (err) {
-                console.error("Lỗi chi tiết:", err);
+                console.error("Lỗi:", err);
                 courseContainer.innerHTML = `<div class="col-span-full text-center p-10 bg-red-50 rounded-3xl">
-                    <p class="text-red-500 font-bold uppercase">LỖI KẾT NỐI HỆ THỐNG</p>
+                    <p class="text-red-500 font-bold uppercase">Lỗi kết nối hệ thống</p>
                     <p class="text-gray-500 text-xs mt-2">${err.message}</p>
                 </div>`;
             }
@@ -276,21 +259,14 @@
         }
 
         function logout() {
-            if(confirm("Thầy muốn đăng xuất hệ thống?")) {
+            if (confirm("Thầy muốn đăng xuất hệ thống?")) {
                 localStorage.removeItem('user');
                 window.location.href = 'trangchu.html';
             }
         }
 
-        window.onload = () => {
-            if(checkLogin()) {
-                loadMyCourses();
-            }
-        };
-
-        window.onclick = () => {
-            document.getElementById('dropdownUser')?.classList.remove('active');
-        };
+        window.onload = () => { if (checkLogin()) loadMyCourses(); };
+        window.onclick = () => { document.getElementById('dropdownUser')?.classList.remove('active'); };
     </script>
 </body>
 </html>
