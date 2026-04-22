@@ -38,7 +38,7 @@
         .toggle-switch input:checked ~ .toggle-thumb { left: 25px; }
 
         /* Status badge */
-        .badge-open { background: #dcfce7; color: #166534; }
+        .badge-Active { background: #dcfce7; color: #166534; }
         .badge-Inactive { background: #f1f5f9; color: #64748b; }
     </style>
 </head>
@@ -116,9 +116,9 @@
             </div>
             <div class="flex items-center gap-3">
                 <!-- Nút mở/khóa tất cả -->
-                <button onclick="toggleAll('open')"
+                <button onclick="toggleAll('Active')"
                     class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
-                    <i class="fas fa-lock-open mr-1"></i> Mở tất cả
+                    <i class="fas fa-lock-Active mr-1"></i> Mở tất cả
                 </button>
                 <button onclick="toggleAll('Inactive')"
                     class="px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">
@@ -151,7 +151,7 @@
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Tổng bài học</div>
                     </div>
                     <div class="bg-white rounded-2xl p-4 border border-green-100 text-center">
-                        <div class="text-2xl font-black text-green-600" id="stat-open">--</div>
+                        <div class="text-2xl font-black text-green-600" id="stat-Active">--</div>
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div>
                     </div>
                     <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
@@ -226,13 +226,13 @@
             }
 
             tbody.innerHTML = currentLessons.map((l, index) => {
-                const isOpen = l.status === 'open';
+                const isActive = l.status === 'Active';
                 return `
-                <tr class="hover:bg-blue-50/20 transition-all ${isOpen ? '' : 'opacity-70'}">
+                <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}">
                     <td class="p-5 pl-8">
                         <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-full ${isOpen ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
-                                ${isOpen ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
+                            <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                                ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
                             </div>
                             <div>
                                 <div class="font-bold text-blue-900">${l.title}</div>
@@ -250,13 +250,13 @@
                     </td>
                     <td class="p-5">
                         <div class="flex flex-col items-center gap-1">
-                            <label class="toggle-switch" title="${isOpen ? 'Nhấn để khóa bài' : 'Nhấn để mở bài'}">
-                                <input type="checkbox" ${isOpen ? 'checked' : ''} onchange="toggleLessonStatus('${l.id}', this.checked)">
+                            <label class="toggle-switch" title="${isActive ? 'Nhấn để khóa bài' : 'Nhấn để mở bài'}">
+                                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleLessonStatus('${l.id}', this.checked)">
                                 <div class="toggle-track"></div>
                                 <div class="toggle-thumb"></div>
                             </label>
-                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isOpen ? 'badge-open' : 'badge-Inactive'}">
-                                ${isOpen ? 'Đang mở' : 'Đang khóa'}
+                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isActive ? 'badge-Active' : 'badge-Inactive'}">
+                                ${isActive ? 'Đang mở' : 'Đang khóa'}
                             </span>
                         </div>
                     </td>
@@ -278,7 +278,7 @@
         // TOGGLE TỪNG BÀI
         // =====================
         async function toggleLessonStatus(lessonId, isChecked) {
-            const newStatus = isChecked ? 'open' : 'Inactive';
+            const newStatus = isChecked ? 'Active' : 'Inactive';
             const { error } = await supabaseClient
                 .from('lessons').update({ status: newStatus }).eq('id', lessonId);
             if (error) {
@@ -296,15 +296,15 @@
         // MỞ / KHÓA TẤT CẢ
         // =====================
         async function toggleAll(status) {
-            const label = status === 'open' ? 'mở tất cả bài học' : 'khóa tất cả bài học';
+            const label = status === 'Active' ? 'mở tất cả bài học' : 'khóa tất cả bài học';
             const confirm = await Swal.fire({
-                title: status === 'open' ? 'Mở tất cả?' : 'Khóa tất cả?',
+                title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
                 text: `Thầy có chắc muốn ${label} trong chuyên đề này không?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Xác nhận',
                 cancelButtonText: 'Hủy',
-                confirmButtonColor: status === 'open' ? '#16a34a' : '#1e3a8a',
+                confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a',
             });
             if (!confirm.isConfirmed) return;
 
@@ -321,10 +321,10 @@
         // =====================
         function updateStats(lessons) {
             const total = lessons.length;
-            const open = lessons.filter(l => l.status === 'open').length;
-            const Inactive = total - open;
+            const Active = lessons.filter(l => l.status === 'Active').length;
+            const Inactive = total - Active;
             document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-open').innerText = open;
+            document.getElementById('stat-Active').innerText = Active;
             document.getElementById('stat-Inactive').innerText = Inactive;
         }
 
@@ -352,7 +352,7 @@
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái ban đầu</label>
                             <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold">
                                 <option value="Inactive">🔒 Không hoạt động (học sinh chưa xem được)</option>
-                                <option value="open">✅ Mở ngay</option>
+                                <option value="Active">✅ Mở ngay</option>
                             </select>
                         </div>
                         <div>
@@ -379,7 +379,7 @@
 
             if (!formValues) return;
 
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
 
             let finalDocs = [];
             if (formValues.file) {
@@ -412,7 +412,7 @@
         // CHỈNH SỬA BÀI HỌC
         // =====================
         async function editLesson(id) {
-            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
             const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
             if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
 
@@ -435,8 +435,8 @@
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái</label>
                             <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold">
-                                <option value="Inactive" ${lesson.status !== 'open' ? 'selected' : ''}>🔒 Không hoạt động (học sinh chưa xem được)</option>
-                                <option value="open" ${lesson.status === 'open' ? 'selected' : ''}>✅ Mở</option>
+                                <option value="Inactive" ${lesson.status !== 'Active' ? 'selected' : ''}>🔒 Không hoạt động (học sinh chưa xem được)</option>
+                                <option value="Active" ${lesson.status === 'Active' ? 'selected' : ''}>✅ Mở</option>
                             </select>
                         </div>
                         <div>
@@ -464,7 +464,7 @@
 
             if (!formValues) return;
 
-            Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
 
             let updatedData = {
                 title: formValues.title,
