@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh sách học viên - Toán thầy Thành</title>
+    <title>Danh sách học viên - Toán Thầy Thành</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -17,10 +17,25 @@
         .submenu.show { max-height: 500px; margin-top: 5px; }
         .rotate-180 { transform: rotate(180deg); }
 
-        /* Modal Style */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 30px; width: 400px; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; border-radius: 24px; width: 560px;
+            max-height: 90vh; overflow-y: auto;
+            animation: slideIn 0.25s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Tabs */
+        .tab-btn { flex: 1; padding: 12px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; color: #94a3b8; transition: all 0.2s; }
+        .tab-btn.active { color: #1e3a8a; border-bottom-color: #1e3a8a; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -35,6 +50,501 @@
                 </div>
             </a>
         </div>
+        <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
+            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+                <i class="fas fa-home w-5 text-blue-300"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-users w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý người dùng</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+                </div>
+                <div id="user-menu" class="submenu show">
+                    <a href="user-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
+                        <i class="fas fa-list-ul mr-2"></i> Danh sách người dùng
+                    </a>
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                        <i class="fas fa-user-plus mr-2"></i> Thêm mới
+                    </a>
+                </div>
+            </div>
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý khóa học</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="course-menu" class="submenu">
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới</a>
+                </div>
+            </div>
+            <div class="menu-parent">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
+                        <span class="font-bold">Quản lý thi Online</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+                </div>
+                <div id="exam-menu" class="submenu">
+                    <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi</a>
+                    <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi</a>
+                    <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-poll opacity-70"></i> Kết quả làm bài</a>
+                </div>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-blue-800">
+            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
+                <i class="fas fa-arrow-left"></i>
+                <span class="text-sm font-bold">Quay lại trang chủ</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase">Danh sách tài khoản</h2>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-blue-900">Chào Thầy Thành</span>
+                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 p-0.5">
+            </div>
+        </header>
+
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
+            <div class="bg-white rounded-[30px] shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-50 flex flex-wrap gap-4 justify-between items-center">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Tìm tên, email, sdt..."
+                               class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="fetchUsers()" class="p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center gap-2">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                            <span>Tải lại</span>
+                        </button>
+                        <a href="add-user.html" class="p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20">
+                            <i class="fas fa-plus"></i>
+                            <span>Thêm mới</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50/50">
+                                <th class="p-5 pl-8 text-[10px] font-black text-blue-900 uppercase tracking-widest">Học viên</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Liên hệ</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Vai trò</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+                <div id="loading" class="p-20 text-center">
+                    <i class="fas fa-circle-notch animate-spin text-4xl text-blue-900"></i>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL CHI TIẾT NGƯỜI DÙNG -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal-box custom-scrollbar">
+            <!-- Header modal -->
+            <div class="bg-blue-900 p-5 rounded-t-3xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="modal-avatar" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white text-sm"></div>
+                    <div>
+                        <div id="modal-header-name" class="font-black text-white text-sm"></div>
+                        <div id="modal-header-email" class="text-blue-300 text-[10px] font-bold"></div>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/20 text-white hover:bg-white/30 transition-all flex items-center justify-center">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-100">
+                <div class="tab-btn active" onclick="switchTab('info')">
+                    <i class="fas fa-user mr-2"></i>Thông tin
+                </div>
+                <div class="tab-btn" onclick="switchTab('courses')">
+                    <i class="fas fa-book-open mr-2"></i>Khóa học (<span id="course-count">0</span>)
+                </div>
+            </div>
+
+            <!-- Tab 1: Thông tin cá nhân -->
+            <div id="tab-info" class="tab-panel active p-6 space-y-4">
+                <input type="hidden" id="edit-user-id">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">Họ và tên</label>
+                        <input id="edit-fullname" type="text" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">Số điện thoại</label>
+                        <input id="edit-sdt" type="text" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">Email</label>
+                    <input id="edit-email" type="email" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">
+                        <i class="fab fa-facebook text-blue-600 mr-1"></i>Link Facebook
+                    </label>
+                    <input id="edit-link-fb" type="url" placeholder="https://facebook.com/..." class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">Vai trò</label>
+                        <select id="edit-role" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                            <option value="student">Học sinh</option>
+                            <option value="admin">Quản trị viên</option>
+                            <option value="teacher">Giáo viên</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">Trạng thái</label>
+                        <select id="edit-status" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Đã khóa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="saveUserInfo()" class="w-full py-3 bg-blue-900 text-white rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-800 transition-all">
+                    <i class="fas fa-save mr-2"></i>Lưu thay đổi
+                </button>
+
+                <!-- Nút xóa người dùng -->
+                <div class="border-t border-gray-100 pt-4 mt-2">
+                    <button onclick="deleteUserFromModal()" class="w-full py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
+                        <i class="fas fa-trash-alt mr-2"></i>Xóa tài khoản này
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Khóa học -->
+            <div id="tab-courses" class="tab-panel p-6">
+                <div id="enrolled-courses-list" class="space-y-3 mb-5"></div>
+
+                <!-- Thêm khóa học mới -->
+                <div class="border-t border-gray-100 pt-4">
+                    <label class="text-[9px] font-black text-gray-400 uppercase block mb-2">Cấp thêm khóa học</label>
+                    <div class="flex gap-2">
+                        <select id="new-course-select" class="flex-1 p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-blue-500">
+                            <option value="">Chọn khóa học...</option>
+                        </select>
+                        <button onclick="addCourse()" class="px-5 py-3 bg-blue-900 text-white rounded-xl font-black text-[11px] uppercase hover:bg-blue-800 transition-all">
+                            <i class="fas fa-plus mr-1"></i>Thêm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allUsers = [];
+        let allCourses = [];
+        let currentUserId = null;
+
+        // =====================
+        // LOAD USERS
+        // =====================
+        async function fetchUsers() {
+            const icon = document.getElementById('refresh-icon');
+            const loading = document.getElementById('loading');
+            const tbody = document.getElementById('user-table-body');
+            icon.classList.add('animate-spin');
+            loading.classList.remove('hidden');
+            tbody.innerHTML = '';
+
+            const { data, error } = await supabaseClient
+                .from('accounts').select('*').order('created_at', { ascending: false });
+
+            icon.classList.remove('animate-spin');
+            loading.classList.add('hidden');
+            if (error) { alert('Lỗi: ' + error.message); return; }
+            allUsers = data;
+            renderTable(allUsers);
+        }
+
+        async function fetchCourses() {
+            const { data } = await supabaseClient.from('courses').select('id, course_name').order('course_name');
+            allCourses = data || [];
+        }
+
+        function renderTable(users) {
+            const tbody = document.getElementById('user-table-body');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-400 italic text-sm">Không tìm thấy người dùng nào</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = users.map(user => `
+                <tr class="hover:bg-blue-50/30 transition-colors">
+                    <td class="p-5 pl-8">
+                        <div class="font-bold text-blue-900">${user.fullname}</div>
+                        <div class="text-xs text-gray-400">${user.email}</div>
+                    </td>
+                    <td class="p-5">
+                        <div class="text-xs font-bold text-gray-600">SĐT: ${user.sdt || '---'}</div>
+                        ${user.link_fb ? `<a href="${user.link_fb}" target="_blank" class="text-blue-500 text-[10px] hover:underline font-bold italic"><i class="fab fa-facebook mr-1"></i>Facebook</a>` : ''}
+                    </td>
+                    <td class="p-5">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${getRoleClass(user.role)}">
+                            ${translateRole(user.role)}
+                        </span>
+                    </td>
+                    <td class="p-5">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="openUserModal('${user.id}')" title="Xem & Chỉnh sửa"
+                                class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all">
+                                <i class="fas fa-user-edit text-lg"></i>
+                            </button>
+                            <button onclick="toggleStatus('${user.id}', '${user.status}')" title="${user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}"
+                                class="p-2 ${user.status === 'active' ? 'text-green-600' : 'text-red-400'} hover:bg-gray-100 rounded-lg transition-all">
+                                <i class="fas ${user.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off'} text-lg"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // =====================
+        // MỞ MODAL
+        // =====================
+        async function openUserModal(userId) {
+            currentUserId = userId;
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            // Điền thông tin vào tab 1
+            document.getElementById('edit-user-id').value = user.id;
+            document.getElementById('edit-fullname').value = user.fullname || '';
+            document.getElementById('edit-sdt').value = user.sdt || '';
+            document.getElementById('edit-email').value = user.email || '';
+            document.getElementById('edit-link-fb').value = user.link_fb || '';
+            document.getElementById('edit-role').value = user.role || 'student';
+            document.getElementById('edit-status').value = user.status || 'active';
+
+            // Header
+            const initials = (user.fullname || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+            document.getElementById('modal-avatar').innerText = initials;
+            document.getElementById('modal-header-name').innerText = user.fullname;
+            document.getElementById('modal-header-email').innerText = user.email + (user.sdt ? ' · ' + user.sdt : '');
+
+            // Reset về tab info
+            switchTab('info');
+
+            // Hiện modal
+            document.getElementById('userModal').classList.add('active');
+
+            // Load khóa học đã đăng ký
+            await loadEnrolledCourses(userId);
+            await populateCourseDropdown(userId);
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').classList.remove('active');
+            currentUserId = null;
+        }
+
+        // Đóng modal khi click nền
+        document.getElementById('userModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // =====================
+        // TABS
+        // =====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', (i === 0 && tab === 'info') || (i === 1 && tab === 'courses'));
+            });
+            document.getElementById('tab-info').classList.toggle('active', tab === 'info');
+            document.getElementById('tab-courses').classList.toggle('active', tab === 'courses');
+        }
+
+        // =====================
+        // LƯU THÔNG TIN
+        // =====================
+        async function saveUserInfo() {
+            const id = document.getElementById('edit-user-id').value;
+            const payload = {
+                fullname: document.getElementById('edit-fullname').value.trim(),
+                sdt: document.getElementById('edit-sdt').value.trim(),
+                email: document.getElementById('edit-email').value.trim(),
+                link_fb: document.getElementById('edit-link-fb').value.trim() || null,
+                role: document.getElementById('edit-role').value,
+                status: document.getElementById('edit-status').value,
+            };
+
+            const { error } = await supabaseClient.from('accounts').update(payload).eq('id', id);
+            if (error) {
+                alert('Lỗi: ' + error.message);
+            } else {
+                alert('Đã lưu thay đổi!');
+                closeModal();
+                fetchUsers();
+            }
+        }
+
+        // =====================
+        // XÓA NGƯỜI DÙNG
+        // =====================
+        async function deleteUserFromModal() {
+            const id = document.getElementById('edit-user-id').value;
+            const name = document.getElementById('edit-fullname').value;
+            if (!confirm(`Xóa vĩnh viễn tài khoản "${name}"?\n\nHành động này không thể hoàn tác!`)) return;
+
+            // Xóa enrollments trước
+            await supabaseClient.from('course_enrollments').delete().eq('user_id', id);
+            // Xóa tài khoản
+            const { error } = await supabaseClient.from('accounts').delete().eq('id', id);
+            if (error) {
+                alert('Lỗi xóa: ' + error.message);
+            } else {
+                alert('Đã xóa tài khoản!');
+                closeModal();
+                fetchUsers();
+            }
+        }
+
+        // =====================
+        // KHÓA HỌC ĐÃ ĐĂNG KÝ
+        // =====================
+        async function loadEnrolledCourses(userId) {
+            const container = document.getElementById('enrolled-courses-list');
+            container.innerHTML = '<div class="text-center text-gray-400 text-xs italic py-4"><i class="fas fa-spinner animate-spin mr-2"></i>Đang tải...</div>';
+
+            const { data, error } = await supabaseClient
+                .from('course_enrollments')
+                .select('id, enrolled_at, courses:course_id(id, course_name)')
+                .eq('user_id', userId);
+
+            if (error || !data || data.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-400 text-xs italic py-6 bg-gray-50 rounded-xl border border-dashed">
+                    <i class="fas fa-folder-open text-2xl mb-2 block opacity-30"></i>Chưa đăng ký khóa học nào</div>`;
+                document.getElementById('course-count').innerText = '0';
+                return;
+            }
+
+            document.getElementById('course-count').innerText = data.length;
+            container.innerHTML = data.map(enroll => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all">
+                    <div>
+                        <div class="text-sm font-bold text-blue-900">${enroll.courses?.course_name || 'Không rõ'}</div>
+                        <div class="text-[10px] text-gray-400 font-bold">
+                            Đăng ký: ${enroll.enrolled_at ? new Date(enroll.enrolled_at).toLocaleDateString('vi-VN') : '---'}
+                        </div>
+                    </div>
+                    <button onclick="removeEnrollment('${enroll.id}')"
+                        class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                        title="Xóa khỏi khóa học">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function removeEnrollment(enrollId) {
+            if (!confirm('Xóa học sinh khỏi khóa học này?')) return;
+            const { error } = await supabaseClient.from('course_enrollments').delete().eq('id', enrollId);
+            if (error) { alert('Lỗi: ' + error.message); return; }
+            await loadEnrolledCourses(currentUserId);
+            await populateCourseDropdown(currentUserId);
+        }
+
+        async function populateCourseDropdown(userId) {
+            const select = document.getElementById('new-course-select');
+
+            // Lấy khóa học đã có
+            const { data: enrolled } = await supabaseClient
+                .from('course_enrollments').select('course_id').eq('user_id', userId);
+            const enrolledIds = (enrolled || []).map(e => e.course_id);
+
+            // Chỉ hiện khóa học chưa đăng ký
+            const available = allCourses.filter(c => !enrolledIds.includes(c.id));
+            select.innerHTML = available.length > 0
+                ? '<option value="">Chọn khóa học...</option>' + available.map(c => `<option value="${c.id}">${c.course_name}</option>`).join('')
+                : '<option value="">Đã đăng ký tất cả khóa học</option>';
+        }
+
+        async function addCourse() {
+            const courseId = document.getElementById('new-course-select').value;
+            if (!courseId) { alert('Vui lòng chọn khóa học!'); return; }
+
+            const { error } = await supabaseClient.from('course_enrollments')
+                .insert([{ user_id: currentUserId, course_id: courseId }]);
+
+            if (error) { alert('Lỗi: ' + error.message); return; }
+            await loadEnrolledCourses(currentUserId);
+            await populateCourseDropdown(currentUserId);
+        }
+
+        // =====================
+        // TIỆN ÍCH
+        // =====================
+        function translateRole(role) {
+            return { 'admin': 'Quản trị', 'student': 'Học sinh', 'teacher': 'Giáo viên' }[role] || role;
+        }
+
+        function getRoleClass(role) {
+            if (role === 'admin') return 'bg-purple-100 text-purple-700';
+            if (role === 'teacher') return 'bg-blue-100 text-blue-700';
+            return 'bg-gray-100 text-gray-600';
+        }
+
+        async function toggleStatus(id, current) {
+            const next = current === 'active' ? 'inactive' : 'active';
+            await supabaseClient.from('accounts').update({ status: next }).eq('id', id);
+            fetchUsers();
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const kw = e.target.value.toLowerCase();
+            renderTable(allUsers.filter(u =>
+                u.fullname?.toLowerCase().includes(kw) ||
+                u.email?.toLowerCase().includes(kw) ||
+                u.sdt?.includes(kw)
+            ));
+        });
+
+        function toggleSubmenu(id, element) {
+            document.getElementById(id).classList.toggle('show');
+            element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
+        }
+
+        // Khởi động
+        fetchUsers();
+        fetchCourses();
+    </script>
+</body>
+</html>        </div>
 
         <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
             <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
