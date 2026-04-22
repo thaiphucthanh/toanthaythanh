@@ -194,12 +194,7 @@
             document.getElementById('document-container').innerHTML = '';
             document.getElementById('video-frame').src = '';
 
-            if (lesson.status === 'Inactive') {
-    document.getElementById('lesson-title').innerText = '🔒 Bài học chưa được mở';
-    document.getElementById('lesson-content').innerHTML = '<p class="text-gray-400 italic">Thầy chưa mở bài học này. Vui lòng chờ!</p>';
-    document.getElementById('video-frame').src = '';
-    return; // Dừng lại, không hiển thị nội dung
-}
+            
             const lessonId = parseInt(id);
             if (isNaN(lessonId)) {
                 document.getElementById('lesson-title').innerText = 'ID bài học không hợp lệ';
@@ -223,6 +218,12 @@
                     document.getElementById('lesson-title').innerText = 'Không tìm thấy bài học #' + lessonId;
                     return;
                 }
+                if (lesson.status === 'Inactive') {
+    document.getElementById('lesson-title').innerText = '🔒 Bài học chưa được mở';
+    document.getElementById('lesson-content').innerHTML = '<p class="text-gray-400 italic">Thầy chưa mở bài học này. Vui lòng chờ!</p>';
+    document.getElementById('video-frame').src = '';
+    return; // Dừng lại, không hiển thị nội dung
+}
 
                 // --- BƯỚC 2: Hiển thị tiêu đề & nội dung ---
                 document.getElementById('lesson-title').innerText = lesson.title || 'Chưa có tiêu đề';
