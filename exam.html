@@ -3,69 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý thi Online - Toán thầy Thành</title>
+  <title>Ngân hàng câu hỏi - Toán thầy Thành</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    
-    .sidebar-item { 
-      cursor: pointer; 
-      transition: all 0.3s; 
-      border-radius: 15px; 
-      margin: 0 10px; 
-    }
-    .sidebar-item:hover { 
-      background: rgba(255,255,255,0.1); 
-    }
-    .active-menu { 
-      background: #facc15 !important; 
-      color: #1e3a8a !important; 
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
-    }
-    .submenu { 
-      display: none; 
-      flex-direction: column; 
-      overflow: hidden; 
-      transition: all 0.3s ease-out; 
-      background: rgba(0,0,0,0.2); 
-    }
-    .submenu.show { 
-      display: flex; 
-      margin-top: 5px; 
-    }
-    .submenu a { 
-      transition: all 0.2s; 
-      border-left: 3px solid transparent; 
-    }
-    .submenu a:hover { 
-      border-left: 3px solid #facc15; 
-      background: rgba(250, 204, 21, 0.1); 
-      padding-left: 3.5rem; 
-    }
+    .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+    .active-menu { background: #facc15 !important; color: #1e3a8a !important; }
+    .submenu { display: none; flex-direction: column; overflow: hidden; background: rgba(0,0,0,0.2); }
+    .submenu.show { display: flex; margin-top: 5px; }
+    .submenu a { transition: all 0.2s; border-left: 3px solid transparent; }
+    .submenu a:hover { border-left: 3px solid #facc15; background: rgba(250,204,21,0.1); padding-left: 3.5rem; }
     .rotate-180 { transform: rotate(180deg); }
-    .line-clamp-2 { 
-      display: -webkit-box; 
-      -webkit-line-clamp: 2; 
-      -webkit-box-orient: vertical; 
-      overflow: hidden; 
-    }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { 
-      background: rgba(255, 255, 255, 0.1); 
-      border-radius: 10px; 
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    /* Upload area */
+    .upload-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
     }
+    .upload-area:hover { border-color: #1e3a8a; background: #eff6ff; }
+    .upload-area.uploading { border-color: #3b82f6; background: #eff6ff; }
+    .upload-area.done { border-color: #22c55e; background: #f0fdf4; }
+    .upload-area.error { border-color: #ef4444; background: #fef2f2; }
+    #img-preview { max-height: 120px; border-radius: 8px; margin-top: 8px; display: none; }
   </style>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <script>
     window.MathJax = {
-      tex: { 
-        inlineMath: [['$', '$'], ['\\(', '\\)']], 
-        displayMath: [['$$', '$$'], ['\\[', '\\]']] 
-      }
+      tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] }
     };
   </script>
 </head>
@@ -81,75 +58,45 @@
         </div>
       </a>
     </div>
-    
     <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
       <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
-        <i class="fas fa-home w-5"></i>
-        <span class="font-bold">Trang Welcome</span>
+        <i class="fas fa-home w-5"></i><span class="font-bold">Trang Welcome</span>
       </a>
-
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
-          <div class="flex items-center gap-3">
-            <i class="fas fa-users w-5 text-blue-300"></i>
-            <span class="font-bold">Quản lý người dùng</span>
-          </div>
+          <div class="flex items-center gap-3"><i class="fas fa-users w-5 text-blue-300"></i><span class="font-bold">Quản lý người dùng</span></div>
           <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
         </div>
         <div id="user-menu" class="submenu">
-          <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-list-ul mr-2 opacity-70"></i> Danh sách người dùng
-          </a>
-          <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-user-plus mr-2 opacity-70"></i> Thêm mới
-          </a>
+          <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list-ul mr-2 opacity-70"></i> Danh sách người dùng</a>
+          <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-user-plus mr-2 opacity-70"></i> Thêm mới</a>
         </div>
       </div>
-
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
-          <div class="flex items-center gap-3">
-            <i class="fas fa-book w-5 text-blue-300"></i>
-            <span class="font-bold">Quản lý khóa học</span>
-          </div>
+          <div class="flex items-center gap-3"><i class="fas fa-book w-5 text-blue-300"></i><span class="font-bold">Quản lý khóa học</span></div>
           <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
         </div>
         <div id="course-menu" class="submenu">
-          <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
-          </a>
-          <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
-          </a>
+          <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học</a>
+          <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới</a>
         </div>
       </div>
-
       <div class="menu-parent">
         <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
-          <div class="flex items-center gap-3">
-            <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
-            <span class="font-bold">Quản lý thi Online</span>
-          </div>
-          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+          <div class="flex items-center gap-3"><i class="fas fa-graduation-cap w-5 text-blue-300"></i><span class="font-bold">Quản lý thi Online</span></div>
+          <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
         </div>
-        <div id="exam-menu" class="submenu">
-          <a href="exam.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
-            <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
-          </a>
-          <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi
-          </a>
-          <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-            <i class="fas fa-poll opacity-70"></i> Kết quả làm bài
-          </a>
+        <div id="exam-menu" class="submenu show">
+          <a href="exam.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50"><i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi</a>
+          <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi</a>
+          <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-poll opacity-70"></i> Kết quả làm bài</a>
         </div>
       </div>
     </nav>
-
     <div class="p-4 border-t border-blue-800">
       <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
-        <i class="fas fa-arrow-left"></i>
-        <span class="text-sm font-bold">Quay lại trang chủ</span>
+        <i class="fas fa-arrow-left"></i><span class="text-sm font-bold">Quay lại trang chủ</span>
       </a>
     </div>
   </aside>
@@ -157,19 +104,17 @@
   <main class="flex-1 flex flex-col overflow-hidden">
     <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
       <h2 class="text-xl font-black text-blue-900 uppercase">Ngân hàng đề thi Thầy Thành</h2>
-      <button onclick="openQuestionModal()" 
-              class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">
+      <button onclick="openQuestionModal()"
+              class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-800 shadow-lg transition-all">
         <i class="fas fa-plus mr-2"></i>Thêm câu hỏi mới
       </button>
     </header>
-
     <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
       <div class="max-w-6xl mx-auto">
         <div class="mb-6">
           <h3 class="text-lg font-black text-blue-900 uppercase tracking-tight">Danh sách câu hỏi</h3>
           <p class="text-sm text-gray-500 italic">Quản lý trắc nghiệm, tự luận chuyển cấp, và chuyên đề học tập</p>
         </div>
-        
         <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -193,44 +138,135 @@
     const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
+    // Tên bucket Supabase Storage
+    const BUCKET_NAME = "documents";
+
     let allCourses = [];
     let allTopics = [];
+    let uploadedImageUrl = null; // Lưu URL ảnh sau khi upload
 
-    // Load danh sách khóa học và chuyên đề
     async function loadCoursesAndTopics() {
       const { data: courses } = await supabaseClient.from('courses').select('id, course_name').order('course_name');
       const { data: topics } = await supabaseClient.from('topics').select('id, course_id, topic_name').order('order_index');
-      
       allCourses = courses || [];
       allTopics = topics || [];
     }
 
     function getExamTypeLabel(examType) {
       const labels = {
-        'hk1-mid': 'HK1 - Giữa kỳ',
-        'hk1-final': 'HK1 - Cuối kỳ',
-        'hk2-mid': 'HK2 - Giữa kỳ',
-        'hk2-final': 'HK2 - Cuối kỳ',
+        'hk1-mid': 'HK1 - Giữa kỳ', 'hk1-final': 'HK1 - Cuối kỳ',
+        'hk2-mid': 'HK2 - Giữa kỳ', 'hk2-final': 'HK2 - Cuối kỳ',
         'entrance': 'Thi chuyển cấp'
       };
       return labels[examType] || examType || 'Chưa phân loại';
     }
 
+    // =============================================
+    // CHUẨN HÓA TÊN FILE (bỏ dấu tiếng Việt)
+    // =============================================
+    function slugifyFileName(name) {
+      const lastDot = name.lastIndexOf('.');
+      const ext = lastDot !== -1 ? name.slice(lastDot).toLowerCase() : '';
+      const baseName = lastDot !== -1 ? name.slice(0, lastDot) : name;
+      const map = {
+        'à':'a','á':'a','ả':'a','ã':'a','ạ':'a',
+        'ă':'a','ắ':'a','ặ':'a','ằ':'a','ẳ':'a','ẵ':'a',
+        'â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a',
+        'đ':'d',
+        'è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e',
+        'ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e',
+        'ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i',
+        'ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o',
+        'ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o',
+        'ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o',
+        'ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u',
+        'ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u',
+        'ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y',
+      };
+      const slug = baseName.toLowerCase().split('')
+        .map(c => map[c] || c).join('')
+        .replace(/[^a-z0-9_\-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      return slug + ext;
+    }
+
+    // =============================================
+    // UPLOAD ẢNH LÊN SUPABASE STORAGE
+    // =============================================
+    async function uploadImage(file) {
+      const area = document.getElementById('upload-area');
+      const status = document.getElementById('upload-status');
+      const preview = document.getElementById('img-preview');
+
+      area.className = 'upload-area uploading';
+      status.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Đang tải lên...';
+
+      // Chuẩn hóa tên file: bỏ dấu + timestamp
+      const safeName = slugifyFileName(file.name);
+      const fileName = `${Date.now()}_${safeName}`;
+
+      const { data, error } = await supabaseClient.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (error) {
+        area.className = 'upload-area error';
+        status.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-2"></i>Lỗi: ${error.message}`;
+        uploadedImageUrl = null;
+        return;
+      }
+
+      // Lấy public URL
+      const { data: urlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(fileName);
+      uploadedImageUrl = urlData.publicUrl;
+
+      // Hiển thị preview
+      preview.src = uploadedImageUrl;
+      preview.style.display = 'block';
+      area.className = 'upload-area done';
+      status.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2"></i>Tải lên thành công!`;
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+      }
+      uploadImage(file);
+    }
+
+    function triggerFileInput() {
+      document.getElementById('img-file-input').click();
+    }
+
+    function removeImage() {
+      uploadedImageUrl = null;
+      const preview = document.getElementById('img-preview');
+      if (preview) { preview.src = ''; preview.style.display = 'none'; }
+      const area = document.getElementById('upload-area');
+      if (area) area.className = 'upload-area';
+      const status = document.getElementById('upload-status');
+      if (status) status.innerHTML = '<i class="fas fa-cloud-upload-alt text-blue-400 text-xl mb-1 block"></i><span class="text-xs text-gray-400 font-bold">Nhấn để chọn ảnh từ máy</span>';
+      const input = document.getElementById('img-file-input');
+      if (input) input.value = '';
+    }
+
+    // =============================================
+    // FETCH DANH SÁCH CÂU HỎI
+    // =============================================
     async function fetchQuestions() {
       const container = document.getElementById('question-table-body');
       container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 italic">Đang tải ngân hàng...</td></tr>';
 
       const { data: questions, error } = await supabaseClient
         .from('questions')
-        .select(`
-          *,
-          courses:course_id(course_name),
-          topics:topic_id(topic_name)
-        `)
+        .select('*, courses:course_id(course_name), topics:topic_id(topic_name)')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error(error);
         container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Lỗi tải dữ liệu</td></tr>';
         return;
       }
@@ -243,15 +279,11 @@
           'short_answer': '<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Trả lời ngắn</span>',
           'essay': '<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Tự luận</span>'
         };
-
         const levelLabels = {
           'easy': '<span class="text-green-500 font-bold">● Nhận biết</span>',
           'medium': '<span class="text-yellow-500 font-bold">● Thông hiểu</span>',
           'hard': '<span class="text-red-500 font-bold">● Vận dụng</span>'
         };
-
-        const courseName = q.courses?.course_name || '';
-        const topicName = q.topics?.topic_name || '';
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-blue-50/30 transition-colors border-b border-gray-50";
@@ -261,7 +293,7 @@
             <div class="text-[9px] text-gray-400 mt-1 font-bold uppercase">${getExamTypeLabel(q.exam_type)}</div>
           </td>
           <td class="p-5">
-            <div class="font-black text-blue-900 text-[10px] uppercase mb-1">${courseName} | ${topicName}</div>
+            <div class="font-black text-blue-900 text-[10px] uppercase mb-1">${q.courses?.course_name || ''} | ${q.topics?.topic_name || ''}</div>
             <div class="text-sm font-semibold text-gray-800 line-clamp-2 max-w-md">${q.content}</div>
             ${q.image_url ? '<div class="text-[9px] text-blue-500 font-bold mt-1 italic"><i class="fas fa-image mr-1"></i>Có ảnh kèm theo</div>' : ''}
           </td>
@@ -272,53 +304,48 @@
               <button onclick='editQuestion(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-edit text-[10px]"></i></button>
               <button onclick="viewDetail('${q.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 hover:bg-blue-900 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-eye text-[10px]"></i></button>
             </div>
-          </td>
-        `;
+          </td>`;
         container.appendChild(tr);
       });
-
       if (window.MathJax) MathJax.typesetPromise();
     }
 
     function updateAddForm(type, data = null) {
       const area = document.getElementById('q-dynamic-area');
       if (!area) return;
-
       if (type === 'choice') {
         area.innerHTML = `
           <div class="grid grid-cols-2 gap-3 text-sm">
-            ${['a', 'b', 'c', 'd'].map(l => `
+            ${['a','b','c','d'].map(l => `
               <div class="flex items-center gap-2">
                 <span class="font-bold uppercase text-blue-900">${l}:</span>
                 <input id="opt-${l}" value="${data?.options?.[l] || ''}" class="flex-1 p-2 border rounded-xl outline-none focus:border-blue-500">
-              </div>
-            `).join('')}
+              </div>`).join('')}
             <div class="col-span-2 mt-2">
               <label class="text-[10px] font-bold text-gray-400 uppercase">Đáp án đúng</label>
               <select id="q-correct" class="w-full p-2 border rounded-xl font-bold">
-                ${['A', 'B', 'C', 'D'].map(l => `<option value="${l}" ${data?.correct_answer === l ? 'selected' : ''}>Đáp án ${l}</option>`).join('')}
+                ${['A','B','C','D'].map(l => `<option value="${l}" ${data?.correct_answer===l?'selected':''}>Đáp án ${l}</option>`).join('')}
               </select>
             </div>
           </div>`;
       } else if (type === 'true_false') {
         area.innerHTML = `
           <div id="tf-container" class="space-y-2">
-            ${(data?.tf_options || [{label: '', is_true: true}]).map((opt, i) => `
+            ${(data?.tf_options || [{label:'',is_true:true}]).map((opt,i) => `
               <div class="flex gap-2 items-center">
                 <input class="tf-label flex-1 p-2 border rounded-xl text-sm" value="${opt.label}" placeholder="Ý ${i+1}...">
                 <select class="tf-status p-2 border rounded-xl text-sm font-bold">
-                  <option value="true" ${opt.is_true ? 'selected' : ''}>Đúng</option>
-                  <option value="false" ${!opt.is_true ? 'selected' : ''}>Sai</option>
+                  <option value="true" ${opt.is_true?'selected':''}>Đúng</option>
+                  <option value="false" ${!opt.is_true?'selected':''}>Sai</option>
                 </select>
-              </div>
-            `).join('')}
+              </div>`).join('')}
           </div>`;
       } else if (type === 'short_answer') {
         area.innerHTML = `
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Đáp án (Dùng | để ngăn cách các đáp án đúng)</label>
-          <input id="q-correct-short" value="${data?.correct_answer || ''}" placeholder="VD: 10|mười" class="w-full p-2 border rounded-xl font-bold mt-1">`;
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Đáp án (Dùng | để ngăn cách)</label>
+          <input id="q-correct-short" value="${data?.correct_answer||''}" placeholder="VD: 10|mười" class="w-full p-2 border rounded-xl font-bold mt-1">`;
       } else {
-        area.innerHTML = `<p class="text-center text-gray-400 text-xs italic">Loại tự luận chuyển cấp không cần cấu hình đáp án trắc nghiệm.</p>`;
+        area.innerHTML = `<p class="text-center text-gray-400 text-xs italic">Tự luận không cần cấu hình đáp án.</p>`;
       }
     }
 
@@ -326,9 +353,7 @@
       const topicSelect = document.getElementById('q-topic');
       if (!topicSelect) return;
       topicSelect.innerHTML = '<option value="">Chọn chuyên đề...</option>';
-
-      const filtered = allTopics.filter(t => t.course_id === courseId);
-      filtered.forEach(topic => {
+      allTopics.filter(t => t.course_id === courseId).forEach(topic => {
         const opt = document.createElement('option');
         opt.value = topic.id;
         opt.textContent = topic.topic_name;
@@ -336,12 +361,18 @@
       });
     }
 
+    // =============================================
+    // MODAL THÊM / SỬA CÂU HỎI
+    // =============================================
     async function openQuestionModal(editData = null) {
       const isEdit = !!editData;
       await loadCoursesAndTopics();
 
-      const courseOptions = allCourses.map(c => 
-        `<option value="${c.id}" ${isEdit && editData.course_id === c.id ? 'selected' : ''}>${c.course_name}</option>`
+      // Reset URL ảnh
+      uploadedImageUrl = isEdit ? (editData.image_url || null) : null;
+
+      const courseOptions = allCourses.map(c =>
+        `<option value="${c.id}" ${isEdit && editData.course_id===c.id?'selected':''}>${c.course_name}</option>`
       ).join('');
 
       const { value: formValues } = await Swal.fire({
@@ -357,27 +388,26 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Loại & Mức độ</label>
                 <div class="flex gap-2">
                   <select id="q-type" class="flex-1 p-2 border rounded-xl font-bold" onchange="updateAddForm(this.value)">
-                    <option value="choice" ${isEdit && editData.question_type==='choice'?'selected':''}>Trắc nghiệm</option>
-                    <option value="true_false" ${isEdit && editData.question_type==='true_false'?'selected':''}>Đúng/Sai</option>
-                    <option value="short_answer" ${isEdit && editData.question_type==='short_answer'?'selected':''}>Trả lời ngắn</option>
-                    <option value="essay" ${isEdit && editData.question_type==='essay'?'selected':''}>Tự luận (Chuyển cấp)</option>
+                    <option value="choice" ${isEdit&&editData.question_type==='choice'?'selected':''}>Trắc nghiệm</option>
+                    <option value="true_false" ${isEdit&&editData.question_type==='true_false'?'selected':''}>Đúng/Sai</option>
+                    <option value="short_answer" ${isEdit&&editData.question_type==='short_answer'?'selected':''}>Trả lời ngắn</option>
+                    <option value="essay" ${isEdit&&editData.question_type==='essay'?'selected':''}>Tự luận (Chuyển cấp)</option>
                   </select>
                   <select id="q-level" class="w-1/3 p-2 border rounded-xl font-bold text-blue-600">
-                    <option value="easy" ${isEdit && editData.level==='easy'?'selected':''}>Nhận biết</option>
-                    <option value="medium" ${isEdit && editData.level==='medium'?'selected':''}>Thông hiểu</option>
-                    <option value="hard" ${isEdit && editData.level==='hard'?'selected':''}>Vận dụng</option>
+                    <option value="easy" ${isEdit&&editData.level==='easy'?'selected':''}>Nhận biết</option>
+                    <option value="medium" ${isEdit&&editData.level==='medium'?'selected':''}>Thông hiểu</option>
+                    <option value="hard" ${isEdit&&editData.level==='hard'?'selected':''}>Vận dụng</option>
                   </select>
                 </div>
               </div>
-
               <div class="space-y-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Loại kỳ thi</label>
                 <select id="q-exam-type" class="w-full p-2 border rounded-xl font-bold">
-                  <option value="hk1-mid" ${isEdit && editData.exam_type === 'hk1-mid' ? 'selected' : ''}>📘 HK1 - Giữa kỳ</option>
-                  <option value="hk1-final" ${isEdit && editData.exam_type === 'hk1-final' ? 'selected' : ''}>📕 HK1 - Cuối kỳ</option>
-                  <option value="hk2-mid" ${isEdit && editData.exam_type === 'hk2-mid' ? 'selected' : ''}>📘 HK2 - Giữa kỳ</option>
-                  <option value="hk2-final" ${isEdit && editData.exam_type === 'hk2-final' ? 'selected' : ''}>📕 HK2 - Cuối kỳ</option>
-                  <option value="entrance" ${isEdit && editData.exam_type === 'entrance' ? 'selected' : ''}>🚀 Thi chuyển cấp</option>
+                  <option value="hk1-mid" ${isEdit&&editData.exam_type==='hk1-mid'?'selected':''}>📘 HK1 - Giữa kỳ</option>
+                  <option value="hk1-final" ${isEdit&&editData.exam_type==='hk1-final'?'selected':''}>📕 HK1 - Cuối kỳ</option>
+                  <option value="hk2-mid" ${isEdit&&editData.exam_type==='hk2-mid'?'selected':''}>📘 HK2 - Giữa kỳ</option>
+                  <option value="hk2-final" ${isEdit&&editData.exam_type==='hk2-final'?'selected':''}>📕 HK2 - Cuối kỳ</option>
+                  <option value="entrance" ${isEdit&&editData.exam_type==='entrance'?'selected':''}>🚀 Thi chuyển cấp</option>
                 </select>
               </div>
             </div>
@@ -398,30 +428,38 @@
               </div>
             </div>
 
-            <textarea id="q-content" placeholder="Nội dung câu hỏi (Latex dùng $ $)..." class="w-full p-3 border rounded-xl h-24">${isEdit ? (editData.content || '') : ''}</textarea>
-            
+            <textarea id="q-content" placeholder="Nội dung câu hỏi (Latex dùng $ $)..." class="w-full p-3 border rounded-xl h-24">${isEdit?(editData.content||''):''}</textarea>
+
+            <!-- UPLOAD ẢNH -->
             <div class="space-y-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase italic">Link ảnh minh họa (image_url)</label>
-                <input id="q-image" value="${isEdit ? (editData.image_url || '') : ''}" placeholder="Dán link ảnh từ Supabase vào đây..." class="w-full p-2 border rounded-xl text-sm italic">
+              <label class="text-[10px] font-bold text-gray-400 uppercase">Hình ảnh minh họa</label>
+              <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+              <div id="upload-area" class="upload-area ${isEdit&&editData.image_url?'done':''}" onclick="triggerFileInput()">
+                <i class="fas fa-cloud-upload-alt text-blue-400 text-xl mb-1 block"></i>
+                <span id="upload-status" class="text-xs text-gray-400 font-bold">
+                  ${isEdit&&editData.image_url
+                    ? '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh'
+                    : 'Nhấn để chọn ảnh từ máy'}
+                </span>
+                <img id="img-preview" src="${isEdit&&editData.image_url?editData.image_url:''}"
+                     style="display:${isEdit&&editData.image_url?'block':'none'}; max-height:120px; border-radius:8px; margin:8px auto 0;">
+              </div>
+              <button type="button" onclick="removeImage()" class="text-[10px] text-red-400 font-bold hover:text-red-600 mt-1">
+                <i class="fas fa-times mr-1"></i>Xóa ảnh
+              </button>
             </div>
 
             <div id="q-dynamic-area" class="bg-gray-50 p-4 rounded-xl border-2 border-dashed"></div>
-            
-            <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20">${isEdit ? (editData.solution_guide || '') : ''}</textarea>
+
+            <textarea id="q-solution" placeholder="Lời giải chi tiết..." class="w-full p-3 border rounded-xl h-20">${isEdit?(editData.solution_guide||''):''}</textarea>
           </div>`,
         didOpen: () => {
           updateAddForm(isEdit ? editData.question_type : 'choice', editData);
           if (isEdit && editData.course_id) {
-            const courseSelect = document.getElementById('q-course');
-            if (courseSelect) {
-              courseSelect.value = editData.course_id;
-              loadTopicsForCourse(editData.course_id);
-            }
+            document.getElementById('q-course').value = editData.course_id;
+            loadTopicsForCourse(editData.course_id);
             setTimeout(() => {
-              if (editData.topic_id) {
-                const topicSelect = document.getElementById('q-topic');
-                if (topicSelect) topicSelect.value = editData.topic_id;
-              }
+              if (editData.topic_id) document.getElementById('q-topic').value = editData.topic_id;
             }, 300);
           }
         },
@@ -431,13 +469,12 @@
             question_type: type,
             level: document.getElementById('q-level').value,
             exam_type: document.getElementById('q-exam-type').value,
-            course_id: document.getElementById('q-course').value,
-            topic_id: document.getElementById('q-topic').value,
+            course_id: document.getElementById('q-course').value || null,
+            topic_id: document.getElementById('q-topic').value || null,
             content: document.getElementById('q-content').value,
-            image_url: document.getElementById('q-image').value || null, // LẤY DỮ LIỆU ẢNH
+            image_url: uploadedImageUrl, // ← URL từ Supabase Storage
             solution_guide: document.getElementById('q-solution').value,
           };
-
           if (type === 'choice') {
             payload.options = {
               a: document.getElementById('opt-a').value,
@@ -449,10 +486,7 @@
           } else if (type === 'true_false') {
             const labels = document.querySelectorAll('.tf-label');
             const stats = document.querySelectorAll('.tf-status');
-            payload.tf_options = Array.from(labels).map((el, i) => ({
-              label: el.value,
-              is_true: stats[i].value === 'true'
-            }));
+            payload.tf_options = Array.from(labels).map((el,i) => ({ label: el.value, is_true: stats[i].value==='true' }));
           } else if (type === 'short_answer') {
             payload.correct_answer = document.getElementById('q-correct-short').value;
           }
@@ -461,50 +495,41 @@
       });
 
       if (formValues) {
-        const { error } = isEdit 
+        const { error } = isEdit
           ? await supabaseClient.from('questions').update(formValues).eq('id', editData.id)
           : await supabaseClient.from('questions').insert([formValues]);
-
         if (error) Swal.fire('Lỗi', error.message, 'error');
-        else {
-          Swal.fire('Thành công!', '', 'success');
-          fetchQuestions();
-        }
+        else { Swal.fire('Thành công!', '', 'success'); fetchQuestions(); }
       }
     }
 
     async function viewDetail(id) {
-      const { data: q } = await supabaseClient.from('questions').select(`
-        *, 
-        courses:course_id(course_name), 
-        topics:topic_id(topic_name)
-      `).eq('id', id).single();
-      
+      const { data: q } = await supabaseClient.from('questions')
+        .select('*, courses:course_id(course_name), topics:topic_id(topic_name)')
+        .eq('id', id).single();
       if (!q) return;
 
       let extraHtml = '';
       if (q.question_type === 'choice' && q.options) {
         extraHtml = `<div class="grid grid-cols-2 gap-2 mt-4 text-left">${['a','b','c','d'].map(l => `
-          <div class="p-2 border rounded ${q.correct_answer === l.toUpperCase() ? 'bg-green-100 border-green-500 font-bold' : 'bg-gray-50'}">
+          <div class="p-2 border rounded ${q.correct_answer===l.toUpperCase()?'bg-green-100 border-green-500 font-bold':'bg-gray-50'}">
             ${l.toUpperCase()}: ${q.options[l]}
           </div>`).join('')}</div>`;
       }
 
-      // XỬ LÝ HIỂN THỊ ẢNH TRONG CHI TIẾT
-      let imageHtml = q.image_url ? `
-        <div class="my-4 flex justify-center bg-white p-2 rounded-xl border shadow-sm">
-            <img src="${q.image_url}" class="max-w-full h-auto rounded-lg" onerror="this.parentElement.innerHTML='<p class='text-red-500 text-xs italic'>Lỗi: Không tải được ảnh từ link này</p>'">
-        </div>
-      ` : '';
+      const imageHtml = q.image_url ? `
+        <div class="my-4 flex justify-center bg-gray-50 p-2 rounded-xl border">
+          <img src="${q.image_url}" class="max-w-full max-h-48 rounded-lg object-contain">
+        </div>` : '';
 
       Swal.fire({
         title: 'Chi tiết câu hỏi',
         width: '700px',
         html: `<div class="text-left">
           <div class="p-4 bg-gray-100 rounded-xl font-bold text-blue-900">${q.content}</div>
-          ${imageHtml} 
+          ${imageHtml}
           ${extraHtml}
-          <div class="mt-4 p-4 bg-blue-50 rounded-xl text-xs"><b>Lời giải:</b> ${q.solution_guide || 'Chưa có'}</div>
+          <div class="mt-4 p-4 bg-blue-50 rounded-xl text-xs"><b>Lời giải:</b> ${q.solution_guide||'Chưa có'}</div>
         </div>`,
         didOpen: () => { if (window.MathJax) MathJax.typesetPromise(); }
       });
@@ -518,19 +543,13 @@
       }
     }
 
-    function editQuestion(data) {
-      openQuestionModal(data);
-    }
+    function editQuestion(data) { openQuestionModal(data); }
 
     function toggleSubmenu(id, el) {
-      const submenu = document.getElementById(id);
-      submenu.classList.toggle('show');
-      
-      const arrow = el.querySelector('.arrow-icon');
-      if (arrow) arrow.classList.toggle('rotate-180');
+      document.getElementById(id).classList.toggle('show');
+      el.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
     }
 
-    // Khởi động
     document.addEventListener('DOMContentLoaded', () => {
       loadCoursesAndTopics();
       fetchQuestions();
