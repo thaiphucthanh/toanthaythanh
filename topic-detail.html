@@ -210,6 +210,12 @@
         async function fetchLessons() {
             const tbody = document.getElementById('lesson-table-body');
             const loader = document.getElementById('loading');
+            if (lesson.status === 'Inactive') {
+    document.getElementById('lesson-title').innerText = '🔒 Bài học chưa được mở';
+    document.getElementById('lesson-content').innerHTML = '<p class="text-gray-400 italic">Thầy chưa mở bài học này. Vui lòng chờ!</p>';
+    document.getElementById('video-frame').src = '';
+    return; // Dừng lại, không hiển thị nội dung
+}
 
             const { data: lessons, error } = await supabaseClient
                 .from('lessons').select('*').eq('topic_id', topicId).order('id', { ascending: true });
