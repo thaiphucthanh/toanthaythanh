@@ -277,7 +277,7 @@
             const { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType } = docx;
             const title = document.getElementById('exam-title').value || "DE_THI";
             const children = [
-                new Paragraph({ children: [new TextRun({ text: "HDC STUDY - TOÁN THẦY THÀNH", bold: true, size: 28 })], alignment: AlignmentType.CENTER }),
+                new Paragraph({ children: [new TextRun({ text: "TOÁN THẦY THÀNH", bold: true, size: 28 })], alignment: AlignmentType.CENTER }),
                 new Paragraph({ children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 24 })], alignment: AlignmentType.CENTER, spacing: { after: 400 } })
             ];
 
