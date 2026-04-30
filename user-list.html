@@ -36,214 +36,126 @@
         .tab-btn.active { color: #1e3a8a; border-bottom-color: #1e3a8a; }
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
-        /* SIDEBAR MOBILE */
-.submenu {
-    opacity: 0;
-}
-
-.submenu.show {
-    opacity: 1;
-}
-
-@media (max-width: 768px) {
-    .modal-box {
-        width: calc(100vw - 20px);
-        border-radius: 24px;
-        max-height: 92vh;
-    }
-
-    #tab-info .grid,
-    #tab-courses .grid {
-        grid-template-columns: 1fr;
-    }
-}
     </style>
 </head>
-<!-- THAY TOÀN BỘ THẺ BODY -->
-<body class="bg-gray-50 flex min-h-screen overflow-hidden">
+<body class="bg-gray-50 flex h-screen overflow-hidden">
 
-    <!-- OVERLAY MOBILE -->
-    <div id="sidebar-overlay"
-         onclick="closeSidebar()"
-         class="hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"></div>
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar"
-        class="w-[85vw] max-w-[290px] md:w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50 md:relative fixed inset-y-0 left-0 -translate-x-full md:translate-x-0 transition-transform duration-300 flex-shrink-0">
-
-        <div class="p-6 flex items-center justify-between gap-3 border-b border-blue-800">
+    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
             <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
                 <div>
                     <div class="font-black text-lg leading-tight text-white">TOÁN</div>
-                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">
-                        Thầy Thành Cổng Admin
-                    </div>
+                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
                 </div>
             </a>
-
-            <!-- Nút đóng mobile -->
-            <button onclick="closeSidebar()"
-                class="md:hidden w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center">
-                <i class="fas fa-times text-sm"></i>
-            </button>
         </div>
-
         <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
             <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
                 <i class="fas fa-home w-5 text-blue-300"></i>
                 <span class="font-bold">Trang Welcome</span>
             </a>
-
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between"
-                    onclick="toggleSubmenu('user-menu', this)">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-users w-5 text-blue-300"></i>
                         <span class="font-bold">Quản lý người dùng</span>
                     </div>
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
                 </div>
-
                 <div id="user-menu" class="submenu show">
-                    <a href="user-list.html"
-                        class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
+                    <a href="user-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
                         <i class="fas fa-list-ul mr-2"></i> Danh sách người dùng
                     </a>
-
-                    <a href="add-user.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
                         <i class="fas fa-user-plus mr-2"></i> Thêm mới
                     </a>
                 </div>
             </div>
-
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between"
-                    onclick="toggleSubmenu('course-menu', this)">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-book w-5 text-blue-300"></i>
                         <span class="font-bold">Quản lý khóa học</span>
                     </div>
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
-
                 <div id="course-menu" class="submenu">
-                    <a href="course-list.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
-                    </a>
-
-                    <a href="add-course.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
-                    </a>
+                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học</a>
+                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới</a>
                 </div>
             </div>
-
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between"
-                    onclick="toggleSubmenu('exam-menu', this)">
+                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
                         <span class="font-bold">Quản lý thi Online</span>
                     </div>
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
-
                 <div id="exam-menu" class="submenu">
-                    <a href="exam.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
-                    </a>
-
-                    <a href="exam-generate.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi
-                    </a>
-
-                    <a href="exam-results.html"
-                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-poll opacity-70"></i> Kết quả làm bài
-                    </a>
+                    <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi</a>
+                    <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi</a>
+                    <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-poll opacity-70"></i> Kết quả làm bài</a>
                 </div>
             </div>
         </nav>
-
         <div class="p-4 border-t border-blue-800">
-            <a href="trangchu.html"
-                class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
+            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
                 <i class="fas fa-arrow-left"></i>
                 <span class="text-sm font-bold">Quay lại trang chủ</span>
             </a>
         </div>
     </aside>
 
-    <!-- MAIN -->
-    <main class="flex-1 flex flex-col overflow-hidden min-w-0">
-
-        <!-- HEADER -->
-        <header class="bg-white shadow-sm p-3 md:p-4 px-4 md:px-8 flex justify-between items-center border-b flex-shrink-0">
-
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+            <h2 class="text-xl font-black text-blue-900 uppercase">Danh sách tài khoản</h2>
             <div class="flex items-center gap-3">
-
-                <!-- Nút hamburger -->
-                <button onclick="openSidebar()"
-                    class="md:hidden w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center">
-                    <i class="fas fa-bars"></i>
-                </button>
-
-                <h2 class="text-base md:text-xl font-black text-blue-900 uppercase">
-                    Danh sách tài khoản
-                </h2>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-blue-900 hidden md:block">
-                    Chào Thầy Thành
-                </span>
-
-                <img src="logo.png"
-                    class="w-10 h-10 rounded-full border border-blue-900 p-0.5 flex-shrink-0">
+                <span class="text-sm font-bold text-blue-900">Chào Thầy Thành</span>
+                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 p-0.5">
             </div>
         </header>
 
-        <!-- CONTENT -->
-        <div class="p-4 md:p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
-
+        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
             <div class="bg-white rounded-[30px] shadow-sm border border-gray-100 overflow-hidden">
-
-                <!-- TOP BAR -->
-                <div class="p-4 md:p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 justify-between md:items-center">
-
+                <div class="p-6 border-b border-gray-50 flex flex-wrap gap-4 justify-between items-center">
                     <div class="relative w-full md:w-96">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
-                        <input type="text"
-                            id="search-input"
-                            placeholder="Tìm tên, email, sdt..."
-                            class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm">
+                        <input type="text" id="search-input" placeholder="Tìm tên, email, sdt..."
+                               class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium">
                     </div>
-
-                    <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-
-                        <button onclick="fetchUsers()"
-                            class="flex-1 md:flex-none p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center justify-center gap-2">
+                    <div class="flex gap-2">
+                        <button onclick="fetchUsers()" class="p-3 px-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all font-bold flex items-center gap-2">
                             <i class="fas fa-sync-alt" id="refresh-icon"></i>
                             <span>Tải lại</span>
                         </button>
-
-                        <a href="add-user.html"
-                            class="flex-1 md:flex-none p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+                        <a href="add-user.html" class="p-3 px-6 bg-blue-900 text-white rounded-2xl hover:bg-blue-800 transition-all font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20">
                             <i class="fas fa-plus"></i>
                             <span>Thêm mới</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- TABLE -->
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[700px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50/50">
+                                <th class="p-5 pl-8 text-[10px] font-black text-blue-900 uppercase tracking-widest">Học viên</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Liên hệ</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest">Vai trò</th>
+                                <th class="p-5 text-[10px] font-black text-blue-900 uppercase tracking-widest text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+                <div id="loading" class="p-20 text-center">
+                    <i class="fas fa-circle-notch animate-spin text-4xl text-blue-900"></i>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <!-- MODAL CHI TIẾT NGƯỜI DÙNG -->
     <div class="modal-overlay" id="userModal">
@@ -351,7 +263,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-
         const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -359,29 +270,7 @@
         let allUsers = [];
         let allCourses = [];
         let currentUserId = null;
-        // =====================
-// SIDEBAR MOBILE
-// =====================
-function openSidebar() {
-    document.getElementById('sidebar').classList.remove('-translate-x-full');
-    document.getElementById('sidebar-overlay').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
 
-function closeSidebar() {
-    document.getElementById('sidebar').classList.add('-translate-x-full');
-    document.getElementById('sidebar-overlay').classList.add('hidden');
-    document.body.style.overflow = '';
-}
-
-// Tự đóng sidebar khi bấm menu trên mobile
-document.querySelectorAll('#sidebar a').forEach(link => {
-    link.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-            closeSidebar();
-        }
-    });
-});
         // =====================
         // LOAD USERS
         // =====================
