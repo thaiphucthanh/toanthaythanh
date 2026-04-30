@@ -1,159 +1,412 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Thêm người dùng mới - Admin HDC Study</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
-        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
-        .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
-        .submenu.show { max-height: 500px; margin-top: 5px; }
-        .rotate-180 { transform: rotate(180deg); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-item {
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 15px;
+            margin: 0 10px;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+            background: rgba(0,0,0,0.2);
+            opacity: 0;
+        }
+
+        .submenu.show {
+            max-height: 500px;
+            margin-top: 5px;
+            opacity: 1;
+        }
+
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e3a8a;
+            border-radius: 10px;
+        }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+
+            body {
+                overflow: hidden;
+            }
+
+            .mobile-sidebar {
+                position: fixed;
+                inset-y: 0;
+                left: 0;
+                z-index: 60;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .mobile-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .mobile-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.45);
+                backdrop-filter: blur(4px);
+                z-index: 50;
+                display: none;
+            }
+
+            .mobile-overlay.show {
+                display: block;
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex h-screen overflow-hidden">
 
-    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
-        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
-            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
+<body class="bg-gray-100 flex min-h-screen overflow-hidden">
+
+    <!-- OVERLAY MOBILE -->
+    <div id="mobile-overlay"
+        class="mobile-overlay"
+        onclick="closeSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+        class="mobile-sidebar md:translate-x-0 w-[85vw] max-w-[290px] md:w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50 flex-shrink-0">
+
+        <!-- HEADER SIDEBAR -->
+        <div class="p-6 flex items-center justify-between gap-3 border-b border-blue-800">
+
+            <a href="admin.html"
+                class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+
+                <img src="logo.png"
+                    class="w-12 h-12 rounded-full bg-white p-1">
+
                 <div>
-                    <div class="font-black text-lg leading-tight text-white">TOÁN</div>
-                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">Thầy Thành Cổng Admin</div>
+                    <div class="font-black text-lg leading-tight text-white">
+                        TOÁN
+                    </div>
+
+                    <div class="text-xs text-blue-200 uppercase tracking-widest text-[10px]">
+                        Thầy Thành Cổng Admin
+                    </div>
                 </div>
             </a>
+
+            <!-- CLOSE MOBILE -->
+            <button onclick="closeSidebar()"
+                class="md:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                <i class="fas fa-times text-sm"></i>
+            </button>
         </div>
 
+        <!-- MENU -->
         <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
-            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+
+            <a href="admin.html"
+                class="sidebar-item p-4 flex items-center gap-3 mb-1">
+
                 <i class="fas fa-home w-5 text-blue-300"></i>
-                <span class="font-bold">Trang Welcome</span>
+
+                <span class="font-bold">
+                    Trang Welcome
+                </span>
             </a>
 
+            <!-- USER -->
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+
+                <div class="sidebar-item p-4 flex items-center justify-between"
+                    onclick="toggleSubmenu('user-menu', this)">
+
                     <div class="flex items-center gap-3">
                         <i class="fas fa-users w-5 text-blue-300"></i>
-                        <span class="font-bold">Quản lý người dùng</span>
+
+                        <span class="font-bold">
+                            Quản lý người dùng
+                        </span>
                     </div>
+
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
                 </div>
+
                 <div id="user-menu" class="submenu show">
-                    <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-list-ul mr-2"></i> Danh sách người dùng
+
+                    <a href="user-list.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-list-ul mr-2"></i>
+                        Danh sách người dùng
                     </a>
-                    <a href="add-user.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
-                        <i class="fas fa-user-plus mr-2"></i> Thêm mới
+
+                    <a href="add-user.html"
+                        class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50">
+
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Thêm mới
                     </a>
                 </div>
             </div>
 
+            <!-- COURSE -->
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+
+                <div class="sidebar-item p-4 flex items-center justify-between"
+                    onclick="toggleSubmenu('course-menu', this)">
+
                     <div class="flex items-center gap-3">
                         <i class="fas fa-book w-5 text-blue-300"></i>
-                        <span class="font-bold">Quản lý khóa học</span>
+
+                        <span class="font-bold">
+                            Quản lý khóa học
+                        </span>
                     </div>
+
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
+
                 <div id="course-menu" class="submenu">
-                    <a href="course-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-list mr-2 opacity-70"></i> Danh sách khóa học
+
+                    <a href="course-list.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-list mr-2 opacity-70"></i>
+                        Danh sách khóa học
                     </a>
-                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-plus-circle mr-2 opacity-70"></i> Thêm khóa học mới
+
+                    <a href="add-course.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-plus-circle mr-2 opacity-70"></i>
+                        Thêm khóa học mới
                     </a>
                 </div>
             </div>
 
+            <!-- EXAM -->
             <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
+
+                <div class="sidebar-item p-4 flex items-center justify-between"
+                    onclick="toggleSubmenu('exam-menu', this)">
+
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-book w-5 text-blue-300"></i>
-                        <span class="font-bold">Quản lý thi Online</span>
+                        <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
+
+                        <span class="font-bold">
+                            Quản lý thi Online
+                        </span>
                     </div>
+
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
                 </div>
-                <div id="exam-menu" class="submenu flex flex-col bg-black/20 rounded-lg mt-1 ml-2 overflow-hidden transition-all">
-                    <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi
+
+                <div id="exam-menu" class="submenu">
+
+                    <a href="exam.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-database opacity-70"></i>
+                        Ngân hàng câu hỏi
                     </a>
-                    <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi
+
+                    <a href="exam-generate.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-random opacity-70"></i>
+                        Trộn đề & Tạo kỳ thi
                     </a>
-                    <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                        <i class="fas fa-poll opacity-70"></i> Kết quả làm bài
+
+                    <a href="exam-results.html"
+                        class="block py-3 pl-12 text-sm hover:text-yellow-400">
+
+                        <i class="fas fa-poll opacity-70"></i>
+                        Kết quả làm bài
                     </a>
                 </div>
             </div>
         </nav>
+
+        <!-- FOOTER -->
+        <div class="p-4 border-t border-blue-800">
+
+            <a href="trangchu.html"
+                class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
+
+                <i class="fas fa-arrow-left"></i>
+
+                <span class="text-sm font-bold">
+                    Quay lại trang chủ
+                </span>
+            </a>
+        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
-            <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Thêm thành viên mới</h2>
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col overflow-hidden min-w-0">
+
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm p-3 md:p-4 px-4 md:px-8 flex justify-between items-center border-b flex-shrink-0">
+
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-blue-900">Chào Thầy Thành</span>
-                <img src="logo.png" class="w-10 h-10 rounded-full border border-blue-900 bg-white p-0.5">
+
+                <!-- HAMBURGER -->
+                <button onclick="openSidebar()"
+                    class="md:hidden w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center">
+
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <h2 class="text-base md:text-xl font-black text-blue-900 uppercase tracking-tight">
+                    Thêm thành viên mới
+                </h2>
+            </div>
+
+            <div class="flex items-center gap-3">
+
+                <span class="text-sm font-bold text-blue-900 hidden md:block">
+                    Chào Thầy Thành
+                </span>
+
+                <img src="logo.png"
+                    class="w-10 h-10 rounded-full border border-blue-900 bg-white p-0.5 flex-shrink-0">
             </div>
         </header>
 
-        <div class="p-8 overflow-y-auto bg-gray-50 flex-1">
-            <div class="max-w-3xl mx-auto bg-white rounded-[30px] p-8 shadow-sm border border-gray-100">
-                <form id="add-user-form" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    
+        <!-- CONTENT -->
+        <div class="p-4 md:p-8 overflow-y-auto bg-gray-50 flex-1 custom-scrollbar">
+
+            <div class="max-w-3xl mx-auto bg-white rounded-[30px] p-5 md:p-8 shadow-sm border border-gray-100">
+
+                <form id="add-user-form"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- FULLNAME -->
                     <div class="md:col-span-2">
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">Họ và tên</label>
-                        <input type="text" id="fullname" required placeholder="Nhập tên..." 
-                               class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
+
+                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">
+                            Họ và tên
+                        </label>
+
+                        <input type="text"
+                            id="fullname"
+                            required
+                            placeholder="Nhập tên..."
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
                     </div>
 
+                    <!-- EMAIL -->
                     <div>
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">Email</label>
-                        <input type="email" id="email" required placeholder="email@gmail.com" 
-                               class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
+
+                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">
+                            Email
+                        </label>
+
+                        <input type="email"
+                            id="email"
+                            required
+                            placeholder="email@gmail.com"
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
                     </div>
 
+                    <!-- PHONE -->
                     <div>
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2 font-bold text-red-600">Số điện thoại (sdt)</label>
-                        <input type="text" id="sdt" required placeholder="09xxxxxxx" 
-                               class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
+
+                        <label class="text-[10px] font-black text-red-600 uppercase tracking-[2px] ml-2">
+                            Số điện thoại
+                        </label>
+
+                        <input type="text"
+                            id="sdt"
+                            required
+                            placeholder="09xxxxxxx"
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
                     </div>
 
+                    <!-- FB -->
                     <div class="md:col-span-2">
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2 font-bold text-blue-600">Link Facebook (link_fb)</label>
-                        <input type="url" id="link_fb" placeholder="https://facebook.com/..." 
-                               class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
+
+                        <label class="text-[10px] font-black text-blue-600 uppercase tracking-[2px] ml-2">
+                            Link Facebook
+                        </label>
+
+                        <input type="url"
+                            id="link_fb"
+                            placeholder="https://facebook.com/..."
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
                     </div>
 
+                    <!-- PASSWORD -->
                     <div>
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">Mật khẩu</label>
-                        <input type="password" id="password" required placeholder="••••••••" 
-                               class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
+
+                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">
+                            Mật khẩu
+                        </label>
+
+                        <input type="password"
+                            id="password"
+                            required
+                            placeholder="••••••••"
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold">
                     </div>
 
+                    <!-- ROLE -->
                     <div>
-                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">Vai trò</label>
-                        <select id="role" class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none font-bold text-blue-900">
+
+                        <label class="text-[10px] font-black text-blue-900 uppercase tracking-[2px] ml-2">
+                            Vai trò
+                        </label>
+
+                        <select id="role"
+                            class="w-full mt-1 p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none font-bold text-blue-900">
+
                             <option value="student">Học sinh</option>
                             <option value="admin">Quản trị viên</option>
                             <option value="teacher">Giáo viên</option>
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 flex gap-3 mt-6">
-                        <button type="submit" id="btn-save" class="flex-1 bg-blue-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20">
+                    <!-- BUTTON -->
+                    <div class="md:col-span-2 flex flex-col sm:flex-row gap-3 mt-6">
+
+                        <button type="submit"
+                            id="btn-save"
+                            class="flex-1 bg-blue-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20">
+
                             Lưu tài khoản
                         </button>
-                        <a href="user-list.html" class="px-8 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center text-center">
+
+                        <a href="user-list.html"
+                            class="px-8 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center text-center">
+
                             Hủy
                         </a>
                     </div>
@@ -162,48 +415,146 @@
         </div>
     </main>
 
+    <!-- SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
+
+        // =====================
+        // SUPABASE
+        // =====================
+
         const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const SUPABASE_KEY =
+            'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+
+        const supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+        // =====================
+        // SIDEBAR MOBILE
+        // =====================
+
+        function openSidebar() {
+
+            document
+                .getElementById('sidebar')
+                .classList.add('show');
+
+            document
+                .getElementById('mobile-overlay')
+                .classList.add('show');
+
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+
+            document
+                .getElementById('sidebar')
+                .classList.remove('show');
+
+            document
+                .getElementById('mobile-overlay')
+                .classList.remove('show');
+
+            document.body.style.overflow = '';
+        }
+
+        // Auto close mobile
+        document.querySelectorAll('#sidebar a').forEach(link => {
+
+            link.addEventListener('click', () => {
+
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            });
+        });
+
+        // =====================
+        // FORM
+        // =====================
 
         const form = document.getElementById('add-user-form');
+
         const btnSave = document.getElementById('btn-save');
 
         form.addEventListener('submit', async (e) => {
+
             e.preventDefault();
+
             btnSave.disabled = true;
-            btnSave.innerHTML = `Đang lưu...`;
+
+            btnSave.innerHTML = `
+                <i class="fas fa-spinner animate-spin mr-2"></i>
+                Đang lưu...
+            `;
 
             const newUser = {
-                fullname: document.getElementById('fullname').value,
-                email: document.getElementById('email').value,
-                sdt: document.getElementById('sdt').value, // Đúng cột sdt của Thầy
-                link_fb: document.getElementById('link_fb').value,
-                password: document.getElementById('password').value,
-                role: document.getElementById('role').value,
+
+                fullname:
+                    document.getElementById('fullname').value.trim(),
+
+                email:
+                    document.getElementById('email').value.trim(),
+
+                sdt:
+                    document.getElementById('sdt').value.trim(),
+
+                link_fb:
+                    document.getElementById('link_fb').value.trim(),
+
+                password:
+                    document.getElementById('password').value,
+
+                role:
+                    document.getElementById('role').value,
+
                 status: 'active'
             };
 
-            const { error } = await supabaseClient.from('accounts').insert([newUser]);
+            const { error } = await supabaseClient
+                .from('accounts')
+                .insert([newUser]);
 
             if (error) {
+
                 alert('Lỗi: ' + error.message);
+
                 btnSave.disabled = false;
-                btnSave.innerHTML = `Lưu tài khoản`;
-            } else {
-                alert('Thầy đã thêm thành viên thành công!');
-                window.location.href = 'user-list.html';
+
+                btnSave.innerHTML = 'Lưu tài khoản';
+
+                return;
             }
+
+            alert('Thầy đã thêm thành viên thành công!');
+
+            window.location.href = 'user-list.html';
         });
 
+        // =====================
+        // SUBMENU
+        // =====================
+
         function toggleSubmenu(id, element) {
+
             const menu = document.getElementById(id);
-            const arrow = element.querySelector('.arrow-icon');
+
+            const arrow =
+                element.querySelector('.arrow-icon');
+
             menu.classList.toggle('show');
-            if (arrow) arrow.classList.toggle('rotate-180');
+
+            if (arrow) {
+                arrow.classList.toggle('rotate-180');
+            }
         }
+
     </script>
 </body>
 </html>
