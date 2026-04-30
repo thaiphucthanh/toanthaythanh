@@ -351,6 +351,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+
+        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allUsers = [];
+        let allCourses = [];
+        let currentUserId = null;
         // =====================
 // SIDEBAR MOBILE
 // =====================
@@ -374,14 +382,6 @@ document.querySelectorAll('#sidebar a').forEach(link => {
         }
     });
 });
-        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let allUsers = [];
-        let allCourses = [];
-        let currentUserId = null;
-
         // =====================
         // LOAD USERS
         // =====================
