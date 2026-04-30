@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thêm người dùng mới - Admin HDC Study</title>
+    <title>Thêm người dùng mới - Admin Toán thầy Thành</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -30,7 +30,8 @@
 
         .submenu {
             max-height: 0;
-            overflow: hidden;
+            overflow-y: hidden;
+            overflow-x: visible;
             transition: all 0.3s ease-out;
             background: rgba(0,0,0,0.2);
             opacity: 0;
@@ -55,32 +56,19 @@
             border-radius: 10px;
         }
 
+        .menu-parent{
+            overflow: visible;
+        }
+
         /* MOBILE */
         @media (max-width: 768px) {
-
-            body {
-                overflow: hidden;
-            }
-
-            .mobile-sidebar {
-                position: fixed;
-                inset-y: 0;
-                left: 0;
-                z-index: 60;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .mobile-sidebar.show {
-                transform: translateX(0);
-            }
 
             .mobile-overlay {
                 position: fixed;
                 inset: 0;
                 background: rgba(0,0,0,0.45);
                 backdrop-filter: blur(4px);
-                z-index: 50;
+                z-index: 40;
                 display: none;
             }
 
@@ -93,16 +81,16 @@
 
 <body class="bg-gray-100 flex min-h-screen overflow-hidden">
 
-    <!-- OVERLAY MOBILE -->
+    <!-- OVERLAY -->
     <div id="mobile-overlay"
         class="mobile-overlay"
         onclick="closeSidebar()"></div>
 
     <!-- SIDEBAR -->
     <aside id="sidebar"
-        class="mobile-sidebar md:translate-x-0 w-[85vw] max-w-[290px] md:w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50 flex-shrink-0">
+        class="w-[88vw] max-w-[320px] md:w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50 md:relative fixed inset-y-0 left-0 -translate-x-full md:translate-x-0 transition-transform duration-300 flex-shrink-0 overflow-y-auto overflow-x-visible">
 
-        <!-- HEADER SIDEBAR -->
+        <!-- HEADER -->
         <div class="p-6 flex items-center justify-between gap-3 border-b border-blue-800">
 
             <a href="admin.html"
@@ -125,6 +113,7 @@
             <!-- CLOSE MOBILE -->
             <button onclick="closeSidebar()"
                 class="md:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+
                 <i class="fas fa-times text-sm"></i>
             </button>
         </div>
@@ -132,6 +121,7 @@
         <!-- MENU -->
         <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
 
+            <!-- HOME -->
             <a href="admin.html"
                 class="sidebar-item p-4 flex items-center gap-3 mb-1">
 
@@ -149,6 +139,7 @@
                     onclick="toggleSubmenu('user-menu', this)">
 
                     <div class="flex items-center gap-3">
+
                         <i class="fas fa-users w-5 text-blue-300"></i>
 
                         <span class="font-bold">
@@ -184,6 +175,7 @@
                     onclick="toggleSubmenu('course-menu', this)">
 
                     <div class="flex items-center gap-3">
+
                         <i class="fas fa-book w-5 text-blue-300"></i>
 
                         <span class="font-bold">
@@ -219,6 +211,7 @@
                     onclick="toggleSubmenu('exam-menu', this)">
 
                     <div class="flex items-center gap-3">
+
                         <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
 
                         <span class="font-bold">
@@ -278,7 +271,7 @@
 
             <div class="flex items-center gap-3">
 
-                <!-- HAMBURGER -->
+                <!-- MOBILE BUTTON -->
                 <button onclick="openSidebar()"
                     class="md:hidden w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center">
 
@@ -442,7 +435,7 @@
 
             document
                 .getElementById('sidebar')
-                .classList.add('show');
+                .classList.remove('-translate-x-full');
 
             document
                 .getElementById('mobile-overlay')
@@ -455,7 +448,7 @@
 
             document
                 .getElementById('sidebar')
-                .classList.remove('show');
+                .classList.add('-translate-x-full');
 
             document
                 .getElementById('mobile-overlay')
@@ -464,7 +457,7 @@
             document.body.style.overflow = '';
         }
 
-        // Auto close mobile
+        // AUTO CLOSE
         document.querySelectorAll('#sidebar a').forEach(link => {
 
             link.addEventListener('click', () => {
