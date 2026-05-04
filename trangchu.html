@@ -15,15 +15,18 @@
         body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
         main { flex: 1; }
 
+        /* Dropdown user */
         .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
         .dropdown-user.active { display: flex; }
         .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
         .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
         .divider { height: 1px; background: #eee; margin: 5px 0; }
 
+        /* Banner */
         .swiper { width: 100%; }
         .swiper-slide img { width: 100%; height: auto; display: block; object-fit: contain; }
 
+        /* Menu */
         .thanh-menu-ngang { background: #1e3a8a; color: white; }
         .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
         .item-menu { font-weight: bold; color: white; text-decoration: none; }
@@ -40,6 +43,26 @@
         .mob-item { display: flex; align-items: center; gap: 12px; padding: 15px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 0.2s; }
         .mob-item:hover { background: rgba(255,255,255,0.1); }
         .mob-highlight { background: #fbbf24; color: #1e3a8a; margin: 12px 16px; border-radius: 12px; border: none; justify-content: center; }
+
+        /* Countdown */
+        .countdown-box { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%); }
+        .countdown-unit { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border-radius: 16px; padding: 14px 18px; min-width: 70px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        .countdown-number { font-size: 2.5rem; font-weight: 900; line-height: 1; color: white; }
+        .countdown-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.65); margin-top: 4px; }
+
+        /* Message banner */
+        .message-banner { border-radius: 24px; padding: 20px 28px; display: flex; align-items: center; gap: 16px; }
+
+        /* Lesson card */
+        .lesson-card { background: white; border-radius: 20px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: block; }
+        .lesson-card:hover { box-shadow: 0 10px 30px rgba(30,58,138,0.1); transform: translateY(-4px); border-color: #bfdbfe; }
+        .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
+        .play-btn { width: 48px; height: 48px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; transition: transform 0.2s; }
+        .lesson-card:hover .play-btn { transform: scale(1.1); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -60,12 +83,12 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <nav class="flex-1 py-2">
+            <nav class="flex-1 py-2" id="mobile-nav">
                 <a href="trangchu.html" class="mob-item"><i class="fas fa-home w-5 text-blue-300"></i> Trang chủ</a>
                 <a href="khoa-hoc-cua-toi.html" class="mob-item"><i class="fas fa-graduation-cap w-5 text-blue-300"></i> Khóa học của tôi</a>
                 <a href="#" class="mob-item"><i class="fas fa-file-pdf w-5 text-blue-300"></i> Tài liệu miễn phí</a>
                 <a href="login.html" class="mob-item" id="mob-login-btn"><i class="fas fa-sign-in-alt w-5 text-blue-300"></i> Đăng nhập</a>
-                <a href="#" class="mob-item mob-highlight"><i class="fas fa-bolt w-5"></i> Đăng ký ngay</a>
+                <a href="#" class="mob-item mob-highlight" id="mob-register-btn"><i class="fas fa-bolt w-5"></i> Đăng ký ngay</a>
             </nav>
             <div class="p-4 border-t border-white/10 text-center">
                 <div class="text-[10px] text-blue-300 font-bold opacity-60 uppercase tracking-widest">Dạy học từ tâm · Nâng tầm kiến thức</div>
@@ -76,7 +99,6 @@
     <!-- HEADER -->
     <header class="bg-white shadow-md sticky top-0 z-[1000]">
         <div class="khung-trang flex items-center justify-between py-3 md:py-4">
-
             <a href="trangchu.html" class="cum-logo flex-shrink-0">
                 <img src="logo.png" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-blue-100">
                 <div>
@@ -85,34 +107,27 @@
                 </div>
             </a>
 
-            <!-- Search desktop -->
             <div class="hidden md:block flex-1 max-w-md mx-10">
                 <input type="text" placeholder="Tìm bài giảng..."
                     class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="flex items-center gap-2">
-                <!-- Search icon mobile -->
                 <button class="md:hidden w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center" onclick="toggleMobileSearch()">
                     <i class="fas fa-search text-sm"></i>
                 </button>
-
-                <!-- User section -->
                 <div class="cum-tai-khoan relative" id="user-section">
-                    <div class="flex gap-2" id="guest-btns">
+                    <div class="flex gap-2">
                         <button class="hidden md:block px-4 py-2 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
                         <button class="hidden md:block px-4 py-2 bg-blue-900 text-white rounded-full font-bold text-sm hover:bg-blue-800 transition-all">Đăng ký</button>
                     </div>
                 </div>
-
-                <!-- Hamburger mobile -->
                 <button onclick="openMobileMenu()" class="md:hidden w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-bars text-sm"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Mobile search bar -->
         <div id="mobile-search" class="hidden px-4 pb-3 md:hidden">
             <input type="text" id="mobile-search-input" placeholder="Tìm bài giảng..."
                 class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -132,13 +147,13 @@
             </div>
         </nav>
 
-        <!-- Nav mobile scroll ngang -->
+        <!-- Nav mobile -->
         <nav class="thanh-menu-ngang md:hidden overflow-x-auto">
             <div class="flex gap-4 px-4 py-2 whitespace-nowrap">
                 <a href="trangchu.html" class="item-menu text-xs opacity-100 border-b-2 border-yellow-400 pb-1 flex-shrink-0">Trang chủ</a>
                 <a href="khoa-hoc-cua-toi.html" class="item-menu text-xs opacity-80 flex-shrink-0">Khóa học</a>
                 <a href="#" class="item-menu text-xs opacity-80 flex-shrink-0">Tài liệu</a>
-                <a href="#" class="item-menu text-xs bg-yellow-400 text-blue-900 px-3 py-1 rounded-lg flex-shrink-0">Đăng ký</a>
+                <a href="#" class="item-menu text-xs bg-yellow-400 text-blue-900 px-3 py-1 rounded-lg flex-shrink-0" id="mobile-nav-dk">Đăng ký</a>
             </div>
         </nav>
     </header>
@@ -154,13 +169,75 @@
 
     <!-- NỘI DUNG CHÍNH -->
     <main>
-        <div class="khung-trang py-8 md:py-12">
-            <!-- Nội dung sẽ thêm sau -->
+        <div class="khung-trang py-8 md:py-12 space-y-10">
+
+            <!-- 1. LỜI NHẮN ĐỘNG VIÊN -->
+            <div id="message-section" class="message-banner bg-blue-50 border border-blue-100">
+                <div class="w-12 h-12 rounded-2xl bg-blue-900 flex items-center justify-center flex-shrink-0">
+                    <span id="message-icon" class="text-xl">👋</span>
+                </div>
+                <div>
+                    <div id="message-greeting" class="font-black text-blue-900 text-lg uppercase tracking-tight"></div>
+                    <div id="message-text" class="text-blue-700 text-sm font-medium mt-1"></div>
+                </div>
+            </div>
+
+            <!-- 2. ĐẾM NGƯỢC NGÀY THI -->
+            <div class="countdown-box rounded-[30px] p-8 md:p-10 text-center relative overflow-hidden">
+                <!-- Vòng trang trí -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full border-[20px] border-white/5"></div>
+                <div class="absolute -bottom-8 -left-8 w-32 h-32 rounded-full border-[16px] border-white/5"></div>
+
+                <div class="relative z-10">
+                    <div class="text-white/60 text-[11px] font-bold uppercase tracking-[0.2em] mb-2" id="exam-label">Kỳ thi tuyển sinh vào lớp 10</div>
+                    <div class="text-white font-black text-2xl md:text-3xl uppercase tracking-tight mb-8">Còn lại bao nhiêu ngày?</div>
+
+                    <div class="flex justify-center gap-3 md:gap-5 mb-6">
+                        <div class="countdown-unit">
+                            <div class="countdown-number" id="cd-days">--</div>
+                            <div class="countdown-label">Ngày</div>
+                        </div>
+                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
+                        <div class="countdown-unit">
+                            <div class="countdown-number" id="cd-hours">--</div>
+                            <div class="countdown-label">Giờ</div>
+                        </div>
+                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
+                        <div class="countdown-unit">
+                            <div class="countdown-number" id="cd-mins">--</div>
+                            <div class="countdown-label">Phút</div>
+                        </div>
+                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
+                        <div class="countdown-unit">
+                            <div class="countdown-number" id="cd-secs">--</div>
+                            <div class="countdown-label">Giây</div>
+                        </div>
+                    </div>
+
+                    <div class="text-white/50 text-xs font-bold uppercase tracking-widest" id="exam-date-display"></div>
+                </div>
+            </div>
+
+            <!-- 3. BÀI GIẢNG MỚI NHẤT -->
+            <div>
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-1 h-6 bg-yellow-400 rounded-full"></div>
+                    <h2 class="text-2xl font-black text-blue-900 uppercase tracking-tight">Bài giảng mới nhất</h2>
+                </div>
+
+                <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
+                        <p class="text-gray-400 mt-3 font-bold text-xs uppercase tracking-widest">Đang tải bài giảng...</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <!-- FOOTER -->
-    <footer style="background: #1e3a8a; color: white; padding: 3rem 0 1.5rem;">
+    <footer style="background: #1e3a8a; color: white; padding: 3rem 0 1.5rem; margin-top: 2rem;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2.5rem; margin-bottom: 2.5rem;">
                 <div>
@@ -219,27 +296,157 @@
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        var swiper = new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
+        // Banner
+        new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-        function openMobileMenu() {
-            document.getElementById('mobile-menu').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMobileMenu() {
-            document.getElementById('mobile-menu').classList.remove('active');
-            document.body.style.overflow = '';
-        }
+        // =====================
+        // MOBILE
+        // =====================
+        function openMobileMenu() { document.getElementById('mobile-menu').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeMobileMenu() { document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = ''; }
         function toggleMobileSearch() {
             const bar = document.getElementById('mobile-search');
             bar.classList.toggle('hidden');
             if (!bar.classList.contains('hidden')) document.getElementById('mobile-search-input').focus();
         }
 
+        // =====================
+        // LỜI NHẮN ĐỘNG VIÊN THEO GIỜ
+        // =====================
+        function showMotivation(userName) {
+            const h = new Date().getHours();
+            const name = userName ? `, ${userName}` : '';
+            let greeting, text, icon, bg, border;
+
+            if (h >= 5 && h < 12) {
+                greeting = `Chào buổi sáng${name}! ☀️`;
+                text = 'Buổi sáng là thời gian não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay nhé!';
+                icon = '☀️'; bg = 'bg-amber-50'; border = 'border-amber-100';
+                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
+                document.getElementById('message-greeting').className = 'font-black text-amber-900 text-lg uppercase tracking-tight';
+                document.getElementById('message-text').className = 'text-amber-700 text-sm font-medium mt-1';
+            } else if (h >= 12 && h < 18) {
+                greeting = `Buổi chiều năng động${name}! 🌤️`;
+                text = 'Thời gian lý tưởng để làm bài tập và luyện đề — cố lên nào!';
+                icon = '🌤️'; bg = 'bg-blue-50'; border = 'border-blue-100';
+            } else if (h >= 18 && h < 22) {
+                greeting = `Chào buổi tối${name}! 🌙`;
+                text = 'Ôn lại những gì học hôm nay trước khi ngủ để não bộ ghi nhớ tốt hơn nhé!';
+                icon = '🌙'; bg = 'bg-indigo-50'; border = 'border-indigo-100';
+                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
+                document.getElementById('message-greeting').className = 'font-black text-indigo-900 text-lg uppercase tracking-tight';
+                document.getElementById('message-text').className = 'text-indigo-700 text-sm font-medium mt-1';
+            } else {
+                greeting = `Khuya rồi đấy${name}! 😴`;
+                text = 'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon và ngày mai tiếp tục nhé!';
+                icon = '😴'; bg = 'bg-gray-50'; border = 'border-gray-200';
+                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
+                document.getElementById('message-greeting').className = 'font-black text-gray-700 text-lg uppercase tracking-tight';
+                document.getElementById('message-text').className = 'text-gray-500 text-sm font-medium mt-1';
+            }
+
+            document.getElementById('message-icon').textContent = icon;
+            document.getElementById('message-greeting').textContent = greeting;
+            document.getElementById('message-text').textContent = text;
+        }
+
+        // =====================
+        // ĐẾM NGƯỢC
+        // =====================
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        async function startCountdown() {
+            // Lấy ngày thi từ Supabase (bảng settings, key = 'exam_date')
+            // Nếu chưa có thì dùng ngày mặc định
+            let examDate = null;
+            try {
+                const { data } = await supabaseClient
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'exam_date')
+                    .single();
+                if (data?.value) examDate = new Date(data.value);
+            } catch (e) {}
+
+            // Ngày mặc định nếu chưa set
+            if (!examDate || isNaN(examDate)) {
+                examDate = new Date(new Date().getFullYear(), 5, 20, 7, 30, 0); // 20/6 07:30
+                if (examDate < new Date()) examDate.setFullYear(examDate.getFullYear() + 1);
+            }
+
+            // Hiện ngày thi
+            document.getElementById('exam-date-display').textContent =
+                `Ngày thi: ${examDate.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+
+            function tick() {
+                const now = new Date();
+                const diff = Math.max(0, examDate - now);
+                if (diff === 0) {
+                    document.getElementById('cd-days').textContent = '00';
+                    document.getElementById('cd-hours').textContent = '00';
+                    document.getElementById('cd-mins').textContent = '00';
+                    document.getElementById('cd-secs').textContent = '00';
+                    document.getElementById('exam-date-display').textContent = '🎉 Hôm nay là ngày thi! Chúc các em làm bài thật tốt!';
+                    return;
+                }
+                document.getElementById('cd-days').textContent = pad(Math.floor(diff / 86400000));
+                document.getElementById('cd-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
+                document.getElementById('cd-mins').textContent = pad(Math.floor((diff % 3600000) / 60000));
+                document.getElementById('cd-secs').textContent = pad(Math.floor((diff % 60000) / 1000));
+            }
+            tick();
+            setInterval(tick, 1000);
+        }
+
+        // =====================
+        // BÀI GIẢNG MỚI NHẤT
+        // =====================
+        async function loadLatestLessons() {
+            const grid = document.getElementById('video-grid');
+            const { data: lessons, error } = await supabaseClient
+                .from('lessons')
+                .select('id, title, content, status')
+                .eq('status', 'open')
+                .order('id', { ascending: false })
+                .limit(6);
+
+            if (error || !lessons || lessons.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-[30px] border-2 border-dashed border-gray-200">
+                    <i class="fas fa-book-open text-4xl text-gray-200 mb-3 block"></i>
+                    <p class="text-gray-400 font-bold text-xs uppercase italic">Chưa có bài giảng nào</p>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = lessons.map(l => `
+                <a href="lesson-detail.html?id=${l.id}" class="lesson-card">
+                    <div class="lesson-thumb">
+                        <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
+                    </div>
+                    <div class="p-5">
+                        <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-2 line-clamp-2">${l.title}</div>
+                        <div class="text-gray-400 text-xs font-medium line-clamp-2">${l.content ? l.content.replace(/<[^>]*>/g,'') : 'Xem bài giảng ngay cùng Thầy Thành'}</div>
+                    </div>
+                    <div class="px-5 pb-4 flex items-center justify-between">
+                        <span class="text-[9px] font-black uppercase text-blue-500 bg-blue-50 px-3 py-1 rounded-full">Toán Thầy Thành</span>
+                        <div class="w-7 h-7 bg-blue-900 rounded-full flex items-center justify-center">
+                            <i class="fas fa-arrow-right text-white text-[9px]"></i>
+                        </div>
+                    </div>
+                </a>`).join('');
+        }
+
+        // =====================
+        // ĐĂNG NHẬP
+        // =====================
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             const userSection = document.getElementById('user-section');
             const menuDkNgay = document.getElementById('menu-dk-ngay');
+            const mobileNavDk = document.getElementById('mobile-nav-dk');
+
             if (user) {
+                // Hiện avatar + dropdown
                 let template = document.getElementById('user-logged-template').innerHTML;
                 let adminOption = user.role === 'admin' ? `
                     <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">
@@ -250,10 +457,20 @@
                     .replace('{role_text}', user.role === 'admin' ? 'Quản trị viên' : 'Học sinh')
                     .replace('{admin_option}', adminOption);
                 userSection.innerHTML = template;
+
+                // Ẩn nút đăng ký
                 if (menuDkNgay) menuDkNgay.style.display = 'none';
-                // Ẩn nút đăng nhập trong drawer nếu đã đăng nhập
+                if (mobileNavDk) mobileNavDk.style.display = 'none';
+
+                // Ẩn nút đăng nhập trong drawer
                 const mobLogin = document.getElementById('mob-login-btn');
+                const mobRegister = document.getElementById('mob-register-btn');
                 if (mobLogin) mobLogin.style.display = 'none';
+                if (mobRegister) mobRegister.style.display = 'none';
+
+                showMotivation(user.fullname.split(' ').pop()); // Lấy tên cuối
+            } else {
+                showMotivation(null);
             }
         }
 
@@ -265,7 +482,11 @@
             if (confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('user'); window.location.reload(); }
         }
 
-        window.onload = () => { checkLogin(); };
+        window.onload = () => {
+            checkLogin();
+            startCountdown();
+            loadLatestLessons();
+        };
         window.onclick = (e) => {
             if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active');
         };
