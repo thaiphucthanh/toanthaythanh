@@ -133,91 +133,131 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-        const urlParams = new URLSearchParams(window.location.search);
-        let currentLessonId = urlParams.get('id');
+const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        function checkLogin() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            const userSection = document.getElementById('user-section');
-            if (!user) { window.location.href = 'login.html'; return; }
-            let template = document.getElementById('user-logged-template').innerHTML;
-            let adminOption = user.role === 'admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">QUẢN TRỊ HỆ THỐNG</a>` : '';
-            template = template.replace(/{fullname}/g, user.fullname).replace(/{role_text}/g, user.role === 'admin' ? 'Thầy Thành' : 'Học sinh').replace(/{admin_option}/g, adminOption);
-            userSection.innerHTML = template;
+const urlParams = new URLSearchParams(window.location.search);
+let currentLessonId = urlParams.get('id');
+
+function checkLogin() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+}
+
+function getYoutubeId(url) {
+    if (!url) return null;
+    const patterns = [/[?&]v=([^&]+)/, /youtu\.be\/([^?&]+)/];
+    for (const p of patterns) {
+        const m = url.match(p);
+        if (m) return m[1];
+    }
+    return null;
+}
+
+async function fetchLessonData(id) {
+    const lessonId = parseInt(id);
+    if (isNaN(lessonId)) return;
+
+    const { data: lesson, error } = await supabaseClient
+        .from('lessons')
+        .select('*')
+        .eq('id', lessonId)
+        .single();
+
+    if (error) {
+        console.error("Lesson error:", error);
+        return;
+    }
+
+    if (!lesson) return;
+
+    document.getElementById('lesson-title').innerText = lesson.title;
+    document.getElementById('lesson-content').innerHTML = lesson.content || '';
+
+    const youtubeId = getYoutubeId(lesson.video_url);
+    if (youtubeId) {
+        document.getElementById('video-frame').src =
+            `https://www.youtube.com/embed/${youtubeId}`;
+    }
+
+    renderDocuments(lesson.documents);
+
+    if (lesson.topic_id) {
+        const { data: topic } = await supabaseClient
+            .from('topics')
+            .select('*')
+            .eq('id', lesson.topic_id)
+            .single();
+
+        if (topic) {
+            await loadSidebar(topic.course_id);
         }
+    }
+}
 
-        function getYoutubeId(url) {
-            if (!url) return null;
-            const patterns = [/[?&]v=([^&]+)/, /youtu\.be\/([^?&]+)/, /youtube\.com\/embed\/([^?&]+)/, /youtube\.com\/shorts\/([^?&]+)/];
-            for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
-            return null;
-        }
+function renderDocuments(docs) {
+    const container = document.getElementById('document-container');
+    container.innerHTML = '';
 
-        async function fetchLessonData(id) {
-            document.getElementById('lesson-title').innerText = 'Đang tải...';
-            // Ép kiểu ID sang số nguyên (int4) để khớp với cột id trong DB
-            const lessonId = parseInt(id);
-            if (isNaN(lessonId)) return;
+    let docList = [];
 
-            const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', lessonId).single();
-            if (error || !lesson) return;
+    try {
+        docList = typeof docs === 'string' ? JSON.parse(docs) : docs;
+    } catch (e) {
+        docList = [];
+    }
 
-            document.getElementById('lesson-title').innerText = lesson.title;
-            document.getElementById('lesson-content').innerHTML = lesson.content || '';
-            document.getElementById('lesson-insight').innerHTML = lesson.insight ? '💡 ' + lesson.insight : '';
-            
-            const youtubeId = getYoutubeId(lesson.video_url);
-            if (youtubeId) { 
-                document.getElementById('video-frame').src = `https://www.youtube.com/embed/${youtubeId}?rel=0`; 
-                document.getElementById('no-video').classList.add('hidden'); 
-            } else { 
-                document.getElementById('no-video').classList.remove('hidden'); 
-                document.getElementById('no-video').classList.add('flex');
-            }
-            
-            renderDocuments(lesson.documents);
-            
-            if (lesson.topic_id) {
-                const { data: topic } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', lesson.topic_id).single();
-                if (topic) { 
-                    document.getElementById('lesson-topic-name').innerText = topic.topic_name; 
-                    await loadSidebar(topic.course_id); 
-                }
-            }
-        }
+    if (!docList || docList.length === 0) {
+        container.innerHTML = "Chưa có tài liệu";
+        return;
+    }
 
-        function renderDocuments(docs) {
-            const container = document.getElementById('document-container');
-            container.innerHTML = '';
-            let docList = typeof docs === 'string' ? JSON.parse(docs) : docs;
-            if (!docList || docList.length === 0) { showNoDoc(container); return; }
-            docList.forEach((file) => {
-                container.insertAdjacentHTML('beforeend', `<div class="p-4 bg-gray-50 rounded-2xl border mb-3"><div class="text-[10px] font-bold text-blue-900 mb-2">${file.name || 'Tài liệu'}</div><div class="flex gap-2"><a href="${file.url}" target="_blank" class="flex-1 py-2 bg-blue-900 text-white text-center rounded-lg text-[9px] font-black uppercase">Xem</a><a href="${file.url}" target="_blank" class="flex-1 py-2 bg-white text-red-600 border text-center rounded-lg text-[9px] font-black uppercase">Tải</a></div></div>`);
-            });
-        }
+    docList.forEach(file => {
+        container.innerHTML += `
+            <div>
+                <a href="${file.url}" target="_blank">${file.name}</a>
+            </div>
+        `;
+    });
+}
 
-        function showNoDoc(container) { container.innerHTML = `<div class="p-6 bg-gray-50 text-gray-400 text-[10px] text-center rounded-[30px] border border-dashed uppercase italic">Chưa có tài liệu</div>`; }
+async function loadSidebar(courseId) {
+    const { data: topics } = await supabaseClient
+        .from('topics')
+        .select('*')
+        .eq('course_id', courseId);
 
-        async function loadSidebar(courseId) {
-            const [{ data: topics }, { data: lessons }] = await Promise.all([
-                supabaseClient.from('topics').select('id, topic_name').eq('course_id', courseId).order('id', { ascending: true }),
-                supabaseClient.from('lessons').select('id, title, topic_id').order('id', { ascending: true })
-            ]);
-            const sidebar = document.getElementById('sidebar-content');
-            sidebar.innerHTML = topics.map(topic => {
-                const topicLessons = (lessons || []).filter(l => l.topic_id === topic.id);
-                return `<div class="mb-1"><div onclick="this.nextElementSibling.classList.toggle('show')" class="p-4 font-black text-[10px] uppercase cursor-pointer flex justify-between items-center rounded-xl text-gray-400"><span>${topic.topic_name}</span><i class="fas fa-chevron-down"></i></div><div class="submenu ${topic.id === currentLessonId ? 'show' : ''}">${topicLessons.map(l => `<div onclick="window.location.href='?id=${l.id}'" class="lesson-item p-3 pl-8 text-[11px] font-bold cursor-pointer uppercase ${l.id == currentLessonId ? 'active' : ''}">${l.title}</div>`).join('')}</div></div>`;
-            }).join('');
-        }
+    const { data: lessons } = await supabaseClient
+        .from('lessons')
+        .select('id, title, topic_id')
+        .in('topic_id', topics.map(t => t.id));
 
-        function toggleUserMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
-        function logout() { localStorage.removeItem('user'); window.location.href = 'login.html'; }
-        window.onclick = () => document.getElementById('dropdownUser')?.classList.remove('active');
+    const sidebar = document.getElementById('sidebar-content');
 
-        window.onload = async () => { checkLogin(); if (currentLessonId) fetchLessonData(currentLessonId); };
-    </script>
+    sidebar.innerHTML = topics.map(topic => {
+        const topicLessons = lessons.filter(l => l.topic_id === topic.id);
+
+        return `
+            <div>
+                <div>${topic.topic_name}</div>
+                ${topicLessons.map(l => `
+                    <div onclick="location.href='?id=${l.id}'">
+                        ${l.title}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+}
+
+window.onload = () => {
+    checkLogin();
+    if (currentLessonId) fetchLessonData(currentLessonId);
+};
+</script>
 </body>
 </html>
