@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toán thầy Thành - Luyện thi vào 10</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+   
+   <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        * { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex: 1; }
+
+        /* Dropdown */
+        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
+        .dropdown-user.active { display: flex; }
+        .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
+        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
+        .divider { height: 1px; background: #eee; margin: 5px 0; }
+
+        /* Banner FULL */
+        .banner-wrap { width: 100%; line-height: 0; overflow: hidden; }
+        .banner-wrap .swiper, .banner-wrap .swiper-slide { width: 100%; }
+        .banner-wrap img { width: 100%; height: auto; display: block; }
+
+        /* Menu */
+        .thanh-menu-ngang { background: #1e3a8a; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        .item-menu { font-weight: 700; color: white; text-decoration: none; }
+        .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        /* Mobile drawer */
+        #mob-menu { display: none; position: fixed; inset: 0; z-index: 300; }
+        #mob-menu.open { display: block; }
+        #mob-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+        #mob-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 270px; background: #1e3a8a; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto; }
+        #mob-menu.open #mob-drawer { transform: translateX(0); }
+        .mi { display: flex; align-items: center; gap: 12px; padding: 14px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .mi:hover { background: rgba(255,255,255,0.08); }
+        .mi-hl { background: #fbbf24 !important; color: #1e3a8a !important; margin: 10px 14px; border-radius: 12px; border: none !important; justify-content: center; }
+
+/* Countdown */
+        .cd-wrap { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); border-radius: 24px; padding: 28px 16px; text-align: center; position: relative; overflow: hidden; }
+        .cd-deco { position: absolute; border-radius: 50%; border: 18px solid rgba(255,255,255,0.05); pointer-events: none; }
+        .cd-unit { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 12px 14px; min-width: 60px; text-align: center; }
+        .cd-num { font-size: 2rem; font-weight: 900; color: white; line-height: 1; }
+        .cd-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.6); margin-top: 3px; }
+
+        /* Nút admin sửa ngày */
+        .admin-edit-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .admin-edit-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* Tip */
+        .tip-wrap { background: #fffbeb; border: 1px solid #fde68a; border-radius: 18px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 12px; }
+
+        /* Motivation */
+        #motivation-box { border-radius: 18px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 12px; border: 1px solid; }
+
+        /* Progress */
+        .prog-bar { background: #e5e7eb; border-radius: 999px; height: 7px; overflow: hidden; }
+        .prog-fill { background: linear-gradient(90deg, #1e3a8a, #3b82f6); height: 100%; border-radius: 999px; transition: width 0.8s ease; }
+
+        /* Lesson card */
+        .lesson-card { background: white; border-radius: 18px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; }
+        .lesson-card:hover { box-shadow: 0 10px 28px rgba(30,58,138,0.12); transform: translateY(-3px); border-color: #bfdbfe; }
+        .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
+        .play-btn { width: 44px; height: 44px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; transition: transform 0.2s; }
+        .lesson-card:hover .play-btn { transform: scale(1.1); }
+
+        /* Section title */
+        .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .sec-bar { width: 4px; height: 22px; background: #fbbf24; border-radius: 2px; flex-shrink: 0; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- MOBILE DRAWER -->
+    <div id="mob-menu">
+        <div id="mob-overlay" onclick="closeMob()"></div>
+        <div id="mob-drawer">
+            <div class="flex items-center justify-between p-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-white/30">
+                    <div>
+                        <div class="font-black text-white text-sm uppercase italic leading-none">Toán Thầy Thành</div>
+                        <div class="text-blue-300 text-[9px] font-bold uppercase tracking-widest mt-0.5">Luyện thi vào 10</div>
+                    </div>
+                </div>
+                <button onclick="closeMob()" class="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="flex-1 py-1" id="mob-nav">
+                <a href="trangchu.html" class="mi"><i class="fas fa-home w-4 text-blue-300 text-sm"></i> Trang chủ</a>
+                <a href="khoa-hoc-cua-toi.html" class="mi"><i class="fas fa-graduation-cap w-4 text-blue-300 text-sm"></i> Khóa học</a>
+                <a href="#" class="mi"><i class="fas fa-file-alt w-4 text-blue-300 text-sm"></i> Tài liệu</a>
+                <a href="login.html" class="mi" id="mob-login"><i class="fas fa-sign-in-alt w-4 text-blue-300 text-sm"></i> Đăng nhập</a>
+                <a href="#" class="mi mi-hl" id="mob-reg"><i class="fas fa-bolt w-4 text-sm"></i> Đăng ký ngay</a>
+            </nav>
+            <div class="p-4 border-t border-white/10">
+                <div class="text-[9px] text-blue-300/60 font-bold uppercase tracking-widest text-center">Dạy học từ tâm · Nâng tầm kiến thức</div>
+            </div>
+        </div>
+    </div>
+
+<!-- HEADER -->
+    <header class="bg-white shadow-md sticky top-0 z-[1000]">
+        <div class="khung-trang flex items-center justify-between py-3">
+            <a href="trangchu.html" class="cum-logo flex-shrink-0">
+                <img src="logo.png" class="w-9 h-9 md:w-11 md:h-11 rounded-full border border-blue-100">
+                <div>
+                    <div class="ten-lon tracking-tighter uppercase italic">Toán</div>
+                    <div class="ten-nho">Thầy Thành</div>
+                </div>
+            </a>
+
+            <!-- Search desktop -->
+            <div class="hidden md:block flex-1 max-w-sm mx-8">
+                <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Search mobile -->
+                <button class="md:hidden w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-sm" onclick="toggleSearch()">
+                    <i class="fas fa-search"></i>
+                </button>
+                <!-- User -->
+                <div class="cum-tai-khoan relative" id="user-section">
+                    <div class="flex gap-1.5">
+                        <button class="hidden md:block px-3 py-1.5 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
+                        <button class="hidden md:block px-4 py-1.5 bg-blue-900 text-white rounded-full font-bold text-sm hover:bg-blue-800 transition-all">Đăng ký</button>
+                    </div>
+                </div>
+                <!-- Hamburger -->
+                <button onclick="openMob()" class="md:hidden w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center text-sm flex-shrink-0">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+<!-- Mobile search -->
+        <div id="mob-search" class="hidden px-4 pb-3 md:hidden">
+            <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Nav desktop -->
+        <nav class="thanh-menu-ngang hidden md:block">
+            <div class="khung-trang">
+                <ul class="flex gap-5 list-none p-0 m-0 py-2">
+                    <li><a href="trangchu.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1">Trang chủ</a></li>
+                    <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
+                    <li><a href="#" class="item-menu text-sm opacity-80 hover:opacity-100">Tài liệu miễn phí</a></li>
+                    <li id="menu-dk"><a href="#" class="item-menu text-sm bg-yellow-400 text-blue-900 px-3 py-1.5 rounded-lg hover:bg-yellow-500 transition-all">Đăng ký ngay</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Nav mobile scroll -->
+        <nav class="thanh-menu-ngang md:hidden overflow-x-auto">
+            <div class="flex gap-4 px-4 py-2 whitespace-nowrap">
+                <a href="trangchu.html" class="item-menu text-xs border-b-2 border-yellow-400 pb-1 flex-shrink-0">Trang chủ</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-menu text-xs opacity-80 flex-shrink-0">Khóa học</a>
+                <a href="#" class="item-menu text-xs opacity-80 flex-shrink-0">Tài liệu</a>
+                <a href="#" class="item-menu text-xs bg-yellow-400 text-blue-900 px-3 py-1 rounded-lg flex-shrink-0" id="nav-dk-mob">Đăng ký</a>
+            </div>
+        </nav>
+    </header>
+<Main>
+  <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+    <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase">Thông tin cá nhân</h2>
+    
+    <div class="space-y-4">
+        <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase">Họ và tên</label>
+            <input type="text" id="profile-name" class="w-full p-3 bg-gray-50 rounded-xl border-none font-bold text-sm">
+        </div>
+        <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase">Số điện thoại</label>
+            <input type="text" id="profile-sdt" class="w-full p-3 bg-gray-50 rounded-xl border-none font-bold text-sm">
+        </div>
+        <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase">Email (đăng nhập)</label>
+            <input type="email" id="profile-email" disabled class="w-full p-3 bg-gray-100 rounded-xl border-none font-bold text-sm text-gray-400 cursor-not-allowed">
+        </div>
+        <button onclick="updateProfile()" class="w-full py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 transition">Lưu thông tin</button>
+    </div>
+
+    <div class="mt-10 pt-8 border-t border-gray-100">
+        <h3 class="text-lg font-black text-blue-900 mb-4">Đổi mật khẩu</h3>
+        <div class="space-y-3">
+            <input type="password" id="old-pass" placeholder="Mật khẩu cũ" class="w-full p-3 border rounded-xl text-sm">
+            <input type="password" id="new-pass" placeholder="Mật khẩu mới" class="w-full p-3 border rounded-xl text-sm">
+            <input type="password" id="confirm-pass" placeholder="Nhập lại mật khẩu mới" class="w-full p-3 border rounded-xl text-sm">
+            <button onclick="changePassword()" class="w-full py-3 bg-yellow-400 text-blue-900 rounded-xl font-black text-sm hover:bg-yellow-300 transition">Cập nhật mật khẩu</button>
+        </div>
+    </div>
+</div>
+</Main>
+<footer class="bg-white border-t py-6 text-center flex-none border-top-2px">
+      <div class="font-black text-blue-900 uppercase text-xs tracking-[0.3em] mb-1">Toán Thầy Thành</div>
+      <div class="text-gray-400 text-[9px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
+    </footer>
+
+
+
+<script>
+  // Khởi tạo Supabase
+  const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+  const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+  const sb = supabase.createClient(SB_URL, SB_KEY);
+
+  // 1. Load data
+  async function loadProfile() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return window.location.href = 'login.html';
+
+    const { data, error } = await sb.from('accounts').select('*').eq('id', user.id).single();
+    if (data) {
+        document.getElementById('profile-name').value = data.fullname || '';
+        document.getElementById('profile-sdt').value = data.sdt || '';
+        document.getElementById('profile-email').value = user.email || '';
+    }
+  }
+
+  // 2. Update Profile
+  async function updateProfile() {
+    const { data: { user } } = await sb.auth.getUser();
+    const newName = document.getElementById('profile-name').value;
+    const newSdt = document.getElementById('profile-sdt').value;
+
+    const { error } = await sb.from('accounts')
+        .update({ fullname: newName, sdt: newSdt })
+        .eq('id', user.id);
+
+    error ? Swal.fire('Lỗi', error.message, 'error') : Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
+  }
+
+  // 3. Change Password
+  async function changePassword() {
+    const oldPass = document.getElementById('old-pass').value;
+    const newPass = document.getElementById('new-pass').value;
+    const confirmPass = document.getElementById('confirm-pass').value;
+
+    if (newPass !== confirmPass) return Swal.fire('Lỗi', 'Mật khẩu không khớp!', 'error');
+    if (!oldPass || !newPass) return Swal.fire('Lỗi', 'Vui lòng nhập đủ thông tin!', 'warning');
+
+    const { data: { user } } = await sb.auth.getUser();
+
+    // Xác thực mật khẩu cũ
+    const { error: signInError } = await sb.auth.signInWithPassword({ email: user.email, password: oldPass });
+    if (signInError) return Swal.fire('Lỗi', 'Mật khẩu cũ không chính xác!', 'error');
+
+    // Cập nhật mật khẩu mới
+    const { error: updateError } = await sb.auth.updateUser({ password: newPass });
+    if (updateError) {
+        Swal.fire('Lỗi', updateError.message, 'error');
+    } else {
+        Swal.fire('Thành công', 'Mật khẩu đã được thay đổi!', 'success');
+        ['old-pass', 'new-pass', 'confirm-pass'].forEach(id => document.getElementById(id).value = '');
+    }
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>
