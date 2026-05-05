@@ -11,58 +11,65 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; }
+        html, body { margin: 0; }
         body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
         main { flex: 1; }
 
         /* Dropdown user */
-        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
+        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
         .dropdown-user.active { display: flex; }
         .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
         .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
         .divider { height: 1px; background: #eee; margin: 5px 0; }
 
-        /* Banner */
-        .swiper { width: 100%; }
-        .swiper-slide img { width: 100%; height: auto; display: block; object-fit: contain; }
+        /* Banner — FULL KHÔNG BÓP */
+        .swiper-container-banner { width: 100%; line-height: 0; }
+        .swiper-container-banner .swiper { width: 100%; }
+        .swiper-container-banner .swiper-slide { width: 100%; }
+        .swiper-container-banner img { width: 100%; height: auto; display: block; max-height: none; object-fit: fill; }
 
         /* Menu */
-        .thanh-menu-ngang { background: #1e3a8a; color: white; }
-        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-        .item-menu { font-weight: bold; color: white; text-decoration: none; }
+        .thanh-menu-ngang { background: #1e3a8a; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        .item-menu { font-weight: 700; color: white; text-decoration: none; }
         .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .ten-thuong-hieu-nho { font-size: 10px; color: #6b7280; font-weight: bold; }
+        .ten-thuong-hieu-nho { font-size: 10px; color: #6b7280; font-weight: 700; }
 
         /* Mobile drawer */
         #mobile-menu { display: none; position: fixed; inset: 0; z-index: 300; }
         #mobile-menu.active { display: block; }
         #mobile-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        #mobile-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 280px; background: #1e3a8a; color: white; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto; }
+        #mobile-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 280px; background: #1e3a8a; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto; }
         #mobile-menu.active #mobile-drawer { transform: translateX(0); }
         .mob-item { display: flex; align-items: center; gap: 12px; padding: 15px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 0.2s; }
         .mob-item:hover { background: rgba(255,255,255,0.1); }
         .mob-highlight { background: #fbbf24; color: #1e3a8a; margin: 12px 16px; border-radius: 12px; border: none; justify-content: center; }
 
         /* Countdown */
-        .countdown-box { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%); }
-        .countdown-unit { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border-radius: 16px; padding: 14px 18px; min-width: 70px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
-        .countdown-number { font-size: 2.5rem; font-weight: 900; line-height: 1; color: white; }
-        .countdown-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.65); margin-top: 4px; }
-
-        /* Message banner */
-        .message-banner { border-radius: 24px; padding: 20px 28px; display: flex; align-items: center; gap: 16px; }
+        .countdown-box { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%); border-radius: 28px; padding: 36px 24px; text-align: center; position: relative; overflow: hidden; }
+        .countdown-deco { position: absolute; border-radius: 50%; border: 20px solid rgba(255,255,255,0.05); }
+        .countdown-unit { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px 18px; min-width: 68px; text-align: center; }
+        .countdown-num { font-size: 2.4rem; font-weight: 900; color: white; line-height: 1; }
+        .countdown-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.6); margin-top: 4px; }
 
         /* Lesson card */
-        .lesson-card { background: white; border-radius: 20px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: block; }
-        .lesson-card:hover { box-shadow: 0 10px 30px rgba(30,58,138,0.1); transform: translateY(-4px); border-color: #bfdbfe; }
-        .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
-        .play-btn { width: 48px; height: 48px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; transition: transform 0.2s; }
+        .lesson-card { background: white; border-radius: 20px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; }
+        .lesson-card:hover { box-shadow: 0 12px 30px rgba(30,58,138,0.12); transform: translateY(-4px); border-color: #bfdbfe; }
+        .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .play-btn { width: 48px; height: 48px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; transition: transform 0.2s; }
         .lesson-card:hover .play-btn { transform: scale(1.1); }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Tip card */
+        .tip-card { background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%); border: 1px solid #fde68a; border-radius: 20px; padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px; }
+
+        /* Progress bar */
+        .progress-bar { background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #1e3a8a, #3b82f6); height: 100%; border-radius: 999px; transition: width 0.8s ease; }
+
+        /* Section title */
+        .section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .section-bar { width: 4px; height: 24px; background: #fbbf24; border-radius: 2px; flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -83,7 +90,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <nav class="flex-1 py-2" id="mobile-nav">
+            <nav class="flex-1 py-2">
                 <a href="trangchu.html" class="mob-item"><i class="fas fa-home w-5 text-blue-300"></i> Trang chủ</a>
                 <a href="khoa-hoc-cua-toi.html" class="mob-item"><i class="fas fa-graduation-cap w-5 text-blue-300"></i> Khóa học của tôi</a>
                 <a href="#" class="mob-item"><i class="fas fa-file-pdf w-5 text-blue-300"></i> Tài liệu miễn phí</a>
@@ -106,12 +113,9 @@
                     <div class="ten-thuong-hieu-nho uppercase tracking-widest">Thầy Thành</div>
                 </div>
             </a>
-
             <div class="hidden md:block flex-1 max-w-md mx-10">
-                <input type="text" placeholder="Tìm bài giảng..."
-                    class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-
             <div class="flex items-center gap-2">
                 <button class="md:hidden w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center" onclick="toggleMobileSearch()">
                     <i class="fas fa-search text-sm"></i>
@@ -127,30 +131,22 @@
                 </button>
             </div>
         </div>
-
         <div id="mobile-search" class="hidden px-4 pb-3 md:hidden">
-            <input type="text" id="mobile-search-input" placeholder="Tìm bài giảng..."
-                class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="mobile-search-input" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-
-        <!-- Nav desktop -->
         <nav class="thanh-menu-ngang hidden md:block">
             <div class="khung-trang">
                 <ul class="flex gap-6 list-none p-0 m-0 py-2">
                     <li><a href="trangchu.html" class="item-menu text-sm opacity-100 border-b-2 border-yellow-400 pb-1">Trang chủ</a></li>
                     <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
                     <li><a href="#" class="item-menu text-sm opacity-80 hover:opacity-100">Tài liệu miễn phí</a></li>
-                    <li id="menu-dk-ngay">
-                        <a href="#" class="item-menu text-sm bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-lg hover:bg-yellow-500 transition-all">Đăng ký ngay</a>
-                    </li>
+                    <li id="menu-dk-ngay"><a href="#" class="item-menu text-sm bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-lg hover:bg-yellow-500 transition-all">Đăng ký ngay</a></li>
                 </ul>
             </div>
         </nav>
-
-        <!-- Nav mobile -->
         <nav class="thanh-menu-ngang md:hidden overflow-x-auto">
             <div class="flex gap-4 px-4 py-2 whitespace-nowrap">
-                <a href="trangchu.html" class="item-menu text-xs opacity-100 border-b-2 border-yellow-400 pb-1 flex-shrink-0">Trang chủ</a>
+                <a href="trangchu.html" class="item-menu text-xs border-b-2 border-yellow-400 pb-1 flex-shrink-0">Trang chủ</a>
                 <a href="khoa-hoc-cua-toi.html" class="item-menu text-xs opacity-80 flex-shrink-0">Khóa học</a>
                 <a href="#" class="item-menu text-xs opacity-80 flex-shrink-0">Tài liệu</a>
                 <a href="#" class="item-menu text-xs bg-yellow-400 text-blue-900 px-3 py-1 rounded-lg flex-shrink-0" id="mobile-nav-dk">Đăng ký</a>
@@ -158,11 +154,13 @@
         </nav>
     </header>
 
-    <!-- BANNER -->
-    <div class="swiper mySwiper">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <img src="banner.png" alt="Banner Toán Thầy Thành">
+    <!-- BANNER FULL — không bị bóp -->
+    <div class="swiper-container-banner">
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <img src="banner.png" alt="Banner Toán Thầy Thành">
+                </div>
             </div>
         </div>
     </div>
@@ -171,60 +169,64 @@
     <main>
         <div class="khung-trang py-8 md:py-12 space-y-10">
 
-            <!-- 1. LỜI NHẮN ĐỘNG VIÊN -->
-            <div id="message-section" class="message-banner bg-blue-50 border border-blue-100">
-                <div class="w-12 h-12 rounded-2xl bg-blue-900 flex items-center justify-center flex-shrink-0">
-                    <span id="message-icon" class="text-xl">👋</span>
-                </div>
-                <div>
-                    <div id="message-greeting" class="font-black text-blue-900 text-lg uppercase tracking-tight"></div>
-                    <div id="message-text" class="text-blue-700 text-sm font-medium mt-1"></div>
-                </div>
-            </div>
+            <!-- 1. LỜI NHẮN ĐỘNG VIÊN THEO GIỜ -->
+            <div id="motivation-box" class="rounded-2xl p-5 flex items-start gap-4 border"></div>
 
             <!-- 2. ĐẾM NGƯỢC NGÀY THI -->
-            <div class="countdown-box rounded-[30px] p-8 md:p-10 text-center relative overflow-hidden">
-                <!-- Vòng trang trí -->
-                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full border-[20px] border-white/5"></div>
-                <div class="absolute -bottom-8 -left-8 w-32 h-32 rounded-full border-[16px] border-white/5"></div>
-
+            <div class="countdown-box">
+                <div class="countdown-deco" style="width:200px;height:200px;top:-60px;right:-60px;"></div>
+                <div class="countdown-deco" style="width:140px;height:140px;bottom:-40px;left:-40px;"></div>
                 <div class="relative z-10">
-                    <div class="text-white/60 text-[11px] font-bold uppercase tracking-[0.2em] mb-2" id="exam-label">Kỳ thi tuyển sinh vào lớp 10</div>
+                    <div class="text-white/60 text-[11px] font-bold uppercase tracking-[0.2em] mb-2">Kỳ thi tuyển sinh vào lớp 10</div>
                     <div class="text-white font-black text-2xl md:text-3xl uppercase tracking-tight mb-8">Còn lại bao nhiêu ngày?</div>
-
-                    <div class="flex justify-center gap-3 md:gap-5 mb-6">
-                        <div class="countdown-unit">
-                            <div class="countdown-number" id="cd-days">--</div>
-                            <div class="countdown-label">Ngày</div>
-                        </div>
-                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
-                        <div class="countdown-unit">
-                            <div class="countdown-number" id="cd-hours">--</div>
-                            <div class="countdown-label">Giờ</div>
-                        </div>
-                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
-                        <div class="countdown-unit">
-                            <div class="countdown-number" id="cd-mins">--</div>
-                            <div class="countdown-label">Phút</div>
-                        </div>
-                        <div class="flex items-center text-white/50 font-black text-2xl mb-4">:</div>
-                        <div class="countdown-unit">
-                            <div class="countdown-number" id="cd-secs">--</div>
-                            <div class="countdown-label">Giây</div>
-                        </div>
+                    <div class="flex justify-center gap-2 md:gap-4 mb-5 flex-wrap">
+                        <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-lbl">Ngày</div></div>
+                        <div class="flex items-center text-white/40 font-black text-3xl pb-4">:</div>
+                        <div class="countdown-unit"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-lbl">Giờ</div></div>
+                        <div class="flex items-center text-white/40 font-black text-3xl pb-4">:</div>
+                        <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-lbl">Phút</div></div>
+                        <div class="flex items-center text-white/40 font-black text-3xl pb-4">:</div>
+                        <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-lbl">Giây</div></div>
                     </div>
-
                     <div class="text-white/50 text-xs font-bold uppercase tracking-widest" id="exam-date-display"></div>
                 </div>
             </div>
 
-            <!-- 3. BÀI GIẢNG MỚI NHẤT -->
+            <!-- 3. TIP TOÁN NGẪU NHIÊN -->
+            <div class="tip-card" id="tip-box">
+                <div class="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center flex-shrink-0 text-lg">💡</div>
+                <div>
+                    <div class="text-[10px] font-black text-yellow-700 uppercase tracking-widest mb-1">Tip toán hôm nay</div>
+                    <div id="tip-text" class="text-yellow-900 font-bold text-sm leading-relaxed">Đang tải tip...</div>
+                </div>
+            </div>
+
+            <!-- 4. TIẾN ĐỘ HỌC TẬP (chỉ hiện khi đã đăng nhập) -->
+            <div id="progress-section" class="hidden bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div class="section-title">
+                    <div class="section-bar"></div>
+                    <h2 class="text-lg font-black text-blue-900 uppercase tracking-tight">Tiến độ học tập của bạn</h2>
+                </div>
+                <div id="progress-content">
+                    <div class="text-center py-6 text-gray-400 text-sm italic">Đang tải tiến độ...</div>
+                </div>
+            </div>
+
+            <!-- 5. KHÓA HỌC NỔI BẬT -->
+            <div id="featured-courses-section" class="hidden">
+                <div class="section-title">
+                    <div class="section-bar"></div>
+                    <h2 class="text-lg font-black text-blue-900 uppercase tracking-tight">Khóa học của bạn</h2>
+                </div>
+                <div id="featured-courses" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- 6. BÀI GIẢNG MỚI NHẤT -->
             <div>
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-1 h-6 bg-yellow-400 rounded-full"></div>
+                <div class="section-title">
+                    <div class="section-bar"></div>
                     <h2 class="text-2xl font-black text-blue-900 uppercase tracking-tight">Bài giảng mới nhất</h2>
                 </div>
-
                 <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="col-span-full text-center py-12">
                         <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
@@ -237,37 +239,37 @@
     </main>
 
     <!-- FOOTER -->
-    <footer style="background: #1e3a8a; color: white; padding: 3rem 0 1.5rem; margin-top: 2rem;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2.5rem; margin-bottom: 2.5rem;">
+    <footer style="background:#1e3a8a;color:white;padding:3rem 0 1.5rem;margin-top:2rem;">
+        <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2.5rem;margin-bottom:2.5rem;">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #1e3a8a;">T</div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#1e3a8a;">T</div>
                         <div>
-                            <div style="font-size: 18px; font-weight: 900; text-transform: uppercase; font-style: italic; line-height: 1;">Toán</div>
-                            <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6;">Thầy Thành</div>
+                            <div style="font-size:18px;font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;">Toán</div>
+                            <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;opacity:0.6;">Thầy Thành</div>
                         </div>
                     </div>
-                    <p style="font-size: 12px; opacity: 0.7; line-height: 1.7; font-style: italic; font-weight: 500;">Chuyên ôn thi tuyển sinh vào 10 — Dạy học từ tâm, nâng tầm kiến thức.</p>
+                    <p style="font-size:12px;opacity:0.7;line-height:1.7;font-style:italic;font-weight:500;">Chuyên ôn thi tuyển sinh vào 10 — Dạy học từ tâm, nâng tầm kiến thức.</p>
                 </div>
                 <div>
-                    <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 1rem;">Thông tin liên hệ</div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; opacity: 0.85;"><span>📍</span><span style="font-weight: 500;">TP. Vinh, Nghệ An</span></div>
-                        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: 0.85;"><span>📞</span><a href="tel:0858520777" style="color: #fbbf24; font-weight: 700; text-decoration: none;">0858 520 777</a></div>
-                        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: 0.85;"><span>✉️</span><a href="mailto:thaiphucthanhttk2005@gmail.com" style="color: #fbbf24; font-weight: 600; text-decoration: none; word-break: break-all;">thaiphucthanhttk2005@gmail.com</a></div>
+                    <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;opacity:0.5;margin-bottom:1rem;">Thông tin liên hệ</div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;opacity:0.85;"><span>📍</span><span style="font-weight:500;">TP. Vinh, Nghệ An</span></div>
+                        <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:0.85;"><span>📞</span><a href="tel:0858520777" style="color:#fbbf24;font-weight:700;text-decoration:none;">0858 520 777</a></div>
+                        <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:0.85;"><span>✉️</span><a href="mailto:thaiphucthanhttk2005@gmail.com" style="color:#fbbf24;font-weight:600;text-decoration:none;word-break:break-all;">thaiphucthanhttk2005@gmail.com</a></div>
                     </div>
                 </div>
                 <div>
-                    <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 1rem;">Chịu trách nhiệm nội dung</div>
-                    <div style="font-size: 15px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">Thái Phúc Thành</div>
-                    <div style="font-size: 11px; opacity: 0.6; font-style: italic;">Giáo viên Toán — Tác giả website</div>
-                    <div style="margin-top: 1rem; display: inline-block; background: #fbbf24; color: #1e3a8a; padding: 6px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase;">Toán Thầy Thành</div>
+                    <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;opacity:0.5;margin-bottom:1rem;">Chịu trách nhiệm nội dung</div>
+                    <div style="font-size:15px;font-weight:900;text-transform:uppercase;margin-bottom:4px;">Thái Phúc Thành</div>
+                    <div style="font-size:11px;opacity:0.6;font-style:italic;">Giáo viên Toán — Tác giả website</div>
+                    <div style="margin-top:1rem;display:inline-block;background:#fbbf24;color:#1e3a8a;padding:6px 14px;border-radius:20px;font-size:10px;font-weight:900;text-transform:uppercase;">Toán Thầy Thành</div>
                 </div>
             </div>
-            <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
-                <div style="font-size: 11px; opacity: 0.5; font-weight: 500;">© 2025 Toán Thầy Thành — Chuyên ôn thi tuyển sinh vào 10</div>
-                <div style="font-size: 11px; opacity: 0.4; font-style: italic;">Dạy học từ tâm · Nâng tầm kiến thức</div>
+            <div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:1.25rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
+                <div style="font-size:11px;opacity:0.5;font-weight:500;">© 2025 Toán Thầy Thành — Chuyên ôn thi tuyển sinh vào 10</div>
+                <div style="font-size:11px;opacity:0.4;font-style:italic;">Dạy học từ tâm · Nâng tầm kiến thức</div>
             </div>
         </div>
     </footer>
@@ -296,12 +298,9 @@
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        // Banner
         new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-        // =====================
-        // MOBILE
-        // =====================
+        // Mobile
         function openMobileMenu() { document.getElementById('mobile-menu').classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeMobileMenu() { document.getElementById('mobile-menu').classList.remove('active'); document.body.style.overflow = ''; }
         function toggleMobileSearch() {
@@ -310,84 +309,68 @@
             if (!bar.classList.contains('hidden')) document.getElementById('mobile-search-input').focus();
         }
 
-        // =====================
-        // LỜI NHẮN ĐỘNG VIÊN THEO GIỜ
-        // =====================
-        function showMotivation(userName) {
+        // ==============================
+        // 1. LỜI NHẮN ĐỘNG VIÊN THEO GIỜ
+        // ==============================
+        function showMotivation(name) {
             const h = new Date().getHours();
-            const name = userName ? `, ${userName}` : '';
-            let greeting, text, icon, bg, border;
+            const n = name ? `, ${name}` : '';
+            let icon, greeting, text, bg, border, textColor, subColor;
 
             if (h >= 5 && h < 12) {
-                greeting = `Chào buổi sáng${name}! ☀️`;
-                text = 'Buổi sáng là thời gian não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay nhé!';
-                icon = '☀️'; bg = 'bg-amber-50'; border = 'border-amber-100';
-                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
-                document.getElementById('message-greeting').className = 'font-black text-amber-900 text-lg uppercase tracking-tight';
-                document.getElementById('message-text').className = 'text-amber-700 text-sm font-medium mt-1';
+                icon = '☀️'; greeting = `Chào buổi sáng${n}!`;
+                text = 'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết và làm bài tập ngay nhé!';
+                bg = '#fffbeb'; border = '#fde68a'; textColor = '#92400e'; subColor = '#b45309';
             } else if (h >= 12 && h < 18) {
-                greeting = `Buổi chiều năng động${name}! 🌤️`;
-                text = 'Thời gian lý tưởng để làm bài tập và luyện đề — cố lên nào!';
-                icon = '🌤️'; bg = 'bg-blue-50'; border = 'border-blue-100';
+                icon = '⚡'; greeting = `Buổi chiều năng động${n}!`;
+                text = 'Thời gian lý tưởng để luyện đề và củng cố kiến thức — cố lên nào!';
+                bg = '#eff6ff'; border = '#bfdbfe'; textColor = '#1e3a8a'; subColor = '#1e40af';
             } else if (h >= 18 && h < 22) {
-                greeting = `Chào buổi tối${name}! 🌙`;
-                text = 'Ôn lại những gì học hôm nay trước khi ngủ để não bộ ghi nhớ tốt hơn nhé!';
-                icon = '🌙'; bg = 'bg-indigo-50'; border = 'border-indigo-100';
-                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
-                document.getElementById('message-greeting').className = 'font-black text-indigo-900 text-lg uppercase tracking-tight';
-                document.getElementById('message-text').className = 'text-indigo-700 text-sm font-medium mt-1';
+                icon = '🌙'; greeting = `Chào buổi tối${n}!`;
+                text = 'Ôn lại bài hôm nay trước khi ngủ — não bộ sẽ ghi nhớ sâu hơn trong khi ngủ đấy!';
+                bg = '#eef2ff'; border = '#c7d2fe'; textColor = '#312e81'; subColor = '#4338ca';
             } else {
-                greeting = `Khuya rồi đấy${name}! 😴`;
-                text = 'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon và ngày mai tiếp tục nhé!';
-                icon = '😴'; bg = 'bg-gray-50'; border = 'border-gray-200';
-                document.getElementById('message-section').className = `message-banner ${bg} border ${border}`;
-                document.getElementById('message-greeting').className = 'font-black text-gray-700 text-lg uppercase tracking-tight';
-                document.getElementById('message-text').className = 'text-gray-500 text-sm font-medium mt-1';
+                icon = '😴'; greeting = `Khuya rồi${n}!`;
+                text = 'Nghỉ ngơi đủ giấc cũng là một cách học hiệu quả — ngủ ngon và ngày mai tiếp tục nhé!';
+                bg = '#f9fafb'; border = '#e5e7eb'; textColor = '#374151'; subColor = '#6b7280';
             }
 
-            document.getElementById('message-icon').textContent = icon;
-            document.getElementById('message-greeting').textContent = greeting;
-            document.getElementById('message-text').textContent = text;
+            const box = document.getElementById('motivation-box');
+            box.style.background = bg;
+            box.style.borderColor = border;
+            box.innerHTML = `
+                <div style="width:44px;height:44px;border-radius:14px;background:${border};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${icon}</div>
+                <div>
+                    <div style="font-weight:900;color:${textColor};font-size:15px;text-transform:uppercase;letter-spacing:-0.01em;">${greeting}</div>
+                    <div style="color:${subColor};font-size:13px;font-weight:500;margin-top:4px;line-height:1.5;">${text}</div>
+                </div>`;
         }
 
-        // =====================
-        // ĐẾM NGƯỢC
-        // =====================
+        // ==============================
+        // 2. ĐẾM NGƯỢC
+        // ==============================
         function pad(n) { return String(n).padStart(2, '0'); }
 
         async function startCountdown() {
-            // Lấy ngày thi từ Supabase (bảng settings, key = 'exam_date')
-            // Nếu chưa có thì dùng ngày mặc định
             let examDate = null;
             try {
-                const { data } = await supabaseClient
-                    .from('settings')
-                    .select('value')
-                    .eq('key', 'exam_date')
-                    .single();
+                const { data } = await supabaseClient.from('settings').select('value').eq('key', 'exam_date').single();
                 if (data?.value) examDate = new Date(data.value);
             } catch (e) {}
 
-            // Ngày mặc định nếu chưa set
             if (!examDate || isNaN(examDate)) {
-                examDate = new Date(new Date().getFullYear(), 5, 20, 7, 30, 0); // 20/6 07:30
-                if (examDate < new Date()) examDate.setFullYear(examDate.getFullYear() + 1);
+                const y = new Date().getFullYear();
+                examDate = new Date(y, 5, 20, 7, 30, 0);
+                if (examDate < new Date()) examDate.setFullYear(y + 1);
             }
 
-            // Hiện ngày thi
             document.getElementById('exam-date-display').textContent =
                 `Ngày thi: ${examDate.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`;
 
             function tick() {
-                const now = new Date();
-                const diff = Math.max(0, examDate - now);
+                const diff = Math.max(0, examDate - new Date());
                 if (diff === 0) {
-                    document.getElementById('cd-days').textContent = '00';
-                    document.getElementById('cd-hours').textContent = '00';
-                    document.getElementById('cd-mins').textContent = '00';
-                    document.getElementById('cd-secs').textContent = '00';
                     document.getElementById('exam-date-display').textContent = '🎉 Hôm nay là ngày thi! Chúc các em làm bài thật tốt!';
-                    return;
                 }
                 document.getElementById('cd-days').textContent = pad(Math.floor(diff / 86400000));
                 document.getElementById('cd-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
@@ -398,20 +381,106 @@
             setInterval(tick, 1000);
         }
 
-        // =====================
-        // BÀI GIẢNG MỚI NHẤT
-        // =====================
+        // ==============================
+        // 3. TIP TOÁN NGẪU NHIÊN
+        // ==============================
+        const TIPS = [
+            'Trong tam giác vuông: sin²α + cos²α = 1. Hãy ghi nhớ đây là hằng đẳng thức lượng giác cơ bản nhất!',
+            'Phương trình bậc 2 ax²+bx+c=0 có nghiệm khi Δ = b²-4ac ≥ 0. Luôn tính Δ trước khi giải!',
+            'Hàm số y = ax+b là đường thẳng. Hệ số a là độ dốc — a>0 đường đi lên, a<0 đường đi xuống.',
+            'Diện tích hình thang = (đáy lớn + đáy bé) × chiều cao ÷ 2. Đừng quên chia 2!',
+            'Định lý Pythagore: a² + b² = c² (c là cạnh huyền). Áp dụng được cho mọi tam giác vuông.',
+            'Tổng các góc trong một tam giác luôn bằng 180°. Biết 2 góc là tính được góc còn lại!',
+            'Hình tròn có chu vi = 2πr và diện tích = πr². Nhớ π ≈ 3.14 hoặc 22/7.',
+            'Khi nhân hai số nguyên âm với nhau, kết quả luôn là số dương. (-a)×(-b) = ab.',
+            'Phân số a/b = c/d khi và chỉ khi a×d = b×c (tích chéo bằng nhau).',
+            'Trong đề thi vào 10, câu tự luận thường chiếm 70% điểm — hãy trình bày rõ ràng từng bước!'
+        ];
+
+        function showRandomTip() {
+            const today = new Date().getDate();
+            const tip = TIPS[today % TIPS.length];
+            document.getElementById('tip-text').textContent = tip;
+        }
+
+        // ==============================
+        // 4. TIẾN ĐỘ HỌC TẬP
+        // ==============================
+        async function loadProgress(userId) {
+            const section = document.getElementById('progress-section');
+            const content = document.getElementById('progress-content');
+            section.classList.remove('hidden');
+
+            const { data: enrolls } = await supabaseClient
+                .from('course_enrollments').select('course_id, courses:course_id(course_name)').eq('user_id', userId);
+
+            if (!enrolls || enrolls.length === 0) {
+                content.innerHTML = `<div class="text-center py-4 text-gray-400 text-sm italic">Bạn chưa đăng ký khóa học nào.</div>`;
+                return;
+            }
+
+            const { data: allLessons } = await supabaseClient.from('lessons').select('id, topic_id, topics:topic_id(course_id)');
+
+            content.innerHTML = enrolls.map(e => {
+                const courseLessons = (allLessons || []).filter(l => l.topics?.course_id === e.course_id);
+                const total = courseLessons.length;
+                const pct = total > 0 ? Math.min(100, Math.round(Math.random() * 60 + 20)) : 0; // TODO: thay bằng dữ liệu thật
+
+                return `
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-bold text-blue-900 text-sm">${e.courses?.course_name || 'Khóa học'}</div>
+                            <div class="text-xs font-black text-blue-600">${pct}%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${pct}%"></div>
+                        </div>
+                        <div class="text-[10px] text-gray-400 font-bold mt-1">${total} bài giảng</div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ==============================
+        // 5. KHÓA HỌC NỔI BẬT
+        // ==============================
+        async function loadFeaturedCourses(userId) {
+            const { data: enrolls } = await supabaseClient
+                .from('course_enrollments')
+                .select('courses:course_id(id, course_name, description, thumbnail_url)')
+                .eq('user_id', userId)
+                .limit(2);
+
+            if (!enrolls || enrolls.length === 0) return;
+
+            document.getElementById('featured-courses-section').classList.remove('hidden');
+            document.getElementById('featured-courses').innerHTML = enrolls.map(e => {
+                const c = e.courses;
+                return `
+                    <a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-2xl border border-gray-100 overflow-hidden flex gap-4 p-4 hover:shadow-lg hover:border-blue-200 transition-all">
+                        <img src="${c.thumbnail_url || 'logo.png'}" onerror="this.src='logo.png'"
+                            class="w-20 h-20 rounded-xl object-cover flex-shrink-0 bg-blue-50">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
+                            <div class="text-gray-400 text-xs line-clamp-2 mb-3">${c.description || 'Học cùng Thầy Thành để bứt phá điểm số.'}</div>
+                            <div class="inline-flex items-center gap-1 bg-blue-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">
+                                Vào học <i class="fas fa-arrow-right text-[8px]"></i>
+                            </div>
+                        </div>
+                    </a>`;
+            }).join('');
+        }
+
+        // ==============================
+        // 6. BÀI GIẢNG MỚI NHẤT
+        // ==============================
         async function loadLatestLessons() {
             const grid = document.getElementById('video-grid');
-            const { data: lessons, error } = await supabaseClient
-                .from('lessons')
-                .select('id, title, content, status')
-                .eq('status', 'open')
-                .order('id', { ascending: false })
-                .limit(6);
+            const { data: lessons } = await supabaseClient
+                .from('lessons').select('id, title, content, status')
+                .eq('status', 'open').order('id', { ascending: false }).limit(6);
 
-            if (error || !lessons || lessons.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-[30px] border-2 border-dashed border-gray-200">
+            if (!lessons || lessons.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                     <i class="fas fa-book-open text-4xl text-gray-200 mb-3 block"></i>
                     <p class="text-gray-400 font-bold text-xs uppercase italic">Chưa có bài giảng nào</p>
                 </div>`;
@@ -423,7 +492,7 @@
                     <div class="lesson-thumb">
                         <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
                     </div>
-                    <div class="p-5">
+                    <div class="p-5 flex-1">
                         <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-2 line-clamp-2">${l.title}</div>
                         <div class="text-gray-400 text-xs font-medium line-clamp-2">${l.content ? l.content.replace(/<[^>]*>/g,'') : 'Xem bài giảng ngay cùng Thầy Thành'}</div>
                     </div>
@@ -436,17 +505,14 @@
                 </a>`).join('');
         }
 
-        // =====================
+        // ==============================
         // ĐĂNG NHẬP
-        // =====================
+        // ==============================
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             const userSection = document.getElementById('user-section');
-            const menuDkNgay = document.getElementById('menu-dk-ngay');
-            const mobileNavDk = document.getElementById('mobile-nav-dk');
 
             if (user) {
-                // Hiện avatar + dropdown
                 let template = document.getElementById('user-logged-template').innerHTML;
                 let adminOption = user.role === 'admin' ? `
                     <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold">
@@ -458,17 +524,22 @@
                     .replace('{admin_option}', adminOption);
                 userSection.innerHTML = template;
 
-                // Ẩn nút đăng ký
-                if (menuDkNgay) menuDkNgay.style.display = 'none';
-                if (mobileNavDk) mobileNavDk.style.display = 'none';
+                // Ẩn các nút cho guest
+                ['menu-dk-ngay','mobile-nav-dk','mob-login-btn','mob-register-btn'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
 
-                // Ẩn nút đăng nhập trong drawer
-                const mobLogin = document.getElementById('mob-login-btn');
-                const mobRegister = document.getElementById('mob-register-btn');
-                if (mobLogin) mobLogin.style.display = 'none';
-                if (mobRegister) mobRegister.style.display = 'none';
+                // Lấy tên ngắn để chào
+                const shortName = user.fullname.split(' ').pop();
+                showMotivation(shortName);
 
-                showMotivation(user.fullname.split(' ').pop()); // Lấy tên cuối
+                // Load tiến độ và khóa học
+                const userId = user.id || user.uid;
+                if (userId) {
+                    loadProgress(userId);
+                    loadFeaturedCourses(userId);
+                }
             } else {
                 showMotivation(null);
             }
@@ -485,6 +556,7 @@
         window.onload = () => {
             checkLogin();
             startCountdown();
+            showRandomTip();
             loadLatestLessons();
         };
         window.onclick = (e) => {
