@@ -503,28 +503,61 @@
 
         // ── Bài giảng mới nhất ──────────────────
         async function loadLessons() {
-            const grid = document.getElementById('video-grid');
-            const { data: lessons } = await sb.from('lessons')
-                .select('id,title,content,status').eq('status','open').order('id',{ascending:false}).limit(6);
-            if (!lessons?.length) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                    <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
-                    <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p></div>`;
-                return;
-            }
-            grid.innerHTML = lessons.map(l=>`
-                <a href="lesson-detail.html?id=${l.id}" class="lesson-card">
-                    <div class="lesson-thumb"><div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div></div>
-                    <div class="p-4 flex-1">
-                        <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1 line-clamp-2">${l.title}</div>
-                        <div class="text-gray-400 text-xs line-clamp-2">${l.content?l.content.replace(/<[^>]*>/g,''):'Xem ngay cùng Thầy Thành'}</div>
-                    </div>
-                    <div class="px-4 pb-3 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
-                        <div class="w-6 h-6 bg-blue-900 rounded-full flex items-center justify-center"><i class="fas fa-arrow-right text-white text-[8px]"></i></div>
-                    </div>
-                </a>`).join('');
-        }
+    const grid = document.getElementById('video-grid');
+
+    const { data: lessons } = await sb.from('lessons')
+        .select('id,title,content,status,created_at')
+        .eq('status','open')
+        .order('created_at',{ascending:false})
+        .limit(6);
+
+    if (!lessons?.length) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10">
+            Không có bài giảng
+        </div>`;
+        return;
+    }
+
+    const viewed = getViewedLessons();
+
+    grid.innerHTML = lessons.map(l => {
+        const isNew = !viewed.includes(l.id);
+
+        return `
+        <a href="lesson-detail.html?id=${l.id}" class="lesson-card relative">
+
+            ${isNew ? `
+            <div class="absolute top-3 left-3 bg-red-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase">
+                Mới
+            </div>` : ''}
+
+            <div class="lesson-thumb">
+                <div class="play-btn">
+                    <i class="fas fa-play"></i>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <div class="font-black text-blue-900 text-sm line-clamp-2">
+                    ${l.title}
+                </div>
+
+                <div class="text-gray-400 text-xs line-clamp-2">
+                    ${l.content ? l.content.replace(/<[^>]*>/g,'') : ''}
+                </div>
+
+                ${isNew ? `
+                <div class="mt-2 text-red-500 text-[10px] font-bold uppercase">
+                    Chưa xem
+                </div>` : `
+                <div class="mt-2 text-green-500 text-[10px] font-bold uppercase">
+                    Đã xem
+                </div>`}
+
+            </div>
+        </a>`;
+    }).join('');
+}
 
         // ── Đăng nhập ───────────────────────────
         function checkLogin() {
