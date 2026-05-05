@@ -3,91 +3,755 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thông tin cá nhân - Toán Thầy Thành</title>
+    <title>Hồ sơ cá nhân - Toán Thầy Thành</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #f9fafb; }
-        #main-content { display: block; } /* Để block để thầy debug */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        * { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex: 1; }
+
+        .thanh-menu-ngang { background: #1e3a8a; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        .item-menu { font-weight: 700; color: white; text-decoration: none; }
+        .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
+        .dropdown-user.active { display: flex; }
+        .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
+        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
+        .divider { height: 1px; background: #eee; margin: 5px 0; }
+
+        /* Mobile drawer */
+        #mob-menu { display: none; position: fixed; inset: 0; z-index: 300; }
+        #mob-menu.open { display: block; }
+        #mob-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+        #mob-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 270px; background: #1e3a8a; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto; }
+        #mob-menu.open #mob-drawer { transform: translateX(0); }
+        .mi { display: flex; align-items: center; gap: 12px; padding: 14px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .mi:hover { background: rgba(255,255,255,0.08); }
+
+        /* Form input */
+        .inp {
+            width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb;
+            border-radius: 14px; font-size: 14px; font-weight: 600; color: #1e3a8a;
+            outline: none; transition: border 0.2s, box-shadow 0.2s;
+            background: #f9fafb; font-family: 'Inter', sans-serif;
+        }
+        .inp:focus { border-color: #1e3a8a; box-shadow: 0 0 0 3px rgba(30,58,138,0.08); background: white; }
+        .inp:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+        .inp-pw { padding-right: 44px; }
+
+        .lbl { font-size: 10px; font-weight: 900; color: #6b7280; text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 6px; }
+
+        .btn-primary {
+            background: #1e3a8a; color: white; font-weight: 900; font-size: 13px;
+            padding: 12px 28px; border-radius: 14px; border: none; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { background: #1e40af; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(30,58,138,0.3); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .btn-outline {
+            background: white; color: #1e3a8a; font-weight: 900; font-size: 13px;
+            padding: 12px 28px; border-radius: 14px; border: 2px solid #1e3a8a; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-outline:hover { background: #eff6ff; }
+
+        .card { background: white; border-radius: 24px; border: 1px solid #f0f0f0; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+
+        .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+        .sec-bar { width: 4px; height: 22px; background: #fbbf24; border-radius: 2px; flex-shrink: 0; }
+
+        .badge-role { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .pw-wrap { position: relative; }
+        .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #9ca3af; font-size: 14px; padding: 4px; }
+        .pw-eye:hover { color: #1e3a8a; }
+
+        .alert-ok { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; border-radius: 14px; padding: 12px 16px; font-size: 13px; font-weight: 700; display: none; align-items: center; gap-8px; }
+        .alert-err { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 14px; padding: 12px 16px; font-size: 13px; font-weight: 700; display: none; align-items: center; gap: 8px; }
+
+        /* Avatar circle */
+        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,#1e3a8a,#3b82f6); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; border: 4px solid white; box-shadow: 0 4px 16px rgba(30,58,138,0.25); flex-shrink: 0; text-transform: uppercase; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Tab */
+        .tab-btn { padding: 10px 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 12px; cursor: pointer; border: none; background: transparent; color: #6b7280; transition: all 0.2s; }
+        .tab-btn.active { background: #1e3a8a; color: white; box-shadow: 0 2px 8px rgba(30,58,138,0.25); }
+        .tab-btn:hover:not(.active) { background: #eff6ff; color: #1e3a8a; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
     </style>
 </head>
 <body>
 
-    <main id="main-content" class="py-10">
-      <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase">Thông tin cá nhân</h2>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="text-[10px] font-black text-gray-400 uppercase">Họ và tên</label>
-                <input type="text" id="profile-name" class="w-full p-3 bg-gray-50 rounded-xl border-none font-bold text-sm">
+<!-- MOBILE DRAWER -->
+<div id="mob-menu">
+    <div id="mob-overlay" onclick="closeMob()"></div>
+    <div id="mob-drawer">
+        <div class="flex items-center justify-between p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-white/30">
+                <div>
+                    <div class="font-black text-white text-sm uppercase italic leading-none">Toán Thầy Thành</div>
+                    <div class="text-blue-300 text-[9px] font-bold uppercase tracking-widest mt-0.5">Luyện thi vào 10</div>
+                </div>
             </div>
-            <div>
-                <label class="text-[10px] font-black text-gray-400 uppercase">Số điện thoại</label>
-                <input type="text" id="profile-sdt" class="w-full p-3 bg-gray-50 rounded-xl border-none font-bold text-sm">
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-gray-400 uppercase">Email (đăng nhập)</label>
-                <input type="email" id="profile-email" disabled class="w-full p-3 bg-gray-100 rounded-xl border-none font-bold text-sm text-gray-400 cursor-not-allowed">
-            </div>
-            <button onclick="updateProfile()" class="w-full py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 transition">Lưu thông tin</button>
+            <button onclick="closeMob()" class="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
         </div>
-      </div>
-    </main>
+        <nav class="flex-1 py-1">
+            <a href="trangchu.html" class="mi"><i class="fas fa-home w-4 text-blue-300 text-sm"></i> Trang chủ</a>
+            <a href="khoa-hoc-cua-toi.html" class="mi"><i class="fas fa-graduation-cap w-4 text-blue-300 text-sm"></i> Khóa học</a>
+            <a href="#" class="mi"><i class="fas fa-file-alt w-4 text-blue-300 text-sm"></i> Tài liệu</a>
+        </nav>
+    </div>
+</div>
 
-    <script>
-        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-        const sb = supabase.createClient(SB_URL, SB_KEY);
+<!-- HEADER -->
+<header class="bg-white shadow-md sticky top-0 z-[1000]">
+    <div class="khung-trang flex items-center justify-between py-3">
+        <a href="trangchu.html" class="cum-logo flex-shrink-0">
+            <img src="logo.png" class="w-9 h-9 md:w-11 md:h-11 rounded-full border border-blue-100">
+            <div>
+                <div class="ten-lon tracking-tighter uppercase italic">Toán</div>
+                <div class="ten-nho">Thầy Thành</div>
+            </div>
+        </a>
+        <div class="flex items-center gap-2">
+            <div class="cum-tai-khoan relative" id="user-section"></div>
+            <button onclick="openMob()" class="md:hidden w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center text-sm flex-shrink-0">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+    <nav class="thanh-menu-ngang hidden md:block">
+        <div class="khung-trang">
+            <ul class="flex gap-5 list-none p-0 m-0 py-2">
+                <li><a href="trangchu.html" class="item-menu text-sm opacity-80 hover:opacity-100">Trang chủ</a></li>
+                <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
+                <li><a href="thong-tin-ca-nhan.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1">Hồ sơ cá nhân</a></li>
+            </ul>
+        </div>
+    </nav>
+    <nav class="thanh-menu-ngang md:hidden overflow-x-auto">
+        <div class="flex gap-4 px-4 py-2 whitespace-nowrap">
+            <a href="trangchu.html" class="item-menu text-xs opacity-80 flex-shrink-0">Trang chủ</a>
+            <a href="khoa-hoc-cua-toi.html" class="item-menu text-xs opacity-80 flex-shrink-0">Khóa học</a>
+            <a href="thong-tin-ca-nhan.html" class="item-menu text-xs border-b-2 border-yellow-400 pb-1 flex-shrink-0">Hồ sơ</a>
+        </div>
+    </nav>
+</header>
 
-        async function checkAndLoad() {
-            // 1. Lấy session hiện tại
-            const { data: { session }, error } = await sb.auth.getSession();
-            
-            if (error || !session) {
-                console.error("Không tìm thấy phiên đăng nhập:", error);
-                alert("Bạn chưa đăng nhập hoặc phiên đã hết hạn. Vui lòng đăng nhập lại.");
-                // window.location.href = 'login.html'; // Tạm thời comment dòng này lại để thầy không bị đá ra
-                return;
+<!-- MAIN -->
+<main>
+    <div class="khung-trang py-6 md:py-10">
+
+        <!-- HERO CARD -->
+        <div class="card mb-6" style="background: linear-gradient(135deg,#1e3a8a,#1d4ed8); border: none; position: relative; overflow: hidden;">
+            <div style="position:absolute;width:200px;height:200px;border-radius:50%;border:24px solid rgba(255,255,255,0.05);top:-60px;right:-60px;pointer-events:none;"></div>
+            <div style="position:absolute;width:130px;height:130px;border-radius:50%;border:16px solid rgba(255,255,255,0.05);bottom:-30px;left:-30px;pointer-events:none;"></div>
+            <div class="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                <div id="avatar-circle" class="avatar-circle">?</div>
+                <div class="text-center sm:text-left flex-1">
+                    <div class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Hồ sơ cá nhân</div>
+                    <div id="hero-name" class="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-tight mb-2">Đang tải...</div>
+                    <div id="hero-role-badge" class="inline-flex items-center gap-2 mb-3"></div>
+                    <div id="hero-meta" class="flex flex-wrap justify-center sm:justify-start gap-4 text-white/60 text-xs font-bold"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="flex gap-2 mb-6 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm w-fit">
+            <button class="tab-btn active" onclick="switchTab('info')">
+                <i class="fas fa-user mr-2"></i>Thông tin
+            </button>
+            <button class="tab-btn" onclick="switchTab('password')">
+                <i class="fas fa-lock mr-2"></i>Đổi mật khẩu
+            </button>
+        </div>
+
+        <!-- TAB: THÔNG TIN -->
+        <div id="tab-info" class="tab-panel active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Form thông tin -->
+                <div class="lg:col-span-2 card">
+                    <div class="sec-title">
+                        <div class="sec-bar"></div>
+                        <h2 class="text-base font-black text-blue-900 uppercase tracking-tight">Thông tin cá nhân</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="sm:col-span-2">
+                            <label class="lbl">Họ và tên <span class="text-red-400">*</span></label>
+                            <input id="inp-fullname" class="inp" type="text" placeholder="Nguyễn Văn A">
+                        </div>
+                        <div>
+                            <label class="lbl">Số điện thoại</label>
+                            <input id="inp-sdt" class="inp" type="tel" placeholder="0912 345 678">
+                        </div>
+                        <div>
+                            <label class="lbl">Email</label>
+                            <input id="inp-email" class="inp" type="email" placeholder="email@gmail.com">
+                        </div>
+                        <div>
+                            <label class="lbl">Link Facebook</label>
+                            <input id="inp-fb" class="inp" type="url" placeholder="https://facebook.com/...">
+                        </div>
+                        <div>
+                            <label class="lbl">Vai trò</label>
+                            <input id="inp-role" class="inp" type="text" disabled>
+                        </div>
+                        <div>
+                            <label class="lbl">Ngày tạo tài khoản</label>
+                            <input id="inp-created" class="inp" type="text" disabled>
+                        </div>
+                        <div>
+                            <label class="lbl">Trạng thái</label>
+                            <input id="inp-status" class="inp" type="text" disabled>
+                        </div>
+                    </div>
+
+                    <div id="info-alert-ok" class="alert-ok mt-5"><i class="fas fa-check-circle text-green-600 mr-2"></i> Cập nhật thông tin thành công!</div>
+                    <div id="info-alert-err" class="alert-err mt-5"><i class="fas fa-times-circle text-red-500 mr-2"></i><span id="info-err-msg"></span></div>
+
+                    <div class="flex gap-3 mt-6 flex-wrap">
+                        <button class="btn-primary" onclick="saveInfo()" id="btn-save-info">
+                            <i class="fas fa-save"></i> Lưu thông tin
+                        </button>
+                        <button class="btn-outline" onclick="loadUserInfo()">
+                            <i class="fas fa-undo"></i> Hoàn tác
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sidebar info -->
+                <div class="space-y-4">
+                    <!-- ID & Avatar -->
+                    <div class="card text-center">
+                        <div class="flex justify-center mb-4">
+                            <div id="avatar-circle-2" class="avatar-circle" style="width:80px;height:80px;font-size:28px;">?</div>
+                        </div>
+                        <div id="side-name" class="font-black text-blue-900 uppercase text-sm mb-1">---</div>
+                        <div id="side-role" class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-3">---</div>
+                        <div class="text-[9px] font-black text-gray-300 uppercase tracking-widest">User ID</div>
+                        <div id="side-id" class="text-[10px] font-bold text-gray-400 break-all mt-1">---</div>
+                    </div>
+
+                    <!-- Thống kê -->
+                    <div class="card">
+                        <div class="sec-title">
+                            <div class="sec-bar"></div>
+                            <h3 class="text-xs font-black text-blue-900 uppercase tracking-tight">Hoạt động</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                                <span class="text-xs text-gray-500 font-bold flex items-center gap-2">
+                                    <i class="fas fa-graduation-cap text-blue-400 w-4"></i> Khóa học
+                                </span>
+                                <span id="stat-courses" class="font-black text-blue-900 text-sm">--</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                                <span class="text-xs text-gray-500 font-bold flex items-center gap-2">
+                                    <i class="fas fa-play-circle text-green-400 w-4"></i> Bài giảng
+                                </span>
+                                <span id="stat-lessons" class="font-black text-blue-900 text-sm">--</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-xs text-gray-500 font-bold flex items-center gap-2">
+                                    <i class="fas fa-calendar-check text-yellow-400 w-4"></i> Thành viên từ
+                                </span>
+                                <span id="stat-since" class="font-black text-blue-900 text-xs">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: ĐỔI MẬT KHẨU -->
+        <div id="tab-password" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 card">
+                    <div class="sec-title">
+                        <div class="sec-bar"></div>
+                        <h2 class="text-base font-black text-blue-900 uppercase tracking-tight">Đổi mật khẩu</h2>
+                    </div>
+
+                    <div class="space-y-5">
+                        <!-- Mật khẩu cũ -->
+                        <div>
+                            <label class="lbl">Mật khẩu hiện tại <span class="text-red-400">*</span></label>
+                            <div class="pw-wrap">
+                                <input id="inp-pw-old" class="inp inp-pw" type="password" placeholder="Nhập mật khẩu hiện tại">
+                                <span class="pw-eye" onclick="togglePw('inp-pw-old',this)"><i class="fas fa-eye"></i></span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-dashed border-gray-200 pt-5">
+                            <!-- Mật khẩu mới -->
+                            <div class="mb-5">
+                                <label class="lbl">Mật khẩu mới <span class="text-red-400">*</span></label>
+                                <div class="pw-wrap">
+                                    <input id="inp-pw-new" class="inp inp-pw" type="password" placeholder="Tối thiểu 6 ký tự" oninput="checkPwStrength(this.value)">
+                                    <span class="pw-eye" onclick="togglePw('inp-pw-new',this)"><i class="fas fa-eye"></i></span>
+                                </div>
+                                <!-- Thanh độ mạnh -->
+                                <div class="mt-2 flex gap-1.5 items-center">
+                                    <div class="flex gap-1 flex-1">
+                                        <div id="str-1" class="h-1.5 flex-1 rounded-full bg-gray-200 transition-all duration-300"></div>
+                                        <div id="str-2" class="h-1.5 flex-1 rounded-full bg-gray-200 transition-all duration-300"></div>
+                                        <div id="str-3" class="h-1.5 flex-1 rounded-full bg-gray-200 transition-all duration-300"></div>
+                                        <div id="str-4" class="h-1.5 flex-1 rounded-full bg-gray-200 transition-all duration-300"></div>
+                                    </div>
+                                    <span id="str-lbl" class="text-[10px] font-black uppercase tracking-wider text-gray-300 w-16 text-right"></span>
+                                </div>
+                            </div>
+
+                            <!-- Nhập lại -->
+                            <div>
+                                <label class="lbl">Nhập lại mật khẩu mới <span class="text-red-400">*</span></label>
+                                <div class="pw-wrap">
+                                    <input id="inp-pw-confirm" class="inp inp-pw" type="password" placeholder="Nhập lại mật khẩu mới" oninput="checkConfirm()">
+                                    <span class="pw-eye" onclick="togglePw('inp-pw-confirm',this)"><i class="fas fa-eye"></i></span>
+                                </div>
+                                <div id="confirm-hint" class="mt-1.5 text-[10px] font-bold hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pw-alert-ok" class="alert-ok mt-5"><i class="fas fa-check-circle text-green-600 mr-2"></i> Đổi mật khẩu thành công!</div>
+                    <div id="pw-alert-err" class="alert-err mt-5"><i class="fas fa-times-circle text-red-500 mr-2"></i><span id="pw-err-msg"></span></div>
+
+                    <div class="mt-6">
+                        <button class="btn-primary" onclick="changePassword()" id="btn-change-pw">
+                            <i class="fas fa-key"></i> Đổi mật khẩu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tips bên phải -->
+                <div class="space-y-4">
+                    <div class="card" style="background:#fffbeb;border-color:#fde68a;">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center text-lg flex-shrink-0">🔐</div>
+                            <div class="font-black text-yellow-800 text-xs uppercase tracking-widest">Bảo mật tài khoản</div>
+                        </div>
+                        <ul class="space-y-3 text-yellow-900 text-xs font-semibold leading-relaxed">
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-yellow-600 mt-0.5 text-[10px]"></i> Dùng ít nhất 8 ký tự</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-yellow-600 mt-0.5 text-[10px]"></i> Kết hợp chữ hoa, chữ thường</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-yellow-600 mt-0.5 text-[10px]"></i> Thêm số và ký tự đặc biệt</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-yellow-600 mt-0.5 text-[10px]"></i> Không dùng mật khẩu dễ đoán</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-yellow-600 mt-0.5 text-[10px]"></i> Không chia sẻ mật khẩu với ai</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer style="background:#1e3a8a;color:white;padding:2rem 0 1.5rem;margin-top:2rem;">
+    <div class="khung-trang">
+        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;">
+            <div class="font-black text-white uppercase text-sm tracking-widest italic">Toán Thầy Thành</div>
+            <div style="font-size:10px;opacity:0.35;font-style:italic;">Dạy học từ tâm · Nâng tầm kiến thức</div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+let currentUser = null;
+
+// ── Mobile ──────────────────────────────────
+function openMob() { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow = ''; }
+
+// ── Tabs ────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+// ── Header login ────────────────────────────
+function renderHeader(user) {
+    const adminOpt = user.role === 'admin'
+        ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a><div class="divider"></div>` : '';
+    document.getElementById('user-section').innerHTML = `
+        <div class="flex items-center gap-2 cursor-pointer" onclick="toggleMenu(event)">
+            <div class="text-right hidden md:block leading-tight">
+                <div class="text-blue-900 font-black text-xs uppercase">${user.fullname}</div>
+                <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">${user.role === 'admin' ? 'Quản trị viên' : 'Học sinh'}</div>
+            </div>
+            <img src="logo.png" class="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-blue-900 object-cover shadow flex-shrink-0">
+            <div class="dropdown-user" id="dropdownUser">
+                ${adminOpt}
+                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i>Hồ sơ</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3 text-green-500"></i>Khóa học</a>
+                <div class="divider"></div>
+                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i>Đăng xuất</a>
+            </div>
+        </div>`;
+}
+
+function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
+function logout() {
+    if (confirm('Bạn muốn đăng xuất?')) { localStorage.removeItem('user'); window.location.href = 'trangchu.html'; }
+}
+window.onclick = e => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+
+// ── Avatar chữ cái ───────────────────────────
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0][0].toUpperCase();
+}
+
+function setAvatar(name) {
+    const init = getInitials(name);
+    document.getElementById('avatar-circle').textContent = init;
+    document.getElementById('avatar-circle-2').textContent = init;
+}
+
+// ── Render thông tin ─────────────────────────
+function renderUserInfo(user) {
+    // Hero
+    document.getElementById('hero-name').textContent = user.fullname || '---';
+    setAvatar(user.fullname || '');
+
+    const isAdmin = user.role === 'admin';
+    document.getElementById('hero-role-badge').innerHTML = isAdmin
+        ? `<span class="badge-role" style="background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)"><i class="fas fa-crown text-[9px]"></i> Quản trị viên</span>`
+        : `<span class="badge-role" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.2)"><i class="fas fa-user-graduate text-[9px]"></i> Học sinh</span>`;
+
+    const metaParts = [];
+    if (user.sdt) metaParts.push(`<span><i class="fas fa-phone mr-1 opacity-60"></i>${user.sdt}</span>`);
+    if (user.email) metaParts.push(`<span><i class="fas fa-envelope mr-1 opacity-60"></i>${user.email}</span>`);
+    document.getElementById('hero-meta').innerHTML = metaParts.join('');
+
+    // Form
+    document.getElementById('inp-fullname').value = user.fullname || '';
+    document.getElementById('inp-sdt').value = user.sdt || '';
+    document.getElementById('inp-email').value = user.email || '';
+    document.getElementById('inp-fb').value = user.link_fb || '';
+    document.getElementById('inp-role').value = isAdmin ? 'Quản trị viên' : 'Học sinh';
+    document.getElementById('inp-status').value = user.status === 'active' ? 'Đang hoạt động ✓' : (user.status || '---');
+
+    const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : '---';
+    document.getElementById('inp-created').value = createdAt;
+
+    // Sidebar
+    document.getElementById('side-name').textContent = user.fullname || '---';
+    document.getElementById('side-role').textContent = isAdmin ? 'Quản trị viên' : 'Học sinh';
+    document.getElementById('side-id').textContent = user.id || '---';
+
+    const sinceDate = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN', {
+        month: 'long', year: 'numeric'
+    }) : '---';
+    document.getElementById('stat-since').textContent = sinceDate;
+}
+
+// ── Load từ Supabase ─────────────────────────
+async function loadUserInfo() {
+    const local = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!local) { window.location.href = 'login.html'; return; }
+
+    renderHeader(local);
+
+    // Lấy mới nhất từ DB
+    try {
+        const { data, error } = await sb
+            .from('accounts')
+            .select('id, fullname, sdt, email, link_fb, role, created_at, status')
+            .eq('id', local.id)
+            .single();
+
+        if (error) throw error;
+        currentUser = data;
+
+        // Cập nhật localStorage
+        const merged = { ...local, ...data };
+        localStorage.setItem('user', JSON.stringify(merged));
+
+        renderUserInfo(data);
+        loadStats(data.id);
+
+    } catch (err) {
+        console.warn('Fallback local:', err.message);
+        currentUser = local;
+        renderUserInfo(local);
+    }
+}
+
+// ── Thống kê khóa học ────────────────────────
+async function loadStats(userId) {
+    try {
+        const { data: enrolls } = await sb
+            .from('course_enrollments')
+            .select('course_id')
+            .eq('user_id', userId);
+
+        const courseCount = enrolls?.length || 0;
+        document.getElementById('stat-courses').textContent = courseCount;
+
+        if (courseCount > 0) {
+            const courseIds = enrolls.map(e => e.course_id);
+            const { data: topics } = await sb
+                .from('topics')
+                .select('id')
+                .in('course_id', courseIds);
+
+            if (topics?.length) {
+                const topicIds = topics.map(t => t.id);
+                const { count } = await sb
+                    .from('lessons')
+                    .select('id', { count: 'exact', head: true })
+                    .in('topic_id', topicIds);
+                document.getElementById('stat-lessons').textContent = count || 0;
+            } else {
+                document.getElementById('stat-lessons').textContent = 0;
             }
+        } else {
+            document.getElementById('stat-lessons').textContent = 0;
+        }
+    } catch (e) {
+        document.getElementById('stat-courses').textContent = '?';
+        document.getElementById('stat-lessons').textContent = '?';
+    }
+}
 
-            console.log("Đã đăng nhập với user:", session.user.email);
-            loadProfile(session.user);
+// ── Lưu thông tin ────────────────────────────
+async function saveInfo() {
+    const fullname = document.getElementById('inp-fullname').value.trim();
+    if (!fullname) {
+        showAlert('info', false, 'Họ và tên không được để trống!');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-info');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang lưu...';
+
+    try {
+        const updates = {
+            fullname,
+            sdt: document.getElementById('inp-sdt').value.trim() || null,
+            email: document.getElementById('inp-email').value.trim() || null,
+            link_fb: document.getElementById('inp-fb').value.trim() || null,
+        };
+
+        const { error } = await sb
+            .from('accounts')
+            .update(updates)
+            .eq('id', currentUser.id);
+
+        if (error) throw error;
+
+        // Cập nhật localStorage
+        const local = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...local, ...updates }));
+        currentUser = { ...currentUser, ...updates };
+
+        // Cập nhật UI
+        document.getElementById('hero-name').textContent = fullname;
+        setAvatar(fullname);
+        document.getElementById('side-name').textContent = fullname;
+        const metaParts = [];
+        if (updates.sdt) metaParts.push(`<span><i class="fas fa-phone mr-1 opacity-60"></i>${updates.sdt}</span>`);
+        if (updates.email) metaParts.push(`<span><i class="fas fa-envelope mr-1 opacity-60"></i>${updates.email}</span>`);
+        document.getElementById('hero-meta').innerHTML = metaParts.join('');
+
+        showAlert('info', true);
+    } catch (err) {
+        showAlert('info', false, err.message || 'Lỗi khi cập nhật thông tin');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Lưu thông tin';
+    }
+}
+
+// ── Đổi mật khẩu ─────────────────────────────
+async function changePassword() {
+    const oldPw = document.getElementById('inp-pw-old').value;
+    const newPw = document.getElementById('inp-pw-new').value;
+    const confirmPw = document.getElementById('inp-pw-confirm').value;
+
+    if (!oldPw || !newPw || !confirmPw) {
+        showAlert('pw', false, 'Vui lòng điền đầy đủ các trường!'); return;
+    }
+    if (newPw.length < 6) {
+        showAlert('pw', false, 'Mật khẩu mới phải có ít nhất 6 ký tự!'); return;
+    }
+    if (newPw !== confirmPw) {
+        showAlert('pw', false, 'Mật khẩu nhập lại không khớp!'); return;
+    }
+
+    const btn = document.getElementById('btn-change-pw');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
+
+    try {
+        // Kiểm tra mật khẩu cũ
+        const { data: acc, error: chkErr } = await sb
+            .from('accounts')
+            .select('id, password')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (chkErr) throw chkErr;
+
+        if (acc.password !== oldPw) {
+            showAlert('pw', false, 'Mật khẩu hiện tại không đúng!');
+            return;
+        }
+        if (oldPw === newPw) {
+            showAlert('pw', false, 'Mật khẩu mới phải khác mật khẩu hiện tại!');
+            return;
         }
 
-        async function loadProfile(user) {
-            // 2. Load dữ liệu từ bảng accounts
-            const { data, error } = await sb.from('accounts').select('*').eq('id', user.id).single();
-            
-            if (error) {
-                console.error("Lỗi khi load profile từ bảng accounts:", error);
-                alert("Lỗi khi tải thông tin: " + error.message);
-                return;
-            }
+        // Cập nhật mật khẩu
+        const { error: upErr } = await sb
+            .from('accounts')
+            .update({ password: newPw })
+            .eq('id', currentUser.id);
 
-            if (data) {
-                document.getElementById('profile-name').value = data.fullname || '';
-                document.getElementById('profile-sdt').value = data.sdt || '';
-                document.getElementById('profile-email').value = user.email || '';
-            }
-        }
+        if (upErr) throw upErr;
 
-        async function updateProfile() {
-            const { data: { user } } = await sb.auth.getUser();
-            const newName = document.getElementById('profile-name').value;
-            const newSdt = document.getElementById('profile-sdt').value;
+        // Xóa ô nhập
+        document.getElementById('inp-pw-old').value = '';
+        document.getElementById('inp-pw-new').value = '';
+        document.getElementById('inp-pw-confirm').value = '';
+        resetStrength();
 
-            const { error } = await sb.from('accounts')
-                .update({ fullname: newName, sdt: newSdt })
-                .eq('id', user.id);
+        showAlert('pw', true);
 
-            if (error) Swal.fire('Lỗi', error.message, 'error');
-            else Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
-        }
+        // Thông báo đăng xuất sau 3s
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đổi mật khẩu thành công!',
+                text: 'Vui lòng đăng nhập lại với mật khẩu mới.',
+                confirmButtonText: 'Đăng nhập lại',
+                confirmButtonColor: '#1e3a8a',
+                allowOutsideClick: false
+            }).then(() => {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+        }, 1000);
 
-        // Chạy ngay khi load
-        checkAndLoad();
-    </script>
+    } catch (err) {
+        showAlert('pw', false, err.message || 'Lỗi khi đổi mật khẩu');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-key"></i> Đổi mật khẩu';
+    }
+}
+
+// ── Hiển thị alert ───────────────────────────
+function showAlert(section, isOk, errMsg = '') {
+    const okEl = document.getElementById(section + '-alert-ok');
+    const errEl = document.getElementById(section + '-alert-err');
+    okEl.style.display = 'none';
+    errEl.style.display = 'none';
+
+    if (isOk) {
+        okEl.style.display = 'flex';
+        setTimeout(() => { okEl.style.display = 'none'; }, 4000);
+    } else {
+        const msgEl = document.getElementById(section + '-err-msg');
+        if (msgEl) msgEl.textContent = errMsg;
+        errEl.style.display = 'flex';
+        setTimeout(() => { errEl.style.display = 'none'; }, 5000);
+    }
+}
+
+// ── Toggle hiện/ẩn mật khẩu ─────────────────
+function togglePw(inputId, iconEl) {
+    const inp = document.getElementById(inputId);
+    const icon = iconEl.querySelector('i');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+// ── Kiểm tra độ mạnh mật khẩu ───────────────
+function checkPwStrength(val) {
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+    if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
+
+    const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+    const labels = ['Yếu', 'Trung bình', 'Khá', 'Mạnh'];
+    const lblEl = document.getElementById('str-lbl');
+
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('str-' + i);
+        el.style.background = i <= score ? colors[score - 1] : '#e5e7eb';
+    }
+
+    if (val.length === 0) {
+        lblEl.textContent = '';
+        lblEl.style.color = '#d1d5db';
+    } else {
+        lblEl.textContent = labels[score - 1] || 'Yếu';
+        lblEl.style.color = colors[score - 1] || '#ef4444';
+    }
+}
+
+function resetStrength() {
+    for (let i = 1; i <= 4; i++) document.getElementById('str-' + i).style.background = '#e5e7eb';
+    document.getElementById('str-lbl').textContent = '';
+}
+
+// ── Kiểm tra nhập lại mật khẩu ──────────────
+function checkConfirm() {
+    const newPw = document.getElementById('inp-pw-new').value;
+    const confirm = document.getElementById('inp-pw-confirm').value;
+    const hint = document.getElementById('confirm-hint');
+    if (!confirm) { hint.classList.add('hidden'); return; }
+    hint.classList.remove('hidden');
+    if (newPw === confirm) {
+        hint.textContent = '✓ Mật khẩu khớp';
+        hint.style.color = '#16a34a';
+    } else {
+        hint.textContent = '✗ Mật khẩu không khớp';
+        hint.style.color = '#dc2626';
+    }
+}
+
+// ── INIT ─────────────────────────────────────
+window.onload = () => { loadUserInfo(); };
+</script>
 </body>
 </html>
