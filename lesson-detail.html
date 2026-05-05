@@ -170,22 +170,30 @@ async function fetchLessonData(id) {
 
     if (error) {
         console.error("Lesson error:", error);
+        alert("Không load được bài học!");
         return;
     }
 
     if (!lesson) return;
 
+    // ✅ HIỂN THỊ
     document.getElementById('lesson-title').innerText = lesson.title;
     document.getElementById('lesson-content').innerHTML = lesson.content || '';
+    document.getElementById('lesson-insight').innerHTML =
+        lesson.insight ? "💡 " + lesson.insight : "";
 
+    // ✅ VIDEO
     const youtubeId = getYoutubeId(lesson.video_url);
     if (youtubeId) {
         document.getElementById('video-frame').src =
             `https://www.youtube.com/embed/${youtubeId}`;
+    } else {
+        document.getElementById('no-video').classList.remove('hidden');
     }
 
     renderDocuments(lesson.documents);
 
+    // ✅ LOAD TOPIC + SIDEBAR
     if (lesson.topic_id) {
         const { data: topic } = await supabaseClient
             .from('topics')
@@ -194,6 +202,9 @@ async function fetchLessonData(id) {
             .single();
 
         if (topic) {
+            document.getElementById('lesson-topic-name').innerText =
+                topic.topic_name;
+
             await loadSidebar(topic.course_id);
         }
     }
@@ -212,40 +223,58 @@ function renderDocuments(docs) {
     }
 
     if (!docList || docList.length === 0) {
-        container.innerHTML = "Chưa có tài liệu";
+        container.innerHTML =
+            "<div class='text-gray-400 text-xs italic'>Chưa có tài liệu</div>";
         return;
     }
 
     docList.forEach(file => {
         container.innerHTML += `
-            <div>
-                <a href="${file.url}" target="_blank">${file.name}</a>
+            <div class="p-2 border rounded">
+                <a href="${file.url}" target="_blank" class="text-blue-600">
+                    ${file.name || "Tài liệu"}
+                </a>
             </div>
         `;
     });
 }
 
 async function loadSidebar(courseId) {
-    const { data: topics } = await supabaseClient
+    const { data: topics, error: topicErr } = await supabaseClient
         .from('topics')
         .select('*')
         .eq('course_id', courseId);
 
-    const { data: lessons } = await supabaseClient
+    if (topicErr) {
+        console.error(topicErr);
+        return;
+    }
+
+    if (!topics || topics.length === 0) return;
+
+    const { data: lessons, error: lessonErr } = await supabaseClient
         .from('lessons')
         .select('id, title, topic_id')
         .in('topic_id', topics.map(t => t.id));
 
+    if (lessonErr) {
+        console.error(lessonErr);
+        return;
+    }
+
     const sidebar = document.getElementById('sidebar-content');
 
     sidebar.innerHTML = topics.map(topic => {
-        const topicLessons = lessons.filter(l => l.topic_id === topic.id);
+        const topicLessons = (lessons || []).filter(
+            l => l.topic_id === topic.id
+        );
 
         return `
-            <div>
-                <div>${topic.topic_name}</div>
+            <div class="mb-2">
+                <div class="font-bold text-sm">${topic.topic_name}</div>
                 ${topicLessons.map(l => `
-                    <div onclick="location.href='?id=${l.id}'">
+                    <div class="pl-4 cursor-pointer hover:text-blue-600"
+                        onclick="location.href='?id=${l.id}'">
                         ${l.title}
                     </div>
                 `).join('')}
