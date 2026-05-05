@@ -9,46 +9,45 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-   
-   <style>
+    
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         * { box-sizing: border-box; }
         html, body { margin: 0; }
         body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
         main { flex: 1; }
-        /* Ẩn nội dung chính khi chưa load xong để tránh chớp nháy */
-        .page-content { display: none; }
+        /* Ẩn nội dung để tránh chớp nháy trước khi check login */
+        #main-content { display: none; }
         
-        /* Dropdown, Menu, Mobile drawer... giữ nguyên styles của thầy */
-        .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
-        .dropdown-user.active { display: flex; }
-        .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
-        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
         .thanh-menu-ngang { background: #1e3a8a; }
         .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
         .item-menu { font-weight: 700; color: white; text-decoration: none; }
         .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
         .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-        #mob-menu { display: none; position: fixed; inset: 0; z-index: 300; }
-        #mob-menu.open { display: block; }
-        #mob-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
-        #mob-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 270px; background: #1e3a8a; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto; }
-        #mob-menu.open #mob-drawer { transform: translateX(0); }
-        .mi { display: flex; align-items: center; gap: 12px; padding: 14px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .mi:hover { background: rgba(255,255,255,0.08); }
-        .mi-hl { background: #fbbf24 !important; color: #1e3a8a !important; margin: 10px 14px; border-radius: 12px; border: none !important; justify-content: center; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-   </style>
+    </style>
 </head>
 <body>
 
     <header class="bg-white shadow-md sticky top-0 z-[1000]">
-        </header>
+        <div class="khung-trang flex items-center justify-between py-3">
+            <a href="trangchu.html" class="cum-logo flex-shrink-0">
+                <img src="logo.png" class="w-9 h-9 md:w-11 md:h-11 rounded-full border border-blue-100">
+                <div>
+                    <div class="ten-lon tracking-tighter uppercase italic">Toán</div>
+                    <div class="ten-nho">Thầy Thành</div>
+                </div>
+            </a>
+            <div class="flex items-center gap-2">
+                <div id="user-section" class="flex gap-1.5">
+                    </div>
+            </div>
+        </div>
+    </header>
 
-    <main id="main-content" class="page-content py-10">
-      <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+    <main id="main-content">
+      <div class="max-w-xl mx-auto bg-white p-8 my-10 rounded-2xl shadow-sm border border-gray-100">
         <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase">Thông tin cá nhân</h2>
         
         <div class="space-y-4">
@@ -79,26 +78,25 @@
       </div>
     </main>
 
-    <footer class="bg-white border-t py-6 text-center flex-none border-top-2px">
-      <div class="font-black text-blue-900 uppercase text-xs tracking-[0.3em] mb-1">Toán Thầy Thành</div>
-      <div class="text-gray-400 text-[9px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
-    </footer>
-
     <script>
+        // Khởi tạo Supabase
         const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        // Kiểm tra login khi load trang
-        async function initAuth() {
-            const { data: { user } } = await sb.auth.getUser();
-            if (!user) {
+        async function initPage() {
+            // Kiểm tra session hiện tại
+            const { data: { session } } = await sb.auth.getSession();
+            
+            if (!session) {
+                // Nếu không có session, chuyển hướng
                 window.location.href = 'login.html';
                 return;
             }
-            // Nếu đã login, hiện nội dung lên
-            document.querySelector('.page-content').style.display = 'block';
-            loadProfile(user);
+
+            // Nếu có, hiển thị nội dung và load data
+            document.getElementById('main-content').style.display = 'block';
+            loadProfile(session.user);
         }
 
         async function loadProfile(user) {
@@ -106,6 +104,9 @@
             if (data) {
                 document.getElementById('profile-name').value = data.fullname || '';
                 document.getElementById('profile-sdt').value = data.sdt || '';
+                document.getElementById('profile-email').value = user.email || '';
+            } else {
+                // Nếu chưa có data trong bảng accounts, vẫn điền email
                 document.getElementById('profile-email').value = user.email || '';
             }
         }
@@ -119,7 +120,11 @@
                 .update({ fullname: newName, sdt: newSdt })
                 .eq('id', user.id);
 
-            error ? Swal.fire('Lỗi', error.message, 'error') : Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
+            if (error) {
+                Swal.fire('Lỗi', 'Không thể cập nhật: ' + error.message, 'error');
+            } else {
+                Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
+            }
         }
 
         async function changePassword() {
@@ -132,19 +137,27 @@
 
             const { data: { user } } = await sb.auth.getUser();
 
-            const { error: signInError } = await sb.auth.signInWithPassword({ email: user.email, password: oldPass });
+            // Xác thực mật khẩu cũ bằng cách đăng nhập lại
+            const { error: signInError } = await sb.auth.signInWithPassword({ 
+                email: user.email, 
+                password: oldPass 
+            });
+            
             if (signInError) return Swal.fire('Lỗi', 'Mật khẩu cũ không chính xác!', 'error');
 
             const { error: updateError } = await sb.auth.updateUser({ password: newPass });
             if (updateError) {
                 Swal.fire('Lỗi', updateError.message, 'error');
             } else {
-                Swal.fire('Thành công', 'Mật khẩu đã được thay đổi!', 'success');
-                ['old-pass', 'new-pass', 'confirm-pass'].forEach(id => document.getElementById(id).value = '');
+                Swal.fire('Thành công', 'Đã đổi mật khẩu!', 'success');
+                document.getElementById('old-pass').value = '';
+                document.getElementById('new-pass').value = '';
+                document.getElementById('confirm-pass').value = '';
             }
         }
 
-        initAuth();
+        // Chạy khởi tạo
+        initPage();
     </script>
 </body>
 </html>
