@@ -3,51 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toán thầy Thành - Luyện thi vào 10</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <title>Thông tin cá nhân - Toán Thầy Thành</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        * { box-sizing: border-box; }
-        html, body { margin: 0; }
-        body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
-        main { flex: 1; }
-        /* Ẩn nội dung để tránh chớp nháy trước khi check login */
-        #main-content { display: none; }
-        
-        .thanh-menu-ngang { background: #1e3a8a; }
-        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-        .item-menu { font-weight: 700; color: white; text-decoration: none; }
-        .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { font-family: sans-serif; background: #f9fafb; }
+        #main-content { display: block; } /* Để block để thầy debug */
     </style>
 </head>
 <body>
 
-    <header class="bg-white shadow-md sticky top-0 z-[1000]">
-        <div class="khung-trang flex items-center justify-between py-3">
-            <a href="trangchu.html" class="cum-logo flex-shrink-0">
-                <img src="logo.png" class="w-9 h-9 md:w-11 md:h-11 rounded-full border border-blue-100">
-                <div>
-                    <div class="ten-lon tracking-tighter uppercase italic">Toán</div>
-                    <div class="ten-nho">Thầy Thành</div>
-                </div>
-            </a>
-            <div class="flex items-center gap-2">
-                <div id="user-section" class="flex gap-1.5">
-                    </div>
-            </div>
-        </div>
-    </header>
-
-    <main id="main-content">
-      <div class="max-w-xl mx-auto bg-white p-8 my-10 rounded-2xl shadow-sm border border-gray-100">
+    <main id="main-content" class="py-10">
+      <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase">Thông tin cá nhân</h2>
         
         <div class="space-y-4">
@@ -65,48 +33,42 @@
             </div>
             <button onclick="updateProfile()" class="w-full py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 transition">Lưu thông tin</button>
         </div>
-
-        <div class="mt-10 pt-8 border-t border-gray-100">
-            <h3 class="text-lg font-black text-blue-900 mb-4">Đổi mật khẩu</h3>
-            <div class="space-y-3">
-                <input type="password" id="old-pass" placeholder="Mật khẩu cũ" class="w-full p-3 border rounded-xl text-sm">
-                <input type="password" id="new-pass" placeholder="Mật khẩu mới" class="w-full p-3 border rounded-xl text-sm">
-                <input type="password" id="confirm-pass" placeholder="Nhập lại mật khẩu mới" class="w-full p-3 border rounded-xl text-sm">
-                <button onclick="changePassword()" class="w-full py-3 bg-yellow-400 text-blue-900 rounded-xl font-black text-sm hover:bg-yellow-300 transition">Cập nhật mật khẩu</button>
-            </div>
-        </div>
       </div>
     </main>
 
     <script>
-        // Khởi tạo Supabase
         const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
         const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        async function initPage() {
-            // Kiểm tra session hiện tại
-            const { data: { session } } = await sb.auth.getSession();
+        async function checkAndLoad() {
+            // 1. Lấy session hiện tại
+            const { data: { session }, error } = await sb.auth.getSession();
             
-            if (!session) {
-                // Nếu không có session, chuyển hướng
-                window.location.href = 'login.html';
+            if (error || !session) {
+                console.error("Không tìm thấy phiên đăng nhập:", error);
+                alert("Bạn chưa đăng nhập hoặc phiên đã hết hạn. Vui lòng đăng nhập lại.");
+                // window.location.href = 'login.html'; // Tạm thời comment dòng này lại để thầy không bị đá ra
                 return;
             }
 
-            // Nếu có, hiển thị nội dung và load data
-            document.getElementById('main-content').style.display = 'block';
+            console.log("Đã đăng nhập với user:", session.user.email);
             loadProfile(session.user);
         }
 
         async function loadProfile(user) {
+            // 2. Load dữ liệu từ bảng accounts
             const { data, error } = await sb.from('accounts').select('*').eq('id', user.id).single();
+            
+            if (error) {
+                console.error("Lỗi khi load profile từ bảng accounts:", error);
+                alert("Lỗi khi tải thông tin: " + error.message);
+                return;
+            }
+
             if (data) {
                 document.getElementById('profile-name').value = data.fullname || '';
                 document.getElementById('profile-sdt').value = data.sdt || '';
-                document.getElementById('profile-email').value = user.email || '';
-            } else {
-                // Nếu chưa có data trong bảng accounts, vẫn điền email
                 document.getElementById('profile-email').value = user.email || '';
             }
         }
@@ -120,44 +82,12 @@
                 .update({ fullname: newName, sdt: newSdt })
                 .eq('id', user.id);
 
-            if (error) {
-                Swal.fire('Lỗi', 'Không thể cập nhật: ' + error.message, 'error');
-            } else {
-                Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
-            }
+            if (error) Swal.fire('Lỗi', error.message, 'error');
+            else Swal.fire('Thành công', 'Đã lưu thông tin!', 'success');
         }
 
-        async function changePassword() {
-            const oldPass = document.getElementById('old-pass').value;
-            const newPass = document.getElementById('new-pass').value;
-            const confirmPass = document.getElementById('confirm-pass').value;
-
-            if (newPass !== confirmPass) return Swal.fire('Lỗi', 'Mật khẩu không khớp!', 'error');
-            if (!oldPass || !newPass) return Swal.fire('Lỗi', 'Vui lòng nhập đủ thông tin!', 'warning');
-
-            const { data: { user } } = await sb.auth.getUser();
-
-            // Xác thực mật khẩu cũ bằng cách đăng nhập lại
-            const { error: signInError } = await sb.auth.signInWithPassword({ 
-                email: user.email, 
-                password: oldPass 
-            });
-            
-            if (signInError) return Swal.fire('Lỗi', 'Mật khẩu cũ không chính xác!', 'error');
-
-            const { error: updateError } = await sb.auth.updateUser({ password: newPass });
-            if (updateError) {
-                Swal.fire('Lỗi', updateError.message, 'error');
-            } else {
-                Swal.fire('Thành công', 'Đã đổi mật khẩu!', 'success');
-                document.getElementById('old-pass').value = '';
-                document.getElementById('new-pass').value = '';
-                document.getElementById('confirm-pass').value = '';
-            }
-        }
-
-        // Chạy khởi tạo
-        initPage();
+        // Chạy ngay khi load
+        checkAndLoad();
     </script>
 </body>
 </html>
