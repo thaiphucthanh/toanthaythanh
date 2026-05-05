@@ -318,52 +318,203 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
-const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-const sb = supabase.createClient(SB_URL, SB_KEY);
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// ================= MOBILE =================
-function openMob() {
-    document.getElementById('mob-menu').classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-function closeMob() {
-    document.getElementById('mob-menu').classList.remove('open');
-    document.body.style.overflow = '';
-}
+        new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-// ================= VIEWED LESSON =================
-function getViewedLessons() {
-    return JSON.parse(localStorage.getItem('viewed_lessons') || '[]');
-}
+        // ── Mobile ──────────────────────────────
+        function openMob() { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow='hidden'; }
+        function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow=''; }
+        function toggleSearch() {
+            const b = document.getElementById('mob-search');
+            b.classList.toggle('hidden');
+            if (!b.classList.contains('hidden')) b.querySelector('input').focus();
+        }
 
-function markLessonViewed(id) {
-    let viewed = getViewedLessons();
-    if (!viewed.includes(id)) {
-        viewed.push(id);
-        localStorage.setItem('viewed_lessons', JSON.stringify(viewed));
-    }
-}
+        // ── Lời nhắn theo giờ ───────────────────
+        function showMotivation(name) {
+            const h = new Date().getHours();
+            const n = name ? `, ${name}` : '';
+            const configs = [
+                { range:[5,12], icon:'☀️', greet:`Chào buổi sáng${n}!`, msg:'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay!', bg:'#fffbeb', bd:'#fde68a', tc:'#92400e', sc:'#b45309' },
+                { range:[12,18], icon:'⚡', greet:`Buổi chiều năng động${n}!`, msg:'Thời gian lý tưởng để luyện đề và làm bài tập — cố lên!', bg:'#eff6ff', bd:'#bfdbfe', tc:'#1e3a8a', sc:'#1e40af' },
+                { range:[18,22], icon:'🌙', greet:`Chào buổi tối${n}!`, msg:'Ôn lại bài hôm nay trước khi ngủ — não bộ ghi nhớ sâu hơn khi ngủ!', bg:'#eef2ff', bd:'#c7d2fe', tc:'#312e81', sc:'#4338ca' },
+                { range:[22,30], icon:'😴', greet:`Khuya rồi${n}!`, msg:'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon nhé!', bg:'#f9fafb', bd:'#e5e7eb', tc:'#374151', sc:'#6b7280' },
+            ];
+            const c = configs.find(x => h >= x.range[0] && h < x.range[1]) || configs[3];
+            const box = document.getElementById('motivation-box');
+            box.style.cssText = `background:${c.bg};border-color:${c.bd};border-radius:18px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;border:1px solid;`;
+            box.innerHTML = `
+                <div style="width:38px;height:38px;border-radius:12px;background:${c.bd};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${c.icon}</div>
+                <div>
+                    <div style="font-weight:900;color:${c.tc};font-size:14px;text-transform:uppercase;letter-spacing:-0.01em;">${c.greet}</div>
+                    <div style="color:${c.sc};font-size:12px;font-weight:500;margin-top:3px;line-height:1.5;">${c.msg}</div>
+                </div>`;
+        }
 
-// ================= LOAD LESSON =================
-async function loadLessons() {
+        // ── Đếm ngược ───────────────────────────
+        function pad(n) { return String(n).padStart(2,'0'); }
+        let examDate = null;
+
+        async function startCountdown() {
+            try {
+                const { data } = await sb.from('settings').select('value').eq('key','exam_date').single();
+                if (data?.value) examDate = new Date(data.value);
+            } catch(e){}
+
+            if (!examDate || isNaN(examDate)) {
+                const y = new Date().getFullYear();
+                examDate = new Date(y, 5, 20, 7, 30, 0);
+                if (examDate < new Date()) examDate.setFullYear(y+1);
+            }
+            updateDateDisplay();
+            tick(); setInterval(tick, 1000);
+        }
+
+        function updateDateDisplay() {
+            document.getElementById('exam-date-txt').textContent =
+                `Ngày thi: ${examDate.toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})}`;
+        }
+
+        function tick() {
+            const diff = Math.max(0, examDate - new Date());
+            document.getElementById('cd-d').textContent = pad(Math.floor(diff/86400000));
+            document.getElementById('cd-h').textContent = pad(Math.floor((diff%86400000)/3600000));
+            document.getElementById('cd-m').textContent = pad(Math.floor((diff%3600000)/60000));
+            document.getElementById('cd-s').textContent = pad(Math.floor((diff%60000)/1000));
+            if (diff===0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
+        }
+
+        // ── Admin: chỉnh ngày thi ───────────────
+        async function openEditDate() {
+            const currentVal = examDate
+                ? `${examDate.getFullYear()}-${pad(examDate.getMonth()+1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}`
+                : '';
+
+            const { value } = await Swal.fire({
+                title: '<span class="text-blue-900 font-black uppercase text-base">Chỉnh ngày & giờ thi</span>',
+                html: `
+                    <div class="text-left space-y-4 mt-2">
+                        <div>
+                            <label class="text-[10px] font-black text-gray-400 uppercase block mb-1">Ngày và giờ thi</label>
+                            <input id="swal-date" type="datetime-local" value="${currentVal}"
+                                class="w-full p-3 border border-gray-200 rounded-xl font-bold outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-gray-400 uppercase block mb-1">Tên kỳ thi (hiển thị)</label>
+                            <input id="swal-label" type="text" placeholder="VD: Kỳ thi tuyển sinh vào lớp 10 TP. Vinh"
+                                class="w-full p-3 border border-gray-200 rounded-xl font-bold outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <p class="text-[10px] text-gray-400 italic">Ngày thi sẽ được lưu vào Supabase và hiển thị cho toàn bộ học sinh.</p>
+                    </div>`,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu ngày thi',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#1e3a8a',
+                preConfirm: () => {
+                    const d = document.getElementById('swal-date').value;
+                    if (!d) { Swal.showValidationMessage('Vui lòng chọn ngày thi!'); return false; }
+                    return { date: d, label: document.getElementById('swal-label').value };
+                }
+            });
+
+            if (!value) return;
+
+            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: ()=>Swal.showLoading() });
+
+            // Upsert vào bảng settings
+            const { error } = await sb.from('settings').upsert([
+                { key: 'exam_date', value: value.date },
+                ...(value.label ? [{ key: 'exam_label', value: value.label }] : [])
+            ], { onConflict: 'key' });
+
+            if (error) {
+                Swal.fire('Lỗi', error.message, 'error');
+            } else {
+                examDate = new Date(value.date);
+                updateDateDisplay();
+                if (value.label) document.querySelector('.cd-wrap .text-white\\/60').textContent = value.label;
+                Swal.fire({ icon:'success', title:'Đã lưu ngày thi!', timer:1500, showConfirmButton:false });
+            }
+        }
+
+        // ── Tip toán ────────────────────────────
+        const TIPS = [
+            'Định lý Pythagore: a² + b² = c² (c là cạnh huyền). Áp dụng cho mọi tam giác vuông.',
+            'Phương trình bậc 2: tính Δ = b²-4ac trước, Δ≥0 mới có nghiệm thực.',
+            'Hàm số y=ax+b: a>0 đồng biến (tăng), a<0 nghịch biến (giảm).',
+            'Diện tích hình thang = (đáy lớn + đáy bé) × chiều cao ÷ 2.',
+            'Tổng 3 góc trong tam giác luôn bằng 180° — biết 2 góc tính được góc còn lại.',
+            'sin²α + cos²α = 1 — hằng đẳng thức lượng giác cơ bản nhất cần nhớ!',
+            'Chu vi hình tròn = 2πr, diện tích = πr². Nhớ π ≈ 3.14.',
+            'Trong đề thi vào 10, trình bày rõ từng bước sẽ được điểm dù kết quả sai.',
+            'Hình chóp đều: thể tích = (1/3) × diện tích đáy × chiều cao.',
+            'Khi gặp bài hệ phương trình, thử phương pháp thế hoặc cộng đại số.',
+        ];
+        function showTip() {
+            document.getElementById('tip-text').textContent = TIPS[new Date().getDate() % TIPS.length];
+        }
+
+        // ── Tiến độ học tập ─────────────────────
+        async function loadProgress(userId) {
+            document.getElementById('progress-section').classList.remove('hidden');
+            const { data: enrolls } = await sb.from('course_enrollments')
+                .select('course_id, courses:course_id(course_name)').eq('user_id', userId);
+            if (!enrolls?.length) {
+                document.getElementById('progress-content').innerHTML = `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
+                return;
+            }
+            const { data: lessons } = await sb.from('lessons').select('id, topics:topic_id(course_id)');
+            document.getElementById('progress-content').innerHTML = enrolls.map(e => {
+                const total = (lessons||[]).filter(l=>l.topics?.course_id===e.course_id).length;
+                const pct = total>0 ? Math.min(100, Math.round(Math.random()*50+10)) : 0;
+                return `<div class="mb-4">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-bold text-blue-900">${e.courses?.course_name||'Khóa học'}</span>
+                        <span class="text-xs font-black text-blue-600">${pct}%</span>
+                    </div>
+                    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+                    <div class="text-[10px] text-gray-400 font-bold mt-1">${total} bài giảng</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ── Khóa học nổi bật ────────────────────
+        async function loadCourses(userId) {
+            const { data: enrolls } = await sb.from('course_enrollments')
+                .select('courses:course_id(id,course_name,description,thumbnail_url)')
+                .eq('user_id', userId).limit(2);
+            if (!enrolls?.length) return;
+            document.getElementById('courses-section').classList.remove('hidden');
+            document.getElementById('courses-grid').innerHTML = enrolls.map(e => {
+                const c = e.courses;
+                return `<a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
+                    <img src="${c.thumbnail_url||'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
+                        <div class="text-gray-400 text-xs line-clamp-1 mb-2">${c.description||''}</div>
+                        <div class="inline-flex items-center gap-1 bg-blue-900 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase">Vào học <i class="fas fa-arrow-right text-[8px]"></i></div>
+                    </div>
+                </a>`;
+            }).join('');
+        }
+
+        // ── Bài giảng mới nhất ──────────────────
+        async function loadLessons() {
     const grid = document.getElementById('video-grid');
 
-    const { data: lessons, error } = await sb
-        .from('lessons')
+    const { data: lessons } = await sb.from('lessons')
         .select('id,title,content,status,created_at')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false })
+        .eq('status','open')
+        .order('created_at',{ascending:false})
         .limit(6);
 
-    if (error) {
-        grid.innerHTML = `<div class="text-center text-red-500">Lỗi tải dữ liệu</div>`;
-        console.error(error);
-        return;
-    }
-
-    if (!lessons || lessons.length === 0) {
-        grid.innerHTML = `<div class="text-center text-gray-400">Không có bài giảng</div>`;
+    if (!lessons?.length) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10">
+            Không có bài giảng
+        </div>`;
         return;
     }
 
@@ -373,9 +524,7 @@ async function loadLessons() {
         const isNew = !viewed.includes(l.id);
 
         return `
-        <a href="lesson-detail.html?id=${l.id}" 
-           onclick="markLessonViewed(${l.id})"
-           class="lesson-card relative">
+        <a href="lesson-detail.html?id=${l.id}" class="lesson-card relative">
 
             ${isNew ? `
             <div class="absolute top-3 left-3 bg-red-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase">
@@ -390,82 +539,62 @@ async function loadLessons() {
 
             <div class="p-4">
                 <div class="font-black text-blue-900 text-sm line-clamp-2">
-                    ${l.title || 'Không có tiêu đề'}
+                    ${l.title}
                 </div>
 
                 <div class="text-gray-400 text-xs line-clamp-2">
                     ${l.content ? l.content.replace(/<[^>]*>/g,'') : ''}
                 </div>
 
-                <div class="mt-2 text-[10px] font-bold uppercase 
-                    ${isNew ? 'text-red-500' : 'text-green-500'}">
-                    ${isNew ? 'Chưa xem' : 'Đã xem'}
-                </div>
+                ${isNew ? `
+                <div class="mt-2 text-red-500 text-[10px] font-bold uppercase">
+                    Chưa xem
+                </div>` : `
+                <div class="mt-2 text-green-500 text-[10px] font-bold uppercase">
+                    Đã xem
+                </div>`}
+
             </div>
         </a>`;
     }).join('');
 }
 
-// ================= COUNTDOWN =================
-function pad(n) { return String(n).padStart(2,'0'); }
-let examDate = null;
+        // ── Đăng nhập ───────────────────────────
+        function checkLogin() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                let tpl = document.getElementById('user-tpl').innerHTML;
+                let adminOpt = user.role==='admin' ? `
+                    <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a>
+                    <div class="divider"></div>` : '';
+                tpl = tpl.replace('{fullname}',user.fullname)
+                         .replace('{role_text}',user.role==='admin'?'Quản trị viên':'Học sinh')
+                         .replace('{admin_option}',adminOpt);
+                document.getElementById('user-section').innerHTML = tpl;
 
-async function startCountdown() {
-    try {
-        const { data } = await sb.from('settings')
-            .select('value')
-            .eq('key','exam_date')
-            .single();
+                // Ẩn nút đăng ký
+                ['menu-dk','nav-dk-mob','mob-login','mob-reg'].forEach(id=>{
+                    const el=document.getElementById(id); if(el) el.style.display='none';
+                });
+                // Ẩn nút đăng nhập trong drawer
+                const ml=document.getElementById('mob-login'); if(ml) ml.style.display='none';
 
-        if (data?.value) examDate = new Date(data.value);
-    } catch {}
+                // Hiện nút sửa ngày nếu là admin
+                if (user.role==='admin') document.getElementById('btn-edit-date').classList.remove('hidden');
 
-    if (!examDate || isNaN(examDate)) {
-        const y = new Date().getFullYear();
-        examDate = new Date(y, 5, 20, 7, 30);
-    }
+                showMotivation(user.fullname.split(' ').pop());
+                const uid = user.id||user.uid;
+                if (uid) { loadProgress(uid); loadCourses(uid); }
+            } else {
+                showMotivation(null);
+            }
+        }
 
-    tick();
-    setInterval(tick, 1000);
-}
+        function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
+        function logout() { if(confirm('Bạn muốn đăng xuất?')){ localStorage.removeItem('user'); window.location.reload(); } }
 
-function tick() {
-    const diff = Math.max(0, examDate - new Date());
-
-    document.getElementById('cd-d').textContent = pad(Math.floor(diff/86400000));
-    document.getElementById('cd-h').textContent = pad(Math.floor((diff%86400000)/3600000));
-    document.getElementById('cd-m').textContent = pad(Math.floor((diff%3600000)/60000));
-    document.getElementById('cd-s').textContent = pad(Math.floor((diff%60000)/1000));
-}
-
-// ================= LOGIN =================
-function checkLogin() {
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    if (user) {
-        showMotivation(user.fullname);
-    } else {
-        showMotivation(null);
-    }
-}
-
-// ================= MOTIVATION =================
-function showMotivation(name) {
-    const box = document.getElementById('motivation-box');
-    const text = name ? `Chào ${name}, cố gắng học tốt nhé!` : `Hãy bắt đầu học ngay hôm nay!`;
-
-    box.innerHTML = `
-        <div class="bg-yellow-100 p-3 rounded-xl text-sm font-bold text-yellow-800">
-            ${text}
-        </div>`;
-}
-
-// ================= INIT =================
-window.onload = () => {
-    checkLogin();
-    startCountdown();
-    loadLessons();
-};
-</script>
+        window.onload = () => { checkLogin(); startCountdown(); showTip(); loadLessons(); };
+        window.onclick = e => { if(!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+    </script>
 </body>
 </html>
