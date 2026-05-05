@@ -12,42 +12,32 @@
     body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; background-color: #f9fafb; overflow: hidden; }
     .sidebar-scroll::-webkit-scrollbar { width: 4px; }
     .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
-    .thanh-menu-ngang { background: #1e3a8a; color: white; }
-    .lesson-item { transition: background 0.15s; }
+    .thanh-menu-ngang { background: #1e3a8a; }
+    .lesson-item { transition: background 0.15s; cursor: pointer; }
     .lesson-item:hover { background-color: #f0f4ff; }
-    .lesson-item.active { background-color: #eff6ff; color: #1e3a8a; border-left: 4px solid #1e3a8a; }
+    .lesson-item.active { background-color: #eff6ff; color: #1e3a8a; border-left: 4px solid #1e3a8a; font-weight: 800; }
     .submenu { display: none; }
-    .submenu.show { display: block; }
-    .dropdown-user {
-      position: absolute; top: 120%; right: 0; width: 220px;
-      background: white; border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      display: none; flex-direction: column; padding: 10px 0;
-      z-index: 1000; border: 1px solid #f0f0f0;
-    }
+    .submenu.open { display: block; }
+    .chevron { transition: transform 0.25s; }
+    .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 1000; border: 1px solid #f0f0f0; }
     .dropdown-user.active { display: flex; }
-    .item-dropdown {
-      padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151;
-      display: flex; align-items: center; text-decoration: none; transition: all 0.2s;
-    }
+    .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; transition: all 0.2s; }
     .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
-    .chevron-icon { transition: transform 0.25s; }
-    .submenu.show ~ * .chevron-icon,
-    .topic-header.open .chevron-icon { transform: rotate(180deg); }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header class="bg-white shadow-sm z-[1100] flex-none">
   <div class="px-6 py-3 flex items-center justify-between">
     <a href="trangchu.html" class="flex items-center gap-2">
-      <img src="logo.png" class="w-10 h-10 rounded-full border" onerror="this.style.display='none'">
+      <img src="logo.png" class="w-10 h-10 rounded-full border">
       <div>
         <div class="text-blue-900 font-black text-lg leading-none uppercase italic">Toán</div>
         <div class="text-gray-400 font-bold text-[8px] tracking-widest uppercase">Thầy Thành</div>
       </div>
     </a>
-    <div class="cum-tai-khoan relative" id="user-section"></div>
+    <div class="relative" id="user-section"></div>
   </div>
   <nav class="thanh-menu-ngang px-6 py-2">
     <ul class="flex gap-6 list-none p-0 m-0">
@@ -59,458 +49,323 @@
 </header>
 
 <div class="flex flex-col lg:flex-row flex-1 overflow-hidden">
+
   <!-- SIDEBAR -->
-  <aside class="w-full lg:w-80 bg-white border-r flex flex-col shadow-inner z-40 flex-none h-[30vh] lg:h-auto">
-    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+  <aside class="w-full lg:w-80 bg-white border-r flex flex-col z-40 flex-none h-[35vh] lg:h-auto">
+    <div class="p-4 bg-gray-50 border-b flex justify-between items-center flex-none">
       <h3 class="font-black text-blue-900 text-[10px] uppercase tracking-widest">Nội dung học tập</h3>
       <i class="fas fa-book-reader text-blue-200"></i>
     </div>
-    <nav id="sidebar-content" class="flex-1 overflow-y-auto sidebar-scroll p-2 space-y-1">
-      <div class="text-center py-10"><i class="fas fa-spinner animate-spin text-blue-900 text-xl"></i></div>
+    <nav id="sidebar-content" class="flex-1 overflow-y-auto sidebar-scroll p-2">
+      <div class="text-center py-10">
+        <i class="fas fa-spinner animate-spin text-blue-900 text-xl"></i>
+        <div class="text-gray-400 text-[10px] mt-2 font-bold uppercase">Đang tải...</div>
+      </div>
     </nav>
   </aside>
 
   <!-- MAIN -->
-  <main class="flex-1 overflow-y-auto flex flex-col scroll-smooth bg-gray-50 h-[70vh] lg:h-auto">
-    <div class="p-6 md:p-10 flex-1">
-      <div class="max-w-6xl mx-auto">
+  <main class="flex-1 overflow-y-auto flex flex-col bg-gray-50 h-[65vh] lg:h-auto">
+    <div class="p-4 md:p-8 flex-1">
+      <div class="max-w-5xl mx-auto space-y-6">
 
         <!-- VIDEO -->
-        <div id="video-wrapper" class="bg-black rounded-[40px] overflow-hidden shadow-2xl aspect-video relative border-[12px] border-white mb-10">
-          <iframe id="video-frame" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen></iframe>
-          <div id="no-video" class="absolute inset-0 flex items-center justify-center flex-col gap-3 text-gray-400" style="display:none!important">
+        <div class="bg-black rounded-3xl overflow-hidden shadow-xl aspect-video relative border-8 border-white">
+          <iframe id="video-frame" class="absolute inset-0 w-full h-full" src="" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <div id="no-video" class="absolute inset-0 hidden items-center justify-center flex-col gap-3 text-gray-500 bg-gray-900">
             <i class="fas fa-video-slash text-4xl"></i>
-            <span class="text-xs font-bold uppercase">Chưa có video</span>
+            <span class="text-xs font-bold uppercase tracking-widest">Chưa có video</span>
           </div>
         </div>
 
-        <!-- CONTENT GRID -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <!-- LEFT: Nội dung bài học -->
-          <div class="lg:col-span-2 space-y-8">
-            <div class="bg-white p-10 rounded-[40px] shadow-sm border border-gray-100">
-              <div id="lesson-topic-name" class="text-blue-600 font-black uppercase text-[10px] tracking-[0.2em] mb-3 italic"></div>
-              <h1 id="lesson-title" class="text-3xl font-black text-blue-900 mb-6 tracking-tight leading-tight uppercase">
-                <i class="fas fa-spinner animate-spin text-blue-300"></i> Đang tải...
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- NỘI DUNG -->
+          <div class="lg:col-span-2">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+              <div id="lesson-topic-name" class="text-blue-500 font-black uppercase text-[10px] tracking-[0.2em] mb-2 italic"></div>
+              <h1 id="lesson-title" class="text-2xl font-black text-blue-900 mb-4 tracking-tight leading-tight uppercase">
+                <i class="fas fa-spinner animate-spin text-blue-300"></i>
               </h1>
-              <div id="lesson-content" class="text-gray-600 leading-relaxed font-medium space-y-4 text-base"></div>
+              <div id="lesson-content" class="text-gray-600 leading-relaxed text-sm space-y-3"></div>
             </div>
           </div>
 
-          <!-- RIGHT: Tài liệu -->
+          <!-- TÀI LIỆU -->
           <div class="lg:col-span-1">
-            <div class="space-y-6 sticky top-6">
-              <div class="bg-white p-8 rounded-[40px] shadow-sm border border-blue-100">
-                <h3 class="font-black text-xs mb-6 text-blue-900 uppercase italic tracking-widest flex items-center gap-3">
-                  <i class="fas fa-file-pdf text-red-500 text-lg"></i> Kho tài liệu
-                </h3>
-                <div id="document-container" class="space-y-3">
-                  <div class="text-center py-4"><i class="fas fa-spinner animate-spin text-blue-200"></i></div>
-                </div>
-                <div id="lesson-insight" class="mt-6 p-5 bg-blue-50 rounded-[25px] text-[11px] text-blue-800 font-bold border-l-4 border-blue-900 leading-relaxed shadow-sm hidden"></div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 sticky top-4">
+              <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
+                <i class="fas fa-file-pdf text-red-500"></i> Kho tài liệu
+              </h3>
+              <div id="document-container">
+                <div class="text-center py-4"><i class="fas fa-spinner animate-spin text-blue-200"></i></div>
               </div>
+              <div id="lesson-insight" class="mt-4 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold border-l-4 border-blue-900 leading-relaxed hidden"></div>
             </div>
           </div>
         </div>
 
-        <!-- ERROR BOX (ẩn mặc định) -->
-        <div id="error-box" class="hidden mt-6 p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-bold"></div>
+        <!-- LỖI -->
+        <div id="error-box" class="hidden p-5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-bold">
+          <i class="fas fa-exclamation-triangle mr-2"></i><span id="error-msg"></span>
+        </div>
 
       </div>
     </div>
-
-    <footer class="bg-white border-t py-12 text-center flex-none mt-20">
-      <div class="max-w-xs mx-auto mb-4 opacity-20"><div class="h-px bg-blue-900"></div></div>
-      <div class="font-black text-blue-900 uppercase text-sm mb-1 tracking-[0.3em]">Toán Thầy Thành</div>
-      <div class="text-gray-400 text-[10px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
+    <footer class="bg-white border-t py-8 text-center flex-none">
+      <div class="font-black text-blue-900 uppercase text-xs tracking-[0.3em] mb-1">Toán Thầy Thành</div>
+      <div class="text-gray-400 text-[9px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
     </footer>
   </main>
 </div>
 
+<!-- DÙNG ĐÚNG VERSION GIỐNG TRANGCHU.HTML -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ============================================================
-// CẤU HÌNH SUPABASE — dùng fetch thuần, không cần thư viện
-// ============================================================
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// Hàm query Supabase REST API trực tiếp
-async function sbQuery(table, params = {}) {
-  const url = new URL(`${SB_URL}/rest/v1/${table}`);
+const currentLessonId = new URLSearchParams(window.location.search).get('id');
 
-  // Thêm các filter dạng ?column=eq.value
-  Object.entries(params).forEach(([key, val]) => {
-    if (key === 'select') url.searchParams.set('select', val);
-    else if (key === 'order') url.searchParams.set('order', val);
-    else if (key === 'limit') url.searchParams.set('limit', val);
-    else url.searchParams.set(key, val);
-  });
-
-  const res = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      // Trả về single object nếu dùng .single()
-      ...(params._single ? { 'Accept': 'application/vnd.pgrst.object+json' } : {})
-    }
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`[${table}] HTTP ${res.status}: ${errText}`);
-  }
-
-  return res.json();
-}
-
-// Helper: query 1 record theo id
-async function sbGetById(table, id, idType = 'int') {
-  const url = new URL(`${SB_URL}/rest/v1/${table}`);
-  url.searchParams.set('select', '*');
-  if (idType === 'int') {
-    url.searchParams.set('id', `eq.${parseInt(id)}`);
-  } else {
-    url.searchParams.set('id', `eq.${id}`);
-  }
-
-  const res = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
-      'Accept': 'application/vnd.pgrst.object+json' // single object
-    }
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`[${table}] HTTP ${res.status}: ${errText}`);
-  }
-  return res.json();
-}
-
-// ============================================================
-const urlParams = new URLSearchParams(window.location.search);
-const currentLessonId = urlParams.get('id');
-
-// ============================================================
-// CHECK LOGIN
-// ============================================================
+// ── Header / Login ──────────────────────────
 function checkLogin() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
-  if (!user) { window.location.href = 'login.html'; return null; }
-
-  const adminOption = user.role === 'admin'
-    ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
-         <i class="fas fa-cog mr-3 opacity-50"></i> Quản trị hệ thống
-       </a>` : '';
-
+  if (!user) { window.location.href = 'login.html'; return; }
+  const adminOpt = user.role === 'admin'
+    ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic"><i class="fas fa-cog mr-3 opacity-60"></i>Quản trị hệ thống</a>` : '';
   document.getElementById('user-section').innerHTML = `
-    <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="toggleMenu(event)">
       <div class="text-right hidden md:block">
         <div class="text-blue-900 font-black text-xs uppercase leading-tight">${user.fullname || ''}</div>
-        <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest italic">
-          ${user.role === 'admin' ? 'Thầy Thành' : 'Học sinh'}
-        </div>
+        <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest italic">${user.role === 'admin' ? 'Thầy Thành' : 'Học sinh'}</div>
       </div>
       <div class="relative">
-        <img src="logo.png" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm"
-             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname||'U')}&background=1e3a8a&color=fff'">
-        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+        <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-blue-900 object-cover shadow-sm">
+        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
       </div>
       <div class="dropdown-user" id="dropdownUser">
-        ${adminOption}
-        <a href="thong-tin-ca-nhan.html" class="item-dropdown">
-          <i class="fas fa-user-circle mr-3 opacity-50"></i> Hồ sơ cá nhân
-        </a>
-        <a href="khoa-hoc-cua-toi.html" class="item-dropdown">
-          <i class="fas fa-graduation-cap mr-3 opacity-50"></i> Khóa học của tôi
-        </a>
+        ${adminOpt}
+        <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 opacity-50"></i>Hồ sơ cá nhân</a>
+        <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-graduation-cap mr-3 opacity-50"></i>Khóa học của tôi</a>
         <div class="border-t my-1 mx-4"></div>
-        <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600">
-          <i class="fas fa-sign-out-alt mr-3 opacity-70"></i> Đăng xuất
-        </a>
+        <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3 opacity-70"></i>Đăng xuất</a>
       </div>
     </div>`;
-  return user;
 }
+function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
+function logout() { localStorage.removeItem('user'); window.location.href = 'login.html'; }
+window.addEventListener('click', () => document.getElementById('dropdownUser')?.classList.remove('active'));
 
-// ============================================================
-// YOUTUBE ID
-// ============================================================
-function getYoutubeId(url) {
+// ── YouTube ──────────────────────────────────
+function getYtId(url) {
   if (!url) return null;
-  const patterns = [
-    /[?&]v=([^&\s]+)/,
-    /youtu\.be\/([^?&\s]+)/,
-    /youtube\.com\/embed\/([^?&\s]+)/,
-    /youtube\.com\/shorts\/([^?&\s]+)/
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return m[1];
-  }
-  return null;
+  const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([^?&\s]{11})/);
+  return m ? m[1] : null;
 }
 
-// ============================================================
-// RENDER VIDEO
-// ============================================================
-function renderVideo(videoUrl) {
+// ── Video ────────────────────────────────────
+function renderVideo(url) {
+  const ytId = getYtId(url);
   const frame = document.getElementById('video-frame');
-  const noVideo = document.getElementById('no-video');
-  const ytId = getYoutubeId(videoUrl);
-
+  const noVid = document.getElementById('no-video');
   if (ytId) {
-    frame.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`;
-    noVideo.style.display = 'none';
+    frame.src = `https://www.youtube.com/embed/${ytId}?rel=0`;
+    noVid.classList.add('hidden'); noVid.classList.remove('flex');
   } else {
     frame.src = '';
-    frame.style.display = 'none';
-    noVideo.style.removeProperty('display');
+    noVid.classList.remove('hidden'); noVid.classList.add('flex');
   }
 }
 
-// ============================================================
-// RENDER DOCUMENTS
-// ============================================================
-function renderDocuments(docs) {
-  const container = document.getElementById('document-container');
-
-  let docList = null;
-  try {
-    docList = typeof docs === 'string' ? JSON.parse(docs) : docs;
-  } catch (e) {
-    docList = null;
-  }
-
-  if (!docList || !Array.isArray(docList) || docList.length === 0) {
-    container.innerHTML = `
-      <div class="p-6 bg-gray-50 text-gray-400 text-[10px] text-center rounded-[30px] border border-dashed uppercase italic">
-        Chưa có tài liệu
-      </div>`;
+// ── Tài liệu ─────────────────────────────────
+function renderDocs(docs) {
+  const el = document.getElementById('document-container');
+  let list = null;
+  try { list = typeof docs === 'string' ? JSON.parse(docs) : docs; } catch(e) {}
+  if (!list || !list.length) {
+    el.innerHTML = `<div class="p-5 bg-gray-50 text-gray-400 text-[10px] text-center rounded-2xl border border-dashed uppercase italic">Chưa có tài liệu</div>`;
     return;
   }
-
-  container.innerHTML = docList.map(file => `
-    <div class="p-4 bg-gray-50 rounded-2xl border">
-      <div class="text-[10px] font-bold text-blue-900 mb-3 flex items-center gap-2">
-        <i class="fas fa-file-alt text-red-400"></i>
-        ${file.name || 'Tài liệu'}
+  el.innerHTML = list.map(f => `
+    <div class="p-3 bg-gray-50 rounded-xl border mb-2">
+      <div class="text-[10px] font-bold text-blue-900 mb-2 flex items-center gap-1">
+        <i class="fas fa-file-alt text-red-400 text-xs"></i> ${f.name || 'Tài liệu'}
       </div>
       <div class="flex gap-2">
-        <a href="${file.url}" target="_blank" rel="noopener"
-           class="flex-1 py-2 bg-blue-900 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-blue-800 transition">
-          <i class="fas fa-eye mr-1"></i> Xem
-        </a>
-        <a href="${file.url}" download target="_blank" rel="noopener"
-           class="flex-1 py-2 bg-white text-red-600 border border-red-200 text-center rounded-lg text-[9px] font-black uppercase hover:bg-red-50 transition">
-          <i class="fas fa-download mr-1"></i> Tải
-        </a>
+        <a href="${f.url}" target="_blank" class="flex-1 py-1.5 bg-blue-900 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-blue-800">
+          <i class="fas fa-eye mr-1"></i>Xem</a>
+        <a href="${f.url}" download target="_blank" class="flex-1 py-1.5 bg-white text-red-600 border text-center rounded-lg text-[9px] font-black uppercase hover:bg-red-50">
+          <i class="fas fa-download mr-1"></i>Tải</a>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ============================================================
-// LOAD SIDEBAR
-// ============================================================
-async function loadSidebar(courseId, currentTopicId) {
-  try {
-    // Query topics theo course_id
-    const topicsUrl = new URL(`${SB_URL}/rest/v1/topics`);
-    topicsUrl.searchParams.set('select', 'id,topic_name,order_index');
-    topicsUrl.searchParams.set('course_id', `eq.${courseId}`);
-    topicsUrl.searchParams.set('order', 'order_index.asc,id.asc');
-
-    const topicsRes = await fetch(topicsUrl.toString(), {
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
-    });
-    const topics = await topicsRes.json();
-
-    if (!topics || topics.length === 0) {
-      document.getElementById('sidebar-content').innerHTML =
-        `<div class="text-center py-10 text-gray-300 text-xs italic">Không có chủ đề nào</div>`;
-      return;
-    }
-
-    // Query tất cả lessons của course này (lọc theo topic_id in list)
-    const topicIds = topics.map(t => `"${t.id}"`).join(',');
-    const lessonsUrl = new URL(`${SB_URL}/rest/v1/lessons`);
-    lessonsUrl.searchParams.set('select', 'id,title,topic_id,status');
-    lessonsUrl.searchParams.set('topic_id', `in.(${topicIds})`);
-    lessonsUrl.searchParams.set('order', 'id.asc');
-
-    const lessonsRes = await fetch(lessonsUrl.toString(), {
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
-    });
-    const lessons = await lessonsRes.json();
-
-    const sidebar = document.getElementById('sidebar-content');
-    sidebar.innerHTML = topics.map(topic => {
-      const topicLessons = (lessons || []).filter(l =>
-        l.topic_id === topic.id && l.status !== 'inactive'
-      );
-      const isActive = topic.id === currentTopicId;
-
-      return `
-        <div class="mb-1">
-          <div class="topic-header p-3 font-black text-[10px] uppercase cursor-pointer flex justify-between items-center rounded-xl
-               ${isActive ? 'text-blue-900 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}"
-               onclick="toggleTopic(this)">
-            <span>${topic.topic_name}</span>
-            <i class="fas fa-chevron-down chevron-icon text-[8px] transition-transform duration-200
-               ${isActive ? 'rotate-180' : ''}"></i>
-          </div>
-          <div class="submenu ${isActive ? 'show' : ''}">
-            ${topicLessons.length === 0
-              ? `<div class="pl-8 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`
-              : topicLessons.map(l => `
-                  <div onclick="window.location.href='?id=${l.id}'"
-                    class="lesson-item p-3 pl-8 text-[11px] font-semibold cursor-pointer rounded-lg mx-1 my-0.5
-                    ${String(l.id) === String(currentLessonId) ? 'active' : 'text-gray-600'}">
-                    ${l.title}
-                  </div>`).join('')
-            }
-          </div>
-        </div>`;
-    }).join('');
-
-  } catch (err) {
-    console.error('Sidebar error:', err);
-    document.getElementById('sidebar-content').innerHTML =
-      `<div class="p-4 text-red-400 text-[10px]">Lỗi tải sidebar: ${err.message}</div>`;
+// ── Sidebar toggle ───────────────────────────
+function toggleTopic(btn) {
+  const sub = btn.nextElementSibling;
+  const icon = btn.querySelector('.chevron');
+  const opening = !sub.classList.contains('open');
+  // đóng hết
+  document.querySelectorAll('#sidebar-content .submenu.open').forEach(s => s.classList.remove('open'));
+  document.querySelectorAll('#sidebar-content .topic-btn').forEach(b => {
+    b.querySelector('.chevron')?.classList.remove('rotate-180');
+  });
+  if (opening) {
+    sub.classList.add('open');
+    icon?.classList.add('rotate-180');
   }
 }
 
-function toggleTopic(el) {
-  const submenu = el.nextElementSibling;
-  const icon = el.querySelector('.chevron-icon');
-  submenu.classList.toggle('show');
-  icon.classList.toggle('rotate-180');
-}
-
-// ============================================================
-// FETCH LESSON DATA — hàm chính
-// ============================================================
-async function fetchLessonData(id) {
-  const lessonId = parseInt(id);
-  if (isNaN(lessonId)) {
-    showError('ID bài học không hợp lệ: ' + id);
+// ── Render Sidebar ───────────────────────────
+function renderSidebar(topics, lessons, currentTopicId) {
+  const sidebar = document.getElementById('sidebar-content');
+  if (!topics || !topics.length) {
+    sidebar.innerHTML = `<div class="text-center py-10 text-gray-300 text-xs italic">Không có chuyên đề</div>`;
     return;
   }
+  sidebar.innerHTML = topics.map(topic => {
+    const tLessons = lessons.filter(l => l.topic_id === topic.id);
+    const isCurrent = topic.id === currentTopicId;
+    const items = tLessons.length
+      ? tLessons.map(l => {
+          const active = String(l.id) === String(currentLessonId);
+          return `<div class="lesson-item px-4 py-2.5 pl-10 text-[11px] rounded-lg mx-1 my-0.5 ${active ? 'active' : 'text-gray-600'}"
+                       onclick="window.location.href='?id=${l.id}'">
+            <i class="fas fa-play-circle mr-2 text-[9px] ${active ? 'text-blue-500' : 'text-gray-300'}"></i>${l.title}
+          </div>`;
+        }).join('')
+      : `<div class="px-10 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`;
 
+    return `
+      <div class="mb-1">
+        <button class="topic-btn w-full text-left px-4 py-3 text-[10px] font-black uppercase rounded-xl
+                       flex justify-between items-center gap-2 transition-colors
+                       ${isCurrent ? 'text-blue-900 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}"
+                onclick="toggleTopic(this)">
+          <span class="flex-1 text-left leading-snug">${topic.topic_name}</span>
+          <i class="fas fa-chevron-down chevron text-[8px] flex-none ${isCurrent ? 'rotate-180' : ''}"></i>
+        </button>
+        <div class="submenu ${isCurrent ? 'open' : ''}">${items}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Load Sidebar ─────────────────────────────
+async function loadSidebar(courseId, currentTopicId) {
   try {
-    // ---- 1. Lấy lesson ----
-    const lessonUrl = new URL(`${SB_URL}/rest/v1/lessons`);
-    lessonUrl.searchParams.set('select', '*');
-    lessonUrl.searchParams.set('id', `eq.${lessonId}`);
+    // Lấy toàn bộ topics của course
+    const { data: topics, error: e1 } = await sb
+      .from('topics')
+      .select('id, topic_name, order_index')
+      .eq('course_id', courseId)
+      .order('order_index', { ascending: true });
 
-    const lessonRes = await fetch(lessonUrl.toString(), {
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Accept': 'application/vnd.pgrst.object+json' // single
-      }
-    });
-
-    if (lessonRes.status === 406 || lessonRes.status === 404) {
-      showError(`Không tìm thấy bài học với ID = ${lessonId}`);
-      return;
-    }
-    if (!lessonRes.ok) {
-      const errTxt = await lessonRes.text();
-      showError(`Lỗi tải bài học (HTTP ${lessonRes.status}): ${errTxt}`);
+    if (e1) throw new Error('topics: ' + e1.message);
+    if (!topics || !topics.length) {
+      document.getElementById('sidebar-content').innerHTML =
+        `<div class="text-center py-10 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`;
       return;
     }
 
-    const lesson = await lessonRes.json();
+    // Lấy tất cả lessons thuộc các topics đó
+    const topicIds = topics.map(t => t.id);
+    const { data: lessons, error: e2 } = await sb
+      .from('lessons')
+      .select('id, title, topic_id')
+      .in('topic_id', topicIds)
+      .order('id', { ascending: true });
 
-    // ---- 2. Render lesson ----
-    document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
-    document.getElementById('lesson-content').innerHTML = lesson.content || '<p class="text-gray-400 italic text-sm">Chưa có nội dung</p>';
+    if (e2) throw new Error('lessons: ' + e2.message);
 
-    // Insight
-    const insightEl = document.getElementById('lesson-insight');
-    if (lesson.insight) {
-      insightEl.innerHTML = '💡 ' + lesson.insight;
-      insightEl.classList.remove('hidden');
-    }
-
-    // Video
-    renderVideo(lesson.video_url);
-
-    // Tài liệu
-    renderDocuments(lesson.documents);
-
-    // ---- 3. Lấy topic ----
-    if (lesson.topic_id) {
-      const topicUrl = new URL(`${SB_URL}/rest/v1/topics`);
-      topicUrl.searchParams.set('select', 'id,topic_name,course_id');
-      topicUrl.searchParams.set('id', `eq.${lesson.topic_id}`);
-
-      const topicRes = await fetch(topicUrl.toString(), {
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${SB_KEY}`,
-          'Accept': 'application/vnd.pgrst.object+json'
-        }
-      });
-
-      if (topicRes.ok) {
-        const topic = await topicRes.json();
-        document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
-        // ---- 4. Load sidebar ----
-        await loadSidebar(topic.course_id, lesson.topic_id);
-      }
-    }
+    renderSidebar(topics, lessons || [], currentTopicId);
 
   } catch (err) {
-    console.error('fetchLessonData error:', err);
-    showError(`Lỗi kết nối: ${err.message}`);
+    console.error('Sidebar lỗi:', err);
+    document.getElementById('sidebar-content').innerHTML =
+      `<div class="p-4 text-red-400 text-[10px] font-bold">Lỗi sidebar: ${err.message}</div>`;
+  }
+}
+
+// ── Load Lesson chính ────────────────────────
+async function loadLesson(id) {
+  const lessonId = parseInt(id);
+  if (isNaN(lessonId)) { showError('ID bài học không hợp lệ'); return; }
+
+  try {
+    // 1. Lấy lesson theo int4 id
+    const { data: lesson, error: e1 } = await sb
+      .from('lessons')
+      .select('*')
+      .eq('id', lessonId)
+      .single();
+
+    if (e1) throw new Error('Lỗi lấy bài học: ' + e1.message);
+    if (!lesson) { showError('Không tìm thấy bài học ID=' + lessonId); return; }
+
+    // 2. Hiển thị nội dung
+    document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
+    document.getElementById('lesson-content').innerHTML = lesson.content
+      || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
+
+    if (lesson.insight) {
+      const el = document.getElementById('lesson-insight');
+      el.innerHTML = '💡 ' + lesson.insight;
+      el.classList.remove('hidden');
+    }
+
+    renderVideo(lesson.video_url);
+    renderDocs(lesson.documents);
+
+    // 3. Nếu không có topic_id thì dừng ở đây
+    if (!lesson.topic_id) {
+      document.getElementById('sidebar-content').innerHTML =
+        `<div class="text-center py-10 text-gray-300 text-xs italic">Bài học chưa thuộc chuyên đề nào</div>`;
+      return;
+    }
+
+    // 4. Lấy topic (topic_id là uuid)
+    const { data: topic, error: e2 } = await sb
+      .from('topics')
+      .select('id, topic_name, course_id')
+      .eq('id', lesson.topic_id)
+      .single();
+
+    if (e2) throw new Error('Lỗi lấy chuyên đề: ' + e2.message);
+    if (!topic) { showError('Không tìm thấy chuyên đề cho bài học này'); return; }
+
+    document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
+
+    // 5. Load toàn bộ sidebar theo course
+    await loadSidebar(topic.course_id, lesson.topic_id);
+
+  } catch (err) {
+    console.error('loadLesson lỗi:', err);
+    showError(err.message);
   }
 }
 
 function showError(msg) {
   document.getElementById('lesson-title').textContent = 'Không thể tải bài học';
-  const box = document.getElementById('error-box');
-  box.classList.remove('hidden');
-  box.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${msg}`;
+  document.getElementById('error-box').classList.remove('hidden');
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('document-container').innerHTML = '';
 }
 
-// ============================================================
-// USER MENU
-// ============================================================
-function toggleUserMenu(e) {
-  e.stopPropagation();
-  document.getElementById('dropdownUser')?.classList.toggle('active');
-}
-function logout() {
-  localStorage.removeItem('user');
-  window.location.href = 'login.html';
-}
-window.addEventListener('click', () => {
-  document.getElementById('dropdownUser')?.classList.remove('active');
-});
-
-// ============================================================
-// INIT
-// ============================================================
+// ── INIT ─────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   checkLogin();
   if (currentLessonId) {
-    fetchLessonData(currentLessonId);
+    loadLesson(currentLessonId);
   } else {
-    document.getElementById('lesson-title').textContent = 'Vui lòng chọn một bài học từ danh sách.';
+    document.getElementById('lesson-title').textContent = 'Chọn bài học từ danh sách bên trái';
     document.getElementById('document-container').innerHTML =
       `<div class="text-gray-300 text-[10px] italic text-center py-4">Chưa chọn bài học</div>`;
     document.getElementById('sidebar-content').innerHTML =
-      `<div class="text-center py-10 text-gray-300 text-xs italic">Chưa có bài học nào được chọn</div>`;
+      `<div class="text-center py-10 text-gray-300 text-xs italic">Vui lòng chọn bài học</div>`;
+    document.getElementById('no-video').classList.remove('hidden');
+    document.getElementById('no-video').classList.add('flex');
   }
 });
 </script>
