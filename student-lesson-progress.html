@@ -376,7 +376,7 @@ window.onload = async () => {
     await loadCourses();
     // Nếu URL có ?course_id thì chọn sẵn
     const params = new URLSearchParams(location.search);
-    const cid = params.get('course_id');
+    const cid = params.get('id');
     if(cid){
         document.getElementById('sel-course').value = cid;
         await onCourseChange();
