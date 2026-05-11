@@ -719,9 +719,7 @@ async function loadViewData() {
     }
 }
 
-// ======================================================
 // SHOW SINGLE USER
-// ======================================================
 
 function showSingleUser() {
 
@@ -734,9 +732,7 @@ function showSingleUser() {
     renderTable();
 }
 
-// ======================================================
 // SHOW MULTI USER
-// ======================================================
 
 function showMultiUser() {
 
@@ -832,12 +828,90 @@ function renderTable() {
 
     let rows = [...allLessons];
 
-    if (keyword) {
+// ======================================
+// FILTER KEYWORD
+// ======================================
 
-        rows = rows.filter(l =>
-            l.title.toLowerCase().includes(keyword)
-        );
+if (keyword) {
+
+    rows = rows.filter(l =>
+        l.title.toLowerCase().includes(keyword)
+    );
+}
+
+// ======================================
+// FILTER STATUS
+// ======================================
+
+rows = rows.filter(l => {
+
+    // Không filter
+    if (filterState === 'all') {
+        return true;
     }
+
+    // 1 USER
+
+    if (selectedUser) {
+
+        const v = viewedMap[String(l.id)];
+
+        // CHƯA XEM
+        if (filterState === 'unseen') {
+            return !v?.viewed;
+        }
+
+        // ĐÃ XEM
+        if (filterState === 'viewed') {
+            return v?.viewed && !v?.completed;
+        }
+
+        // HOÀN THÀNH
+        if (filterState === 'done') {
+            return v?.completed;
+        }
+    }
+
+    // MULTI USER
+
+    else {
+
+        const lid = String(l.id);
+
+        let anyViewed = false;
+        let anyDone = false;
+
+        allUsers.forEach(u => {
+
+            const v = (viewedMap[String(u.id)] || {})[lid];
+
+            if (v?.completed) {
+                anyDone = true;
+            }
+
+            else if (v?.viewed) {
+                anyViewed = true;
+            }
+        });
+
+        // CHƯA XEM
+        if (filterState === 'unseen') {
+            return !anyViewed && !anyDone;
+        }
+
+        // ĐÃ XEM
+        if (filterState === 'viewed') {
+            return anyViewed && !anyDone;
+        }
+
+        // HOÀN THÀNH
+        if (filterState === 'done') {
+            return anyDone;
+        }
+    }
+
+    return true;
+});
 
     document.getElementById('row-count').textContent =
         `${rows.length} bài`;
@@ -912,9 +986,7 @@ function renderTable() {
     }).join('');
 }
 
-// ======================================================
 // MULTI USER TABLE
-// ======================================================
 
 function renderMultiUser() {
 
@@ -1000,9 +1072,7 @@ function renderMultiUser() {
     `).join('');
 }
 
-// ======================================================
 // FILTER
-// ======================================================
 
 function setFilter(f, el) {
 
@@ -1031,10 +1101,6 @@ function selectUser(uid) {
         behavior: 'smooth'
     });
 }
-
-// ======================================================
-// EXPORT CSV
-// ======================================================
 
 function exportCSV() {
 
@@ -1086,10 +1152,6 @@ function exportCSV() {
     a.click();
 }
 
-// ======================================================
-// RESET
-// ======================================================
-
 function resetView() {
 
     selectedCourse = '';
@@ -1120,10 +1182,6 @@ function resetView() {
             document.getElementById(id).textContent = '--';
         });
 }
-
-// ======================================================
-// LOADING
-// ======================================================
 
 function showLoading() {
 
