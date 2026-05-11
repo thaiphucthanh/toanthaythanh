@@ -15,24 +15,20 @@
         html, body { margin: 0; }
         body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
         main { flex: 1; }
-
         .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; padding: 10px 0; z-index: 200; border: 1px solid #f0f0f0; }
         .dropdown-user.active { display: flex; }
         .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; transition: all 0.2s; display: flex; align-items: center; text-decoration: none; }
         .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
         .divider { height: 1px; background: #eee; margin: 5px 0; }
-
         .banner-wrap { width: 100%; line-height: 0; overflow: hidden; }
         .banner-wrap .swiper, .banner-wrap .swiper-slide { width: 100%; }
         .banner-wrap img { width: 100%; height: auto; display: block; }
-
         .thanh-menu-ngang { background: #1e3a8a; }
         .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
         .item-menu { font-weight: 700; color: white; text-decoration: none; }
         .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
         .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-
         #mob-menu { display: none; position: fixed; inset: 0; z-index: 300; }
         #mob-menu.open { display: block; }
         #mob-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
@@ -41,35 +37,26 @@
         .mi { display: flex; align-items: center; gap: 12px; padding: 14px 20px; font-weight: 700; font-size: 14px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
         .mi:hover { background: rgba(255,255,255,0.08); }
         .mi-hl { background: #fbbf24 !important; color: #1e3a8a !important; margin: 10px 14px; border-radius: 12px; border: none !important; justify-content: center; }
-
         .cd-wrap { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); border-radius: 24px; padding: 28px 16px; text-align: center; position: relative; overflow: hidden; }
         .cd-deco { position: absolute; border-radius: 50%; border: 18px solid rgba(255,255,255,0.05); pointer-events: none; }
         .cd-unit { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 12px 14px; min-width: 60px; text-align: center; }
         .cd-num { font-size: 2rem; font-weight: 900; color: white; line-height: 1; }
         .cd-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.6); margin-top: 3px; }
-
         .admin-edit-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 12px; text-transform: uppercase; }
         .admin-edit-btn:hover { background: rgba(255,255,255,0.25); }
-
         .tip-wrap { background: #fffbeb; border: 1px solid #fde68a; border-radius: 18px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 12px; }
         #motivation-box { border-radius: 18px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 12px; border: 1px solid; }
-
         .prog-bar { background: #e5e7eb; border-radius: 999px; height: 7px; overflow: hidden; }
         .prog-fill { background: linear-gradient(90deg, #1e3a8a, #3b82f6); height: 100%; border-radius: 999px; transition: width 0.8s ease; }
-
-        .lesson-card { background: white; border-radius: 18px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; position: relative; }
+        .lesson-card { background: white; border-radius: 18px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; position: relative; cursor: pointer; }
         .lesson-card:hover { box-shadow: 0 10px 28px rgba(30,58,138,0.12); transform: translateY(-3px); border-color: #bfdbfe; }
         .lesson-card.unread { border-color: #fca5a5; }
         .lesson-card.unread:hover { border-color: #ef4444; }
-
-        /* ── Badge chưa xem có dot nhấp nháy ── */
         .badge-unread-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#fff; animation:badgepulse 1.4s ease-in-out infinite; margin-right:3px; }
         @keyframes badgepulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
         .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
         .play-btn { width: 44px; height: 44px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; transition: transform 0.2s; }
         .lesson-card:hover .play-btn { transform: scale(1.1); }
-
         .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
         .sec-bar { width: 4px; height: 22px; background: #fbbf24; border-radius: 2px; flex-shrink: 0; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -118,18 +105,14 @@
                 <input type="text" placeholder="Tìm bài giảng..." class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div class="flex items-center gap-2">
-                <button class="md:hidden w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-sm" onclick="toggleSearch()">
-                    <i class="fas fa-search"></i>
-                </button>
+                <button class="md:hidden w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-sm" onclick="toggleSearch()"><i class="fas fa-search"></i></button>
                 <div class="cum-tai-khoan relative" id="user-section">
                     <div class="flex gap-1.5">
                         <button class="hidden md:block px-3 py-1.5 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
                         <button class="hidden md:block px-4 py-1.5 bg-blue-900 text-white rounded-full font-bold text-sm hover:bg-blue-800 transition-all">Đăng ký</button>
                     </div>
                 </div>
-                <button onclick="openMob()" class="md:hidden w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center text-sm flex-shrink-0">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <button onclick="openMob()" class="md:hidden w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center text-sm flex-shrink-0"><i class="fas fa-bars"></i></button>
             </div>
         </div>
         <div id="mob-search" class="hidden px-4 pb-3 md:hidden">
@@ -155,7 +138,7 @@
         </nav>
     </header>
 
-    <!-- BANNER FULL -->
+    <!-- BANNER -->
     <div class="banner-wrap">
         <div class="swiper mySwiper">
             <div class="swiper-wrapper">
@@ -168,10 +151,8 @@
     <main>
         <div class="khung-trang py-6 md:py-10 space-y-6 md:space-y-10">
 
-            <!-- 1. LỜI NHẮN ĐỘNG VIÊN -->
             <div id="motivation-box"></div>
 
-            <!-- 2. ĐỒNG HỒ ĐẾM NGƯỢC -->
             <div class="cd-wrap">
                 <div class="cd-deco" style="width:180px;height:180px;top:-50px;right:-50px;"></div>
                 <div class="cd-deco" style="width:120px;height:120px;bottom:-30px;left:-30px;"></div>
@@ -194,7 +175,6 @@
                 </div>
             </div>
 
-            <!-- 3. TIP TOÁN NGẪU NHIÊN -->
             <div class="tip-wrap">
                 <div class="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center flex-shrink-0 text-base">💡</div>
                 <div>
@@ -203,7 +183,6 @@
                 </div>
             </div>
 
-            <!-- 4. TIẾN ĐỘ HỌC TẬP -->
             <div id="progress-section" class="hidden bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                 <div class="sec-title">
                     <div class="sec-bar"></div>
@@ -212,7 +191,6 @@
                 <div id="progress-content"><div class="text-center py-4 text-gray-400 text-sm italic">Đang tải...</div></div>
             </div>
 
-            <!-- 5. KHÓA HỌC CỦA BẠN -->
             <div id="courses-section" class="hidden">
                 <div class="sec-title">
                     <div class="sec-bar"></div>
@@ -221,7 +199,6 @@
                 <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
 
-            <!-- 6. BÀI GIẢNG MỚI NHẤT -->
             <div>
                 <div class="sec-title flex-wrap gap-y-2">
                     <div class="sec-bar"></div>
@@ -232,8 +209,12 @@
                             <span class="text-[10px] font-bold text-gray-500 uppercase">Chưa xem</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                            <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
                             <span class="text-[10px] font-bold text-gray-500 uppercase">Đã xem</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase">Hoàn thành</span>
                         </div>
                     </div>
                 </div>
@@ -310,7 +291,7 @@
 
         new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-        // ── Mobile menu ─────────────────────────────────────────────────────────
+        // ── Mobile ───────────────────────────────────────────────
         function openMob()  { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow = 'hidden'; }
         function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow = ''; }
         function toggleSearch() {
@@ -319,15 +300,14 @@
             if (!b.classList.contains('hidden')) b.querySelector('input').focus();
         }
 
-        // ── Lời nhắn theo giờ ────────────────────────────────────────────────────
+        // ── Motivation ───────────────────────────────────────────
         function showMotivation(name) {
-            const h = new Date().getHours();
-            const n = name ? `, ${name}` : '';
+            const h = new Date().getHours(), n = name ? `, ${name}` : '';
             const configs = [
-                { range: [5, 12],  icon: '☀️', greet: `Chào buổi sáng${n}!`,      msg: 'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay!', bg: '#fffbeb', bd: '#fde68a', tc: '#92400e', sc: '#b45309' },
-                { range: [12, 18], icon: '⚡', greet: `Buổi chiều năng động${n}!`, msg: 'Thời gian lý tưởng để luyện đề và làm bài tập — cố lên!',      bg: '#eff6ff', bd: '#bfdbfe', tc: '#1e3a8a', sc: '#1e40af' },
-                { range: [18, 22], icon: '🌙', greet: `Chào buổi tối${n}!`,         msg: 'Ôn lại bài hôm nay trước khi ngủ — não bộ ghi nhớ sâu hơn!',   bg: '#eef2ff', bd: '#c7d2fe', tc: '#312e81', sc: '#4338ca' },
-                { range: [22, 30], icon: '😴', greet: `Khuya rồi${n}!`,             msg: 'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon nhé!',   bg: '#f9fafb', bd: '#e5e7eb', tc: '#374151', sc: '#6b7280' },
+                { range:[5,12],  icon:'☀️', greet:`Chào buổi sáng${n}!`,      msg:'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay!', bg:'#fffbeb', bd:'#fde68a', tc:'#92400e', sc:'#b45309' },
+                { range:[12,18], icon:'⚡', greet:`Buổi chiều năng động${n}!`, msg:'Thời gian lý tưởng để luyện đề và làm bài tập — cố lên!',      bg:'#eff6ff', bd:'#bfdbfe', tc:'#1e3a8a', sc:'#1e40af' },
+                { range:[18,22], icon:'🌙', greet:`Chào buổi tối${n}!`,         msg:'Ôn lại bài hôm nay trước khi ngủ — não bộ ghi nhớ sâu hơn!',   bg:'#eef2ff', bd:'#c7d2fe', tc:'#312e81', sc:'#4338ca' },
+                { range:[22,30], icon:'😴', greet:`Khuya rồi${n}!`,             msg:'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon nhé!',   bg:'#f9fafb', bd:'#e5e7eb', tc:'#374151', sc:'#6b7280' },
             ];
             const c = configs.find(x => h >= x.range[0] && h < x.range[1]) || configs[3];
             const box = document.getElementById('motivation-box');
@@ -340,38 +320,37 @@
                 </div>`;
         }
 
-        // ── Đếm ngược ────────────────────────────────────────────────────────────
+        // ── Countdown ────────────────────────────────────────────
         function pad(n) { return String(n).padStart(2, '0'); }
         let examDate = null;
         async function startCountdown() {
             try {
-                const { data } = await sb.from('settings').select('value').eq('key', 'exam_date').single();
+                const { data } = await sb.from('settings').select('value').eq('key','exam_date').single();
                 if (data?.value) examDate = new Date(data.value);
-            } catch (e) {}
+            } catch(e) {}
             if (!examDate || isNaN(examDate)) {
                 const y = new Date().getFullYear();
                 examDate = new Date(y, 5, 20, 7, 30, 0);
                 if (examDate < new Date()) examDate.setFullYear(y + 1);
             }
-            updateDateDisplay();
-            tick(); setInterval(tick, 1000);
+            updateDateDisplay(); tick(); setInterval(tick, 1000);
         }
         function updateDateDisplay() {
             document.getElementById('exam-date-txt').textContent =
-                `Ngày thi: ${examDate.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+                `Ngày thi: ${examDate.toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})}`;
         }
         function tick() {
             const diff = Math.max(0, examDate - new Date());
-            document.getElementById('cd-d').textContent = pad(Math.floor(diff / 86400000));
-            document.getElementById('cd-h').textContent = pad(Math.floor((diff % 86400000) / 3600000));
-            document.getElementById('cd-m').textContent = pad(Math.floor((diff % 3600000) / 60000));
-            document.getElementById('cd-s').textContent = pad(Math.floor((diff % 60000) / 1000));
-            if (diff === 0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
+            document.getElementById('cd-d').textContent = pad(Math.floor(diff/86400000));
+            document.getElementById('cd-h').textContent = pad(Math.floor((diff%86400000)/3600000));
+            document.getElementById('cd-m').textContent = pad(Math.floor((diff%3600000)/60000));
+            document.getElementById('cd-s').textContent = pad(Math.floor((diff%60000)/1000));
+            if (diff===0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
         }
 
-        // ── Admin chỉnh ngày thi ──────────────────────────────────────────────────
+        // ── Admin chỉnh ngày thi ─────────────────────────────────
         async function openEditDate() {
-            const cv = examDate ? `${examDate.getFullYear()}-${pad(examDate.getMonth() + 1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}` : '';
+            const cv = examDate ? `${examDate.getFullYear()}-${pad(examDate.getMonth()+1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}` : '';
             const { value } = await Swal.fire({
                 title: '<span class="text-blue-900 font-black uppercase text-base">Chỉnh ngày & giờ thi</span>',
                 html: `<div class="text-left space-y-4 mt-2">
@@ -380,7 +359,7 @@
                     <div><label class="text-[10px] font-black text-gray-400 uppercase block mb-1">Tên kỳ thi</label>
                     <input id="swal-label" type="text" placeholder="VD: Kỳ thi tuyển sinh vào lớp 10 TP. Vinh" class="w-full p-3 border border-gray-200 rounded-xl font-bold outline-none focus:border-blue-500 text-sm"></div>
                     <p class="text-[10px] text-gray-400 italic">Ngày thi lưu vào Supabase và hiển thị cho toàn bộ học sinh.</p></div>`,
-                showCancelButton: true, confirmButtonText: 'Lưu', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
+                showCancelButton:true, confirmButtonText:'Lưu', cancelButtonText:'Hủy', confirmButtonColor:'#1e3a8a',
                 preConfirm: () => {
                     const d = document.getElementById('swal-date').value;
                     if (!d) { Swal.showValidationMessage('Vui lòng chọn ngày!'); return false; }
@@ -388,18 +367,18 @@
                 }
             });
             if (!value) return;
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title:'Đang lưu...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
             const { error } = await sb.from('settings').upsert([
-                { key: 'exam_date', value: value.date },
-                ...(value.label ? [{ key: 'exam_label', value: value.label }] : [])
-            ], { onConflict: 'key' });
+                { key:'exam_date', value:value.date },
+                ...(value.label ? [{ key:'exam_label', value:value.label }] : [])
+            ], { onConflict:'key' });
             if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
             examDate = new Date(value.date);
             updateDateDisplay();
-            Swal.fire({ icon: 'success', title: 'Đã lưu ngày thi!', timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon:'success', title:'Đã lưu ngày thi!', timer:1500, showConfirmButton:false });
         }
 
-        // ── Tip toán ─────────────────────────────────────────────────────────────
+        // ── Tips ─────────────────────────────────────────────────
         const TIPS = [
             'Định lý Pythagore: a² + b² = c² (c là cạnh huyền). Áp dụng cho mọi tam giác vuông.',
             'Phương trình bậc 2: tính Δ = b²-4ac trước, Δ≥0 mới có nghiệm thực.',
@@ -414,59 +393,60 @@
         ];
         function showTip() { document.getElementById('tip-text').textContent = TIPS[new Date().getDate() % TIPS.length]; }
 
-        // ══════════════════════════════════════════════════════════════════════════
-        // ĐỌC TRẠNG THÁI XEM TỪ SUPABASE (lesson_views)
-        // ══════════════════════════════════════════════════════════════════════════
-        // Trả về Map: lessonId (string) → { viewed, completed, watch_duration }
+        // ══════════════════════════════════════════════════════════
+        // ĐỌC TRẠNG THÁI XEM TỪ SUPABASE — trả về Map
+        // map[lessonId] = { viewed, completed, watch_duration }
+        // ══════════════════════════════════════════════════════════
         async function getViewedMap(userId) {
-            const { data } = await sb
-                .from('lesson_views')
-                .select('lesson_id, completed, watch_duration')
-                .eq('user_id', userId);
-            const map = {};
-            (data || []).forEach(r => {
-                map[String(r.lesson_id)] = {
-                    viewed:         true,
-                    completed:      r.completed || false,
-                    watch_duration: r.watch_duration || 0
-                };
-            });
-            return map;
+            try {
+                const { data } = await sb
+                    .from('lesson_views')
+                    .select('lesson_id, completed, watch_duration')
+                    .eq('user_id', userId);
+                const map = {};
+                (data || []).forEach(r => {
+                    map[String(r.lesson_id)] = {
+                        viewed:         true,
+                        completed:      r.completed  || false,
+                        watch_duration: r.watch_duration || 0
+                    };
+                });
+                return map;
+            } catch(e) { return {}; }
         }
 
-        // ── Tiến độ học tập ───────────────────────────────────────────────────────
+        // ── Tiến độ học tập ──────────────────────────────────────
         async function loadProgress(userId) {
             document.getElementById('progress-section').classList.remove('hidden');
             const { data: enrolls } = await sb.from('course_enrollments')
-                .select('course_id, courses:course_id(course_name)')
-                .eq('user_id', userId);
+                .select('course_id, courses:course_id(course_name)').eq('user_id', userId);
             if (!enrolls?.length) {
                 document.getElementById('progress-content').innerHTML =
                     `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
                 return;
             }
             const [lessonsRes, viewedMap] = await Promise.all([
-                sb.from('lessons').select('id, topics:topic_id(course_id)').eq('status', 'Active'),
+                sb.from('lessons').select('id, topics:topic_id(course_id)').eq('status','Active'),
                 getViewedMap(userId)
             ]);
             const lessons = lessonsRes.data || [];
             document.getElementById('progress-content').innerHTML = enrolls.map(e => {
-                const courseLessons  = lessons.filter(l => l.topics?.course_id === e.course_id);
-                const total          = courseLessons.length;
-                const viewedCount    = courseLessons.filter(l => viewedMap[String(l.id)]?.viewed).length;
-                const completedCount = courseLessons.filter(l => viewedMap[String(l.id)]?.completed).length;
-                const pct = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
+                const cls          = lessons.filter(l => l.topics?.course_id === e.course_id);
+                const total        = cls.length;
+                const viewedCount  = cls.filter(l => viewedMap[String(l.id)]?.viewed).length;
+                const doneCount    = cls.filter(l => viewedMap[String(l.id)]?.completed).length;
+                const pct          = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
                 return `<div class="mb-4">
                     <div class="flex justify-between mb-1">
                         <span class="text-sm font-bold text-blue-900">${e.courses?.course_name || 'Khóa học'}</span>
-                        <span class="text-xs font-black text-blue-600">${viewedCount}/${total} đã xem · ${completedCount} hoàn thành · ${pct}%</span>
+                        <span class="text-xs font-black text-blue-600">${viewedCount}/${total} đã xem · ${doneCount} hoàn thành · ${pct}%</span>
                     </div>
                     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
                 </div>`;
             }).join('');
         }
 
-        // ── Khóa học nổi bật ──────────────────────────────────────────────────────
+        // ── Khóa học nổi bật ─────────────────────────────────────
         async function loadCourses(userId) {
             const { data: enrolls } = await sb.from('course_enrollments')
                 .select('courses:course_id(id,course_name,description,thumbnail_url)')
@@ -476,40 +456,39 @@
             document.getElementById('courses-grid').innerHTML = enrolls.map(e => {
                 const c = e.courses;
                 return `<a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
-                    <img src="${c.thumbnail_url || 'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
+                    <img src="${c.thumbnail_url||'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
                     <div class="flex-1 min-w-0">
                         <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
-                        <div class="text-gray-400 text-xs line-clamp-1 mb-2">${c.description || ''}</div>
+                        <div class="text-gray-400 text-xs line-clamp-1 mb-2">${c.description||''}</div>
                         <div class="inline-flex items-center gap-1 bg-blue-900 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase">Vào học <i class="fas fa-arrow-right text-[8px]"></i></div>
                     </div>
                 </a>`;
             }).join('');
         }
 
-        // ── Bài giảng mới nhất ────────────────────────────────────────────────────
+        // ── Helper ───────────────────────────────────────────────
         function getTimeAgo(dateStr) {
             const diff = Date.now() - new Date(dateStr).getTime();
-            const mins = Math.floor(diff / 60000), hours = Math.floor(diff / 3600000), days = Math.floor(diff / 86400000);
-            if (mins < 60) return `${mins} phút trước`;
+            const mins = Math.floor(diff/60000), hours = Math.floor(diff/3600000), days = Math.floor(diff/86400000);
+            if (mins < 60)  return `${mins} phút trước`;
             if (hours < 24) return `${hours} giờ trước`;
-            if (days < 7) return `${days} ngày trước`;
+            if (days < 7)   return `${days} ngày trước`;
             return new Date(dateStr).toLocaleDateString('vi-VN');
         }
-
         function fmtWatchTime(secs) {
-            if (!secs || secs < 10) return null;
-            const m = Math.floor(secs / 60), s = secs % 60;
+            if (!secs || secs < 5) return null;
+            const m = Math.floor(secs/60), s = secs % 60;
             return m > 0 ? `${m} phút ${s} giây` : `${s} giây`;
         }
 
+        // ── Bài giảng mới nhất ───────────────────────────────────
         async function loadLessons() {
             const grid = document.getElementById('video-grid');
             const user = JSON.parse(localStorage.getItem('user'));
 
-            // 6 bài mới nhất đang active
             const { data: lessons } = await sb.from('lessons')
                 .select('id, title, content, status, created_at, topic_id')
-                .eq('status', 'Active')
+                .eq('status','Active')
                 .order('created_at', { ascending: false })
                 .limit(6);
 
@@ -525,53 +504,50 @@
             let topicCourseMap = {};
             if (topicIds.length) {
                 const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
-                (topics || []).forEach(t => { topicCourseMap[t.id] = t.course_id; });
+                (topics||[]).forEach(t => { topicCourseMap[t.id] = t.course_id; });
             }
 
-            // Lấy khóa học đã đăng ký + trạng thái xem từ Supabase (song song)
-            let enrolledIds = [];
-            let viewedMap   = {};
+            // Lấy khóa học đã đăng ký + viewedMap (song song)
+            let enrolledIds = [], viewedMap = {};
             if (user) {
                 const uid = user.id || user.uid;
-                const [enrollRes, viewedRes] = await Promise.all([
+                const [enrollRes, vmRes] = await Promise.all([
                     sb.from('course_enrollments').select('course_id').eq('user_id', uid),
-                    getViewedMap(uid)   // ← đọc từ Supabase, không phải localStorage
+                    getViewedMap(uid)
                 ]);
-                enrolledIds = (enrollRes.data || []).map(e => e.course_id);
-                viewedMap   = viewedRes;
+                enrolledIds = (enrollRes.data||[]).map(e => e.course_id);
+                viewedMap   = vmRes;
             }
 
             grid.innerHTML = lessons.map(l => {
-                const lid        = String(l.id);
-                const courseId   = topicCourseMap[l.topic_id];
-                const isEnrolled = user && enrolledIds.includes(courseId);
-                const vData      = viewedMap[lid];           // { viewed, completed, watch_duration }
-                const isViewed   = !!(vData?.viewed);
-                const isCompleted= !!(vData?.completed);
-                const watchTime  = fmtWatchTime(vData?.watch_duration);
-                const showBadge  = user && isEnrolled;
-                const isUnread   = showBadge && !isViewed;
+                const lid         = String(l.id);
+                const courseId    = topicCourseMap[l.topic_id];
+                const isEnrolled  = user && enrolledIds.includes(courseId);
+                const vData       = viewedMap[lid];
+                const isViewed    = !!(vData?.viewed);
+                const isCompleted = !!(vData?.completed);
+                const watchTime   = fmtWatchTime(vData?.watch_duration);
+                const showBadge   = user && isEnrolled;
+                const isUnread    = showBadge && !isViewed;
 
-                // Màu mũi tên + border theo trạng thái
-                const arrowBg    = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#1e3a8a');
+                // Màu mũi tên theo trạng thái
+                const arrowBg = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#3b82f6');
 
-                const destUrl = `lesson-detail.html?id=${l.id}`;
                 return `
                 <div class="lesson-card ${isUnread ? 'unread' : ''} group"
-                     style="cursor:pointer;"
-                     onclick="window.location.href='${destUrl}'">
+                     onclick="window.location.href='lesson-detail.html?id=${l.id}'">
 
                     ${showBadge ? `
                     <div style="position:absolute;top:10px;left:10px;z-index:10;pointer-events:none;">
                         ${isCompleted
-                            ? `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                            ? `<span style="background:#22c55e" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
                                 <i class="fas fa-check-circle text-[8px]"></i> Hoàn thành
                                </span>`
                             : isViewed
-                                ? `<span class="bg-blue-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                ? `<span style="background:#3b82f6" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
                                     <i class="fas fa-history text-[8px]"></i> Đã xem${watchTime ? ' · ' + watchTime : ''}
                                    </span>`
-                                : `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                : `<span style="background:#ef4444" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
                                     <span class="badge-unread-dot"></span> Chưa xem
                                    </span>`
                         }
@@ -584,7 +560,7 @@
 
                     <div class="p-4 flex-1" style="pointer-events:none;">
                         <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title}</div>
-                        <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem ngay cùng Thầy Thành'}</div>
+                        <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g,'') : 'Xem ngay cùng Thầy Thành'}</div>
                         <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
                     </div>
 
@@ -599,22 +575,20 @@
             }).join('');
         }
 
-        // ── Đăng nhập ─────────────────────────────────────────────────────────────
+        // ── Login ────────────────────────────────────────────────
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) {
                 let tpl = document.getElementById('user-tpl').innerHTML;
-                let adminOpt = user.role === 'admin'
-                    ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a><div class="divider"></div>`
-                    : '';
+                const adminOpt = user.role === 'admin'
+                    ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a><div class="divider"></div>` : '';
                 tpl = tpl
                     .replace('{fullname}', user.fullname)
                     .replace('{role_text}', user.role === 'admin' ? 'Quản trị viên' : 'Học sinh')
                     .replace('{admin_option}', adminOpt);
                 document.getElementById('user-section').innerHTML = tpl;
-                ['menu-dk', 'nav-dk-mob', 'mob-login', 'mob-reg'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.style.display = 'none';
+                ['menu-dk','nav-dk-mob','mob-login','mob-reg'].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.style.display = 'none';
                 });
                 if (user.role === 'admin') document.getElementById('btn-edit-date').classList.remove('hidden');
                 showMotivation(user.fullname.split(' ').pop());
