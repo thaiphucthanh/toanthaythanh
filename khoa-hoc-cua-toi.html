@@ -181,7 +181,7 @@
             let template = document.getElementById('user-logged-template').innerHTML;
             let adminOption = userLocal.role === 'admin' ? `
                 <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
-                    <i class="fas fa-user-shield mr-3"></i> TRANG QUẢN TRỊ
+                    <i class="fas fa-user-shield mr-3"></i> Trang quản trị
                 </a><div class="divider"></div>` : '';
             template = template
                 .replace('{fullname}', userLocal.fullname)
