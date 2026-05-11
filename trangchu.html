@@ -57,7 +57,6 @@
         .prog-bar { background: #e5e7eb; border-radius: 999px; height: 7px; overflow: hidden; }
         .prog-fill { background: linear-gradient(90deg, #1e3a8a, #3b82f6); height: 100%; border-radius: 999px; transition: width 0.8s ease; }
 
-        /* Lesson card */
         .lesson-card { background: white; border-radius: 18px; border: 1px solid #f0f0f0; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; position: relative; }
         .lesson-card:hover { box-shadow: 0 10px 28px rgba(30,58,138,0.12); transform: translateY(-3px); border-color: #bfdbfe; }
         .lesson-card.unread { border-color: #fca5a5; }
@@ -222,7 +221,6 @@
                 <div class="sec-title flex-wrap gap-y-2">
                     <div class="sec-bar"></div>
                     <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight flex-1">Bài giảng mới nhất</h2>
-                    <!-- Chú thích badge -->
                     <div class="flex items-center gap-3 ml-auto">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
@@ -307,9 +305,9 @@
 
         new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-        // Mobile
-        function openMob() { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow='hidden'; }
-        function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow=''; }
+        // ── Mobile menu ─────────────────────
+        function openMob() { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow = 'hidden'; }
+        function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow = ''; }
         function toggleSearch() {
             const b = document.getElementById('mob-search');
             b.classList.toggle('hidden');
@@ -321,10 +319,10 @@
             const h = new Date().getHours();
             const n = name ? `, ${name}` : '';
             const configs = [
-                { range:[5,12],  icon:'☀️', greet:`Chào buổi sáng${n}!`,     msg:'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay!', bg:'#fffbeb', bd:'#fde68a', tc:'#92400e', sc:'#b45309' },
-                { range:[12,18], icon:'⚡', greet:`Buổi chiều năng động${n}!`, msg:'Thời gian lý tưởng để luyện đề và làm bài tập — cố lên!',      bg:'#eff6ff', bd:'#bfdbfe', tc:'#1e3a8a', sc:'#1e40af' },
-                { range:[18,22], icon:'🌙', greet:`Chào buổi tối${n}!`,        msg:'Ôn lại bài hôm nay trước khi ngủ — não bộ ghi nhớ sâu hơn!',   bg:'#eef2ff', bd:'#c7d2fe', tc:'#312e81', sc:'#4338ca' },
-                { range:[22,30], icon:'😴', greet:`Khuya rồi${n}!`,            msg:'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon nhé!',   bg:'#f9fafb', bd:'#e5e7eb', tc:'#374151', sc:'#6b7280' },
+                { range: [5, 12],  icon: '☀️', greet: `Chào buổi sáng${n}!`,      msg: 'Buổi sáng não bộ hoạt động tốt nhất — hãy ôn lý thuyết ngay!', bg: '#fffbeb', bd: '#fde68a', tc: '#92400e', sc: '#b45309' },
+                { range: [12, 18], icon: '⚡', greet: `Buổi chiều năng động${n}!`, msg: 'Thời gian lý tưởng để luyện đề và làm bài tập — cố lên!',      bg: '#eff6ff', bd: '#bfdbfe', tc: '#1e3a8a', sc: '#1e40af' },
+                { range: [18, 22], icon: '🌙', greet: `Chào buổi tối${n}!`,         msg: 'Ôn lại bài hôm nay trước khi ngủ — não bộ ghi nhớ sâu hơn!',   bg: '#eef2ff', bd: '#c7d2fe', tc: '#312e81', sc: '#4338ca' },
+                { range: [22, 30], icon: '😴', greet: `Khuya rồi${n}!`,             msg: 'Nghỉ ngơi đủ giấc cũng là cách học hiệu quả — ngủ ngon nhé!',   bg: '#f9fafb', bd: '#e5e7eb', tc: '#374151', sc: '#6b7280' },
             ];
             const c = configs.find(x => h >= x.range[0] && h < x.range[1]) || configs[3];
             const box = document.getElementById('motivation-box');
@@ -338,37 +336,37 @@
         }
 
         // ── Đếm ngược ───────────────────────
-        function pad(n) { return String(n).padStart(2,'0'); }
+        function pad(n) { return String(n).padStart(2, '0'); }
         let examDate = null;
         async function startCountdown() {
             try {
-                const { data } = await sb.from('settings').select('value').eq('key','exam_date').single();
+                const { data } = await sb.from('settings').select('value').eq('key', 'exam_date').single();
                 if (data?.value) examDate = new Date(data.value);
-            } catch(e){}
+            } catch (e) {}
             if (!examDate || isNaN(examDate)) {
                 const y = new Date().getFullYear();
                 examDate = new Date(y, 5, 20, 7, 30, 0);
-                if (examDate < new Date()) examDate.setFullYear(y+1);
+                if (examDate < new Date()) examDate.setFullYear(y + 1);
             }
             updateDateDisplay();
             tick(); setInterval(tick, 1000);
         }
         function updateDateDisplay() {
             document.getElementById('exam-date-txt').textContent =
-                `Ngày thi: ${examDate.toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})}`;
+                `Ngày thi: ${examDate.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`;
         }
         function tick() {
             const diff = Math.max(0, examDate - new Date());
-            document.getElementById('cd-d').textContent = pad(Math.floor(diff/86400000));
-            document.getElementById('cd-h').textContent = pad(Math.floor((diff%86400000)/3600000));
-            document.getElementById('cd-m').textContent = pad(Math.floor((diff%3600000)/60000));
-            document.getElementById('cd-s').textContent = pad(Math.floor((diff%60000)/1000));
-            if (diff===0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
+            document.getElementById('cd-d').textContent = pad(Math.floor(diff / 86400000));
+            document.getElementById('cd-h').textContent = pad(Math.floor((diff % 86400000) / 3600000));
+            document.getElementById('cd-m').textContent = pad(Math.floor((diff % 3600000) / 60000));
+            document.getElementById('cd-s').textContent = pad(Math.floor((diff % 60000) / 1000));
+            if (diff === 0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
         }
 
         // ── Admin chỉnh ngày thi ─────────────
         async function openEditDate() {
-            const cv = examDate ? `${examDate.getFullYear()}-${pad(examDate.getMonth()+1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}` : '';
+            const cv = examDate ? `${examDate.getFullYear()}-${pad(examDate.getMonth() + 1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}` : '';
             const { value } = await Swal.fire({
                 title: '<span class="text-blue-900 font-black uppercase text-base">Chỉnh ngày & giờ thi</span>',
                 html: `<div class="text-left space-y-4 mt-2">
@@ -385,7 +383,7 @@
                 }
             });
             if (!value) return;
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: ()=>Swal.showLoading() });
+            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const { error } = await sb.from('settings').upsert([
                 { key: 'exam_date', value: value.date },
                 ...(value.label ? [{ key: 'exam_label', value: value.label }] : [])
@@ -393,7 +391,7 @@
             if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
             examDate = new Date(value.date);
             updateDateDisplay();
-            Swal.fire({ icon:'success', title:'Đã lưu ngày thi!', timer:1500, showConfirmButton:false });
+            Swal.fire({ icon: 'success', title: 'Đã lưu ngày thi!', timer: 1500, showConfirmButton: false });
         }
 
         // ── Tip toán ────────────────────────
@@ -411,20 +409,53 @@
         ];
         function showTip() { document.getElementById('tip-text').textContent = TIPS[new Date().getDate() % TIPS.length]; }
 
-        // ── Tiến độ học tập ─────────────────
+        // ── Quản lý bài đã xem (Supabase) ──────────────────────────────────────
+        // Lấy danh sách lesson_id đã xem của user từ Supabase
+        async function getViewedLessons(userId) {
+            const { data } = await sb.from('lesson_views')
+                .select('lesson_id')
+                .eq('user_id', userId);
+            return (data || []).map(r => String(r.lesson_id));
+        }
+
+        // Ghi nhận học sinh vừa click vào bài → UPSERT lên Supabase
+        async function markViewed(lessonId) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            const uid = user.id || user.uid;
+            await sb.from('lesson_views').upsert({
+                user_id: uid,
+                lesson_id: parseInt(lessonId),
+                viewed_at: new Date().toISOString(),
+                device: window.innerWidth < 768 ? 'mobile' : 'desktop'
+            }, { onConflict: 'user_id,lesson_id' });
+        }
+
+        // ── Tiến độ học tập ──────────────────────────────────────────────────────
         async function loadProgress(userId) {
             document.getElementById('progress-section').classList.remove('hidden');
-            const { data: enrolls } = await sb.from('course_enrollments').select('course_id, courses:course_id(course_name)').eq('user_id', userId);
-            if (!enrolls?.length) { document.getElementById('progress-content').innerHTML = `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`; return; }
-            const { data: lessons } = await sb.from('lessons').select('id, topics:topic_id(course_id)');
+            const { data: enrolls } = await sb.from('course_enrollments')
+                .select('course_id, courses:course_id(course_name)')
+                .eq('user_id', userId);
+            if (!enrolls?.length) {
+                document.getElementById('progress-content').innerHTML =
+                    `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
+                return;
+            }
+            // Lấy lessons và bài đã xem song song
+            const [lessonsRes, viewed] = await Promise.all([
+                sb.from('lessons').select('id, topics:topic_id(course_id)').eq('status', 'Active'),
+                getViewedLessons(userId)
+            ]);
+            const lessons = lessonsRes.data || [];
             document.getElementById('progress-content').innerHTML = enrolls.map(e => {
-                const total = (lessons||[]).filter(l=>l.topics?.course_id===e.course_id).length;
-                const viewed = getViewedLessons();
-                const viewedCount = (lessons||[]).filter(l => l.topics?.course_id===e.course_id && viewed.includes(String(l.id))).length;
+                const courseLessons = lessons.filter(l => l.topics?.course_id === e.course_id);
+                const total = courseLessons.length;
+                const viewedCount = courseLessons.filter(l => viewed.includes(String(l.id))).length;
                 const pct = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
                 return `<div class="mb-4">
                     <div class="flex justify-between mb-1">
-                        <span class="text-sm font-bold text-blue-900">${e.courses?.course_name||'Khóa học'}</span>
+                        <span class="text-sm font-bold text-blue-900">${e.courses?.course_name || 'Khóa học'}</span>
                         <span class="text-xs font-black text-blue-600">${viewedCount}/${total} bài · ${pct}%</span>
                     </div>
                     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
@@ -432,174 +463,141 @@
             }).join('');
         }
 
-        // ── Khóa học nổi bật ────────────────
+        // ── Khóa học nổi bật ────────────────────────────────────────────────────
         async function loadCourses(userId) {
-            const { data: enrolls } = await sb.from('course_enrollments').select('courses:course_id(id,course_name,description,thumbnail_url)').eq('user_id', userId).limit(2);
+            const { data: enrolls } = await sb.from('course_enrollments')
+                .select('courses:course_id(id,course_name,description,thumbnail_url)')
+                .eq('user_id', userId).limit(2);
             if (!enrolls?.length) return;
             document.getElementById('courses-section').classList.remove('hidden');
             document.getElementById('courses-grid').innerHTML = enrolls.map(e => {
                 const c = e.courses;
                 return `<a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
-                    <img src="${c.thumbnail_url||'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
+                    <img src="${c.thumbnail_url || 'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
                     <div class="flex-1 min-w-0">
                         <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
-                        <div class="text-gray-400 text-xs line-clamp-1 mb-2">${c.description||''}</div>
+                        <div class="text-gray-400 text-xs line-clamp-1 mb-2">${c.description || ''}</div>
                         <div class="inline-flex items-center gap-1 bg-blue-900 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase">Vào học <i class="fas fa-arrow-right text-[8px]"></i></div>
                     </div>
                 </a>`;
             }).join('');
         }
 
-// ── Quản lý bài đã xem (Supabase) ──
-async function getViewedLessons(userId) {
-    const { data } = await sb.from('lesson_views')
-        .select('lesson_id')
-        .eq('user_id', userId);
-    return (data || []).map(r => String(r.lesson_id));
-}
+        // ── Bài giảng mới nhất ──────────────────────────────────────────────────
+        function getTimeAgo(dateStr) {
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000), hours = Math.floor(diff / 3600000), days = Math.floor(diff / 86400000);
+            if (mins < 60) return `${mins} phút trước`;
+            if (hours < 24) return `${hours} giờ trước`;
+            if (days < 7) return `${days} ngày trước`;
+            return new Date(dateStr).toLocaleDateString('vi-VN');
+        }
 
-async function markViewed(lessonId) {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) return;
-    const uid = user.id || user.uid;
-    await sb.from('lesson_views').upsert({
-        user_id: uid,
-        lesson_id: parseInt(lessonId),   // ← int4
-        viewed_at: new Date().toISOString(),
-        device: window.innerWidth < 768 ? 'mobile' : 'desktop'
-    }, { onConflict: 'user_id,lesson_id' });
-}
+        async function loadLessons() {
+            const grid = document.getElementById('video-grid');
+            const user = JSON.parse(localStorage.getItem('user'));
 
-// ── Tiến độ học tập ─────────────────
-async function loadProgress(userId) {
-    document.getElementById('progress-section').classList.remove('hidden');
-    const { data: enrolls } = await sb.from('course_enrollments')
-        .select('course_id, courses:course_id(course_name)')
-        .eq('user_id', userId);
-    if (!enrolls?.length) {
-        document.getElementById('progress-content').innerHTML =
-            `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
-        return;
-    }
-    const { data: lessons } = await sb.from('lessons')
-        .select('id, topics:topic_id(course_id)')
-        .eq('status', 'Active');
+            // Lấy 6 bài mới nhất đang active
+            const { data: lessons } = await sb.from('lessons')
+                .select('id, title, content, status, created_at, topic_id')
+                .eq('status', 'Active')
+                .order('created_at', { ascending: false })
+                .limit(6);
 
-    // ← await getViewedLessons
-    const viewed = await getViewedLessons(userId);
+            if (!lessons?.length) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+                    <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
+                    <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p></div>`;
+                return;
+            }
 
-    document.getElementById('progress-content').innerHTML = enrolls.map(e => {
-        const courseLessons = (lessons || []).filter(l => l.topics?.course_id === e.course_id);
-        const total = courseLessons.length;
-        const viewedCount = courseLessons.filter(l => viewed.includes(String(l.id))).length;
-        const pct = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
-        return `<div class="mb-4">
-            <div class="flex justify-between mb-1">
-                <span class="text-sm font-bold text-blue-900">${e.courses?.course_name || 'Khóa học'}</span>
-                <span class="text-xs font-black text-blue-600">${viewedCount}/${total} bài · ${pct}%</span>
-            </div>
-            <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-        </div>`;
-    }).join('');
-}
+            // Lấy course_id từ topic
+            const topicIds = [...new Set(lessons.map(l => l.topic_id).filter(Boolean))];
+            let topicCourseMap = {};
+            if (topicIds.length) {
+                const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
+                (topics || []).forEach(t => { topicCourseMap[t.id] = t.course_id; });
+            }
 
-// ── Bài giảng mới nhất ──────────────
-async function loadLessons() {
-    const grid = document.getElementById('video-grid');
-    const user = JSON.parse(localStorage.getItem('user'));
+            // Lấy khóa học đã đăng ký + danh sách đã xem (song song)
+            let enrolledIds = [];
+            let viewed = [];
+            if (user) {
+                const uid = user.id || user.uid;
+                const [enrollRes, viewedRes] = await Promise.all([
+                    sb.from('course_enrollments').select('course_id').eq('user_id', uid),
+                    getViewedLessons(uid)
+                ]);
+                enrolledIds = (enrollRes.data || []).map(e => e.course_id);
+                viewed = viewedRes;
+            }
 
-    const { data: lessons } = await sb.from('lessons')
-        .select('id, title, content, status, created_at, topic_id')
-        .eq('status', 'Active')
-        .order('created_at', { ascending: false })
-        .limit(6);
+            grid.innerHTML = lessons.map(l => {
+                const lid = String(l.id);
+                const courseId = topicCourseMap[l.topic_id];
+                const isEnrolled = user && enrolledIds.includes(courseId);
+                const isViewed = viewed.includes(lid);
+                const showBadge = user && isEnrolled;
+                const isUnread = showBadge && !isViewed;
 
-    if (!lessons?.length) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-            <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
-            <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p></div>`;
-        return;
-    }
+                return `
+                <a href="lesson-detail.html?id=${l.id}"
+                   class="lesson-card ${isUnread ? 'unread' : ''} group"
+                   onclick="markViewed('${lid}')">
 
-    // Lấy course_id của các bài
-    const topicIds = [...new Set(lessons.map(l => l.topic_id).filter(Boolean))];
-    let topicCourseMap = {};
-    if (topicIds.length) {
-        const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
-        (topics || []).forEach(t => { topicCourseMap[t.id] = t.course_id; });
-    }
+                    ${showBadge ? `
+                    <div class="absolute top-2.5 left-2.5 z-10">
+                        ${isUnread
+                            ? `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Chưa xem
+                               </span>`
+                            : `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">
+                                ✓ Đã xem
+                               </span>`
+                        }
+                    </div>` : ''}
 
-    // Khóa học học sinh đang đăng ký + bài đã xem
-    let enrolledIds = [];
-    let viewed = [];
-    if (user) {
-        const uid = user.id || user.uid;
-        const [enrollRes, viewRes] = await Promise.all([
-            sb.from('course_enrollments').select('course_id').eq('user_id', uid),
-            getViewedLessons(uid)   // ← await bằng Promise.all
-        ]);
-        enrolledIds = (enrollRes.data || []).map(e => e.course_id);
-        viewed = viewRes;
-    }
+                    <div class="lesson-thumb relative">
+                        <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
+                        ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all"></div>' : ''}
+                    </div>
 
-    grid.innerHTML = lessons.map(l => {
-        const lid = String(l.id);
-        const courseId = topicCourseMap[l.topic_id];
-        const isEnrolled = user && enrolledIds.includes(courseId);
-        const isViewed = viewed.includes(lid);
-        const showBadge = user && isEnrolled;
-        const isUnread = showBadge && !isViewed;
+                    <div class="p-4 flex-1">
+                        <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title}</div>
+                        <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem ngay cùng Thầy Thành'}</div>
+                        <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
+                    </div>
 
-        return `
-        <a href="lesson-detail.html?id=${l.id}"
-           class="lesson-card ${isUnread ? 'unread' : ''} group"
-           onclick="markViewed('${lid}')">
+                    <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
+                        <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
+                        <div class="w-6 h-6 ${isUnread ? 'bg-red-500' : 'bg-blue-900'} rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                            <i class="fas fa-arrow-right text-white text-[8px]"></i>
+                        </div>
+                    </div>
+                </a>`;
+            }).join('');
+        }
 
-            ${showBadge ? `
-            <div class="absolute top-2.5 left-2.5 z-10">
-                ${isUnread
-                    ? `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Chưa xem
-                       </span>`
-                    : `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">
-                        ✓ Đã xem
-                       </span>`
-                }
-            </div>` : ''}
-
-            <div class="lesson-thumb relative">
-                <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
-                ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all"></div>' : ''}
-            </div>
-
-            <div class="p-4 flex-1">
-                <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title}</div>
-                <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem ngay cùng Thầy Thành'}</div>
-                <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
-            </div>
-
-            <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
-                <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
-                <div class="w-6 h-6 ${isUnread ? 'bg-red-500' : 'bg-blue-900'} rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
-                    <i class="fas fa-arrow-right text-white text-[8px]"></i>
-                </div>
-            </div>
-        </a>`;
-    }).join('');
-}
-
-        // ── Đăng nhập ───────────────────────
+        // ── Đăng nhập ───────────────────────────────────────────────────────────
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) {
                 let tpl = document.getElementById('user-tpl').innerHTML;
-                let adminOpt = user.role==='admin' ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a><div class="divider"></div>` : '';
-                tpl = tpl.replace('{fullname}',user.fullname).replace('{role_text}',user.role==='admin'?'Quản trị viên':'Học sinh').replace('{admin_option}',adminOpt);
+                let adminOpt = user.role === 'admin'
+                    ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold"><i class="fas fa-user-shield mr-3"></i>Quản trị</a><div class="divider"></div>`
+                    : '';
+                tpl = tpl
+                    .replace('{fullname}', user.fullname)
+                    .replace('{role_text}', user.role === 'admin' ? 'Quản trị viên' : 'Học sinh')
+                    .replace('{admin_option}', adminOpt);
                 document.getElementById('user-section').innerHTML = tpl;
-                ['menu-dk','nav-dk-mob','mob-login','mob-reg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
-                if (user.role==='admin') document.getElementById('btn-edit-date').classList.remove('hidden');
+                ['menu-dk', 'nav-dk-mob', 'mob-login', 'mob-reg'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                if (user.role === 'admin') document.getElementById('btn-edit-date').classList.remove('hidden');
                 showMotivation(user.fullname.split(' ').pop());
-                const uid = user.id||user.uid;
+                const uid = user.id || user.uid;
                 if (uid) { loadProgress(uid); loadCourses(uid); }
             } else {
                 showMotivation(null);
@@ -607,10 +605,10 @@ async function loadLessons() {
         }
 
         function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
-        function logout() { if(confirm('Bạn muốn đăng xuất?')){ localStorage.removeItem('user'); window.location.reload(); } }
+        function logout() { if (confirm('Bạn muốn đăng xuất?')) { localStorage.removeItem('user'); window.location.reload(); } }
 
         window.onload = () => { checkLogin(); startCountdown(); showTip(); loadLessons(); };
-        window.onclick = e => { if(!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+        window.onclick = e => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
     </script>
 </body>
 </html>
