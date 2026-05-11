@@ -555,12 +555,14 @@
                 // Màu mũi tên + border theo trạng thái
                 const arrowBg    = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#1e3a8a');
 
+                const destUrl = `hoc-bai-giang.html?id=${l.id}`;
                 return `
-                <a href="hoc-bai-giang.html?id=${l.id}"
-                   class="lesson-card ${isUnread ? 'unread' : ''} group">
+                <div class="lesson-card ${isUnread ? 'unread' : ''} group"
+                     style="cursor:pointer;"
+                     onclick="window.location.href='${destUrl}'">
 
                     ${showBadge ? `
-                    <div class="absolute top-2.5 left-2.5 z-10">
+                    <div style="position:absolute;top:10px;left:10px;z-index:10;pointer-events:none;">
                         ${isCompleted
                             ? `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
                                 <i class="fas fa-check-circle text-[8px]"></i> Hoàn thành
@@ -575,25 +577,25 @@
                         }
                     </div>` : ''}
 
-                    <div class="lesson-thumb relative">
+                    <div class="lesson-thumb relative" style="pointer-events:none;">
                         <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
                         ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all"></div>' : ''}
                     </div>
 
-                    <div class="p-4 flex-1">
+                    <div class="p-4 flex-1" style="pointer-events:none;">
                         <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title}</div>
                         <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem ngay cùng Thầy Thành'}</div>
                         <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
                     </div>
 
-                    <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
+                    <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5" style="pointer-events:none;">
                         <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
                         <div class="w-6 h-6 rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity"
                              style="background:${arrowBg}">
                             <i class="fas fa-arrow-right text-white text-[8px]"></i>
                         </div>
                     </div>
-                </a>`;
+                </div>`;
             }).join('');
         }
 
