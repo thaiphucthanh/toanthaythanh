@@ -323,416 +323,821 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-// ══════════════════════════════════════════════
-// SUPABASE — dùng cùng key với trangchu.html
-// ══════════════════════════════════════════════
+// ======================================================
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+// ======================================================
+
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// ── Sidebar helpers ──────────────────────────
-function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('active'); }
-function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('active'); }
-function toggleSubmenu(id, el) { document.getElementById(id).classList.toggle('show'); el.querySelector('.arrow-icon')?.classList.toggle('rotate-180'); }
+// ======================================================
+// SIDEBAR
+// ======================================================
 
-// ── State ────────────────────────────────────
-let allCourses    = [];   // [{ id, course_name }]
-let allLessons    = [];   // bài học của course đang chọn
-let topicMap      = {};   // topic_id → topic_name
-let allUsers      = [];   // học viên enrolled
-let viewedMap     = {};   // lesson_id → { viewed, completed, watch_duration, viewed_at, device }
-let filterState   = 'all';
-let selectedCourse= '';
-let selectedUser  = '';
+function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('active');
+}
 
-// ── Util ─────────────────────────────────────
-function pad(n){ return String(n).padStart(2,'0'); }
-function fmtDur(secs){
-    if(!secs || secs<3) return '—';
-    const m=Math.floor(secs/60), s=secs%60;
-    return m>0 ? `${m}p ${s}s` : `${s}s`;
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
 }
-function fmtDate(str){
-    if(!str) return '—';
-    const d=new Date(str);
-    return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+function toggleSubmenu(id, el) {
+    document.getElementById(id).classList.toggle('show');
+    el.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
 }
-function timeAgo(str){
-    if(!str) return '—';
-    const diff=Date.now()-new Date(str).getTime();
-    const m=Math.floor(diff/60000), h=Math.floor(diff/3600000), d=Math.floor(diff/86400000);
-    if(m<1)  return 'Vừa xong';
-    if(m<60) return `${m} phút trước`;
-    if(h<24) return `${h} giờ trước`;
-    if(d<7)  return `${d} ngày trước`;
+
+// ======================================================
+// STATE
+// ======================================================
+
+let allCourses = [];
+let allLessons = [];
+let allUsers = [];
+let topicMap = {};
+let viewedMap = {};
+
+let selectedCourse = '';
+let selectedUser = '';
+let filterState = 'all';
+
+// ======================================================
+// HELPERS
+// ======================================================
+
+function pad(n) {
+    return String(n).padStart(2, '0');
+}
+
+function fmtDur(secs) {
+    if (!secs || secs < 3) return '—';
+
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+
+    return m > 0 ? `${m}p ${s}s` : `${s}s`;
+}
+
+function fmtDate(str) {
+    if (!str) return '—';
+
+    const d = new Date(str);
+
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function timeAgo(str) {
+    if (!str) return '—';
+
+    const diff = Date.now() - new Date(str).getTime();
+
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+
+    if (m < 1) return 'Vừa xong';
+    if (m < 60) return `${m} phút trước`;
+    if (h < 24) return `${h} giờ trước`;
+    if (d < 7) return `${d} ngày trước`;
+
     return fmtDate(str);
 }
 
-// ══════════════════════════════════════════════
-// KHỞI ĐỘNG
-// ══════════════════════════════════════════════
-window.onload = async () => {
+// ======================================================
+// START
+// ======================================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    console.log('START LOAD');
+
     await loadCourses();
-    // Nếu URL có ?course_id thì chọn sẵn
+
     const params = new URLSearchParams(location.search);
-    const cid = params.get('id');
-    if(cid){
+
+    const cid = params.get('course_id');
+
+    if (cid) {
+
         document.getElementById('sel-course').value = cid;
+
         await onCourseChange();
+
         const uid = params.get('user_id');
-        if(uid){
+
+        if (uid) {
+
             document.getElementById('sel-user').value = uid;
+
             await onUserChange();
         }
     }
-};
+});
 
-// ── 1. Load danh sách khóa học ───────────────
-async function loadCourses(){
-    const { data } = await sb.from('courses').select('id, course_name').eq('status','Active').order('course_name');
-    allCourses = data || [];
-    const sel = document.getElementById('sel-course');
-    sel.innerHTML = '<option value="">— Chọn khóa học —</option>' +
-        allCourses.map(c=>`<option value="${c.id}">${c.course_name}</option>`).join('');
-}
+// ======================================================
+// LOAD COURSES
+// ======================================================
 
-// ── 2. Khi chọn khóa học ────────────────────
-async function onCourseChange(){
-    selectedCourse = document.getElementById('sel-course').value;
-    if(!selectedCourse){ resetView(); return; }
+async function loadCourses() {
 
-    showLoading();
+    try {
 
-    // Lấy topics + lessons song song
-    const [topicRes, lessonRes] = await Promise.all([
-        sb.from('topics').select('id, topic_name').eq('course_id', selectedCourse),
-        sb.from('lessons').select('id, title, topic_id, created_at').eq('status','Active').order('created_at')
-    ]);
+        console.log('LOADING COURSES...');
 
-    // Build topicMap
-    topicMap = {};
-    (topicRes.data||[]).forEach(t=>{ topicMap[t.id]=t.topic_name; });
+        const { data, error } = await sb
+            .from('courses')
+            .select('id, course_name, status')
+            .order('course_name');
 
-    // Chỉ lấy bài của topics thuộc course này
-    const validTopics = new Set((topicRes.data||[]).map(t=>String(t.id)));
-    allLessons = (lessonRes.data||[]).filter(l=>validTopics.has(String(l.topic_id)));
+        console.log('COURSES DATA:', data);
+        console.log('COURSES ERROR:', error);
 
-    // Lấy học viên đã đăng ký
-    const { data: enrolls } = await sb.from('course_enrollments')
-        .select('user_id, accounts:user_id(id, fullname)')
-        .eq('course_id', selectedCourse)
-        .eq('status','Active');
+        if (error) {
+            console.error(error);
+            alert('Lỗi load khóa học!');
+            return;
+        }
 
-    allUsers = (enrolls||[]).map(e=>({
-        id:   e.accounts?.id,
-        name: e.accounts?.fullname || 'Không rõ'
-    })).filter(u=>u.id);
+        allCourses = (data || []).filter(c =>
+            !c.status ||
+            c.status.toLowerCase() === 'active'
+        );
 
-    // Populate select user
-    const selU = document.getElementById('sel-user');
-    selU.innerHTML = '<option value="">— Tất cả học viên —</option>' +
-        allUsers.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+        const sel = document.getElementById('sel-course');
 
-    selectedUser = '';
-    await loadViewData();
-}
+        sel.innerHTML =
+            `<option value="">— Chọn khóa học —</option>` +
+            allCourses.map(c => `
+                <option value="${c.id}">
+                    ${c.course_name}
+                </option>
+            `).join('');
 
-// ── 3. Khi chọn học viên ────────────────────
-async function onUserChange(){
-    selectedUser = document.getElementById('sel-user').value;
-    await loadViewData();
-}
+        console.log('LOAD COURSES DONE');
 
-// ── 4. Load lesson_views — CÙNG CÁCH trangchu.html ──
-//   trangchu dùng: sb.from('lesson_views').select('lesson_id, completed, watch_duration').eq('user_id', uid)
-//   Ở đây ta thêm viewed_at, device để admin thấy chi tiết hơn
-async function loadViewData(){
-    viewedMap = {};
+    } catch (err) {
 
-    if(selectedUser){
-        // Một học viên cụ thể — giống trangchu.html getViewedMap()
-        const { data } = await sb.from('lesson_views')
-            .select('lesson_id, completed, watch_duration, viewed_at, device')
-            .eq('user_id', selectedUser);
-        (data||[]).forEach(r=>{
-            viewedMap[String(r.lesson_id)] = {
-                viewed:         true,
-                completed:      r.completed || false,
-                watch_duration: r.watch_duration || 0,
-                viewed_at:      r.viewed_at,
-                device:         r.device || '—'
-            };
-        });
-        showSingleUser();
-    } else {
-        // Tất cả học viên — load viewedMap theo mảng user_ids
-        if(!allUsers.length){ showSingleUser(); return; }
-        const ids = allUsers.map(u=>u.id);
-        const { data } = await sb.from('lesson_views')
-            .select('user_id, lesson_id, completed, watch_duration, viewed_at')
-            .in('user_id', ids);
-        // viewedMap[user_id][lesson_id]
-        (data||[]).forEach(r=>{
-            const uid=String(r.user_id), lid=String(r.lesson_id);
-            if(!viewedMap[uid]) viewedMap[uid]={};
-            viewedMap[uid][lid]={
-                viewed:true,
-                completed: r.completed||false,
-                watch_duration: r.watch_duration||0,
-                viewed_at: r.viewed_at
-            };
-        });
-        showMultiUser();
+        console.error(err);
+
+        alert('Không thể tải khóa học!');
     }
 }
 
-// ── 5. Hiển thị 1 học viên ──────────────────
-function showSingleUser(){
-    document.getElementById('multi-user-wrap').style.display='none';
-    document.getElementById('progress-wrap').style.display='block';
+// ======================================================
+// COURSE CHANGE
+// ======================================================
+
+async function onCourseChange() {
+
+    selectedCourse = document.getElementById('sel-course').value;
+
+    if (!selectedCourse) {
+        resetView();
+        return;
+    }
+
+    showLoading();
+
+    try {
+
+        // ==================================================
+        // LOAD TOPICS
+        // ==================================================
+
+        const { data: topics, error: topicErr } = await sb
+            .from('topics')
+            .select('*')
+            .eq('course_id', selectedCourse)
+            .order('order_index');
+
+        console.log('TOPICS:', topics);
+        console.log('TOPIC ERR:', topicErr);
+
+        if (topicErr) {
+            console.error(topicErr);
+            return;
+        }
+
+        topicMap = {};
+
+        (topics || []).forEach(t => {
+            topicMap[t.id] = t.topic_name;
+        });
+
+        const topicIds = (topics || []).map(t => t.id);
+
+        // ==================================================
+        // LOAD LESSONS
+        // ==================================================
+
+        const { data: lessons, error: lessonErr } = await sb
+            .from('lessons')
+            .select('*')
+            .in('topic_id', topicIds)
+            .order('created_at');
+
+        console.log('LESSONS:', lessons);
+        console.log('LESSON ERR:', lessonErr);
+
+        if (lessonErr) {
+            console.error(lessonErr);
+            return;
+        }
+
+        allLessons = (lessons || []).filter(l =>
+            !l.status ||
+            l.status.toLowerCase() === 'active'
+        );
+
+        // ==================================================
+        // LOAD USERS
+        // ==================================================
+
+        const { data: enrolls, error: enrollErr } = await sb
+            .from('course_enrollments')
+            .select(`
+                user_id,
+                accounts (
+                    id,
+                    fullname
+                )
+            `)
+            .eq('course_id', selectedCourse);
+
+        console.log('ENROLLS:', enrolls);
+        console.log('ENROLL ERR:', enrollErr);
+
+        if (enrollErr) {
+            console.error(enrollErr);
+            return;
+        }
+
+        allUsers = (enrolls || [])
+            .map(e => ({
+                id: e.accounts?.id,
+                name: e.accounts?.fullname || 'Không rõ'
+            }))
+            .filter(u => u.id);
+
+        // ==================================================
+        // RENDER USERS
+        // ==================================================
+
+        const selU = document.getElementById('sel-user');
+
+        selU.innerHTML =
+            `<option value="">— Tất cả học viên —</option>` +
+            allUsers.map(u => `
+                <option value="${u.id}">
+                    ${u.name}
+                </option>
+            `).join('');
+
+        selectedUser = '';
+
+        await loadViewData();
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert('Lỗi tải dữ liệu khóa học!');
+    }
+}
+
+// ======================================================
+// USER CHANGE
+// ======================================================
+
+async function onUserChange() {
+
+    selectedUser = document.getElementById('sel-user').value;
+
+    await loadViewData();
+}
+
+// ======================================================
+// LOAD VIEW DATA
+// ======================================================
+
+async function loadViewData() {
+
+    viewedMap = {};
+
+    try {
+
+        // ==================================================
+        // SINGLE USER
+        // ==================================================
+
+        if (selectedUser) {
+
+            const { data, error } = await sb
+                .from('lesson_views')
+                .select('*')
+                .eq('user_id', selectedUser);
+
+            console.log('VIEW DATA:', data);
+            console.log('VIEW ERROR:', error);
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            (data || []).forEach(r => {
+
+                viewedMap[String(r.lesson_id)] = {
+
+                    viewed: true,
+                    completed: r.completed || false,
+                    watch_duration: r.watch_duration || 0,
+                    viewed_at: r.viewed_at,
+                    device: r.device || '—'
+                };
+            });
+
+            showSingleUser();
+
+        } else {
+
+            // ==============================================
+            // MULTI USER
+            // ==============================================
+
+            if (!allUsers.length) {
+
+                showMultiUser();
+                return;
+            }
+
+            const ids = allUsers.map(u => u.id);
+
+            const { data, error } = await sb
+                .from('lesson_views')
+                .select('*')
+                .in('user_id', ids);
+
+            console.log('MULTI VIEW:', data);
+            console.log('MULTI VIEW ERR:', error);
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            (data || []).forEach(r => {
+
+                const uid = String(r.user_id);
+                const lid = String(r.lesson_id);
+
+                if (!viewedMap[uid]) {
+                    viewedMap[uid] = {};
+                }
+
+                viewedMap[uid][lid] = {
+
+                    viewed: true,
+                    completed: r.completed || false,
+                    watch_duration: r.watch_duration || 0,
+                    viewed_at: r.viewed_at
+                };
+            });
+
+            showMultiUser();
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert('Lỗi tải tiến độ học!');
+    }
+}
+
+// ======================================================
+// SHOW SINGLE USER
+// ======================================================
+
+function showSingleUser() {
+
+    document.getElementById('multi-user-wrap').style.display = 'none';
+
+    document.getElementById('progress-wrap').style.display = 'block';
+
     updateStats();
+
     renderTable();
 }
 
-// ── 6. Hiển thị nhiều học viên ──────────────
-function showMultiUser(){
-    document.getElementById('progress-wrap').style.display='none';
-    updateStats(); // stats dựa trên lesson count
-    renderTable(); // bảng bài học vẫn hiện (không lọc theo user nào)
-    document.getElementById('multi-user-wrap').style.display='block';
+// ======================================================
+// SHOW MULTI USER
+// ======================================================
+
+function showMultiUser() {
+
+    document.getElementById('multi-user-wrap').style.display = 'block';
+
+    document.getElementById('progress-wrap').style.display = 'none';
+
+    updateStats();
+
+    renderTable();
+
     renderMultiUser();
 }
 
-// ── 7. Stats ─────────────────────────────────
-function updateStats(){
-    const total = allLessons.length;
-    let viewed=0, done=0;
+// ======================================================
+// STATS
+// ======================================================
 
-    if(selectedUser){
-        allLessons.forEach(l=>{
+function updateStats() {
+
+    const total = allLessons.length;
+
+    let viewed = 0;
+    let done = 0;
+
+    if (selectedUser) {
+
+        allLessons.forEach(l => {
+
             const v = viewedMap[String(l.id)];
-            if(v?.completed) done++;
-            else if(v?.viewed) viewed++;
+
+            if (v?.completed) done++;
+            else if (v?.viewed) viewed++;
         });
+
     } else {
-        // Hợp nhất toàn bộ user
-        allLessons.forEach(l=>{
-            const lid=String(l.id);
-            let anyViewed=false, anyDone=false;
-            allUsers.forEach(u=>{
-                const v=(viewedMap[String(u.id)]||{})[lid];
-                if(v?.completed) anyDone=true;
-                else if(v?.viewed) anyViewed=true;
+
+        allLessons.forEach(l => {
+
+            const lid = String(l.id);
+
+            let anyViewed = false;
+            let anyDone = false;
+
+            allUsers.forEach(u => {
+
+                const v = (viewedMap[String(u.id)] || {})[lid];
+
+                if (v?.completed) anyDone = true;
+                else if (v?.viewed) anyViewed = true;
             });
-            if(anyDone) done++;
-            else if(anyViewed) viewed++;
+
+            if (anyDone) done++;
+            else if (anyViewed) viewed++;
         });
     }
 
     const unseen = total - viewed - done;
-    document.getElementById('s-total').textContent  = total;
-    document.getElementById('s-unseen').textContent = unseen < 0 ? 0 : unseen;
-    document.getElementById('s-viewed').textContent = viewed;
-    document.getElementById('s-done').textContent   = done;
 
-    // Progress bar (chỉ có ý nghĩa khi chọn 1 user)
-    const pct = total>0 ? Math.round(((viewed+done)/total)*100) : 0;
-    document.getElementById('progress-bar').style.width = pct+'%';
-    document.getElementById('progress-pct').textContent = pct+'%';
-    const uName = selectedUser ? allUsers.find(u=>String(u.id)===String(selectedUser))?.name || '' : '';
+    document.getElementById('s-total').textContent = total;
+    document.getElementById('s-viewed').textContent = viewed;
+    document.getElementById('s-done').textContent = done;
+    document.getElementById('s-unseen').textContent = unseen < 0 ? 0 : unseen;
+
+    const pct = total > 0
+        ? Math.round(((viewed + done) / total) * 100)
+        : 0;
+
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+
+    const uName = selectedUser
+        ? allUsers.find(u => String(u.id) === String(selectedUser))?.name || ''
+        : '';
+
     document.getElementById('progress-label').textContent =
-        uName ? `${uName} — ${viewed+done}/${total} bài đã tiếp cận` : `${total} bài trong khóa học`;
+        uName
+            ? `${uName} — ${viewed + done}/${total} bài`
+            : `${total} bài học`;
 }
 
-// ── 8. Render bảng chi tiết bài học ──────────
-function renderTable(){
-    const keyword = document.getElementById('search-lesson').value.toLowerCase().trim();
-    const rows = allLessons.filter(l=>{
-        if(keyword && !l.title.toLowerCase().includes(keyword)) return false;
-        if(filterState==='all') return true;
+// ======================================================
+// TABLE
+// ======================================================
 
-        if(selectedUser){
-            const v = viewedMap[String(l.id)];
-            if(filterState==='done')   return v?.completed;
-            if(filterState==='viewed') return v?.viewed && !v?.completed;
-            if(filterState==='unseen') return !v?.viewed;
-        } else {
-            // Tổng hợp
-            const lid=String(l.id);
-            let anyViewed=false, anyDone=false;
-            allUsers.forEach(u=>{
-                const v=(viewedMap[String(u.id)]||{})[lid];
-                if(v?.completed) anyDone=true;
-                else if(v?.viewed) anyViewed=true;
-            });
-            if(filterState==='done')   return anyDone;
-            if(filterState==='viewed') return anyViewed && !anyDone;
-            if(filterState==='unseen') return !anyViewed && !anyDone;
-        }
-        return true;
-    });
+function renderTable() {
 
-    document.getElementById('row-count').textContent = `${rows.length} bài`;
+    const keyword = document
+        .getElementById('search-lesson')
+        .value
+        .toLowerCase()
+        .trim();
 
-    if(!rows.length){
-        document.getElementById('table-body').innerHTML =
-            `<tr><td colspan="7" class="text-center py-8 text-gray-400 text-xs font-bold uppercase italic">Không có bài nào phù hợp</td></tr>`;
+    let rows = [...allLessons];
+
+    if (keyword) {
+
+        rows = rows.filter(l =>
+            l.title.toLowerCase().includes(keyword)
+        );
+    }
+
+    document.getElementById('row-count').textContent =
+        `${rows.length} bài`;
+
+    if (!rows.length) {
+
+        document.getElementById('table-body').innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-8 text-gray-400 text-xs">
+                    Không có dữ liệu
+                </td>
+            </tr>
+        `;
+
         return;
     }
 
-    document.getElementById('table-body').innerHTML = rows.map((l,i)=>{
-        let viewed=false, completed=false, dur=0, viewedAt='', device='—';
+    document.getElementById('table-body').innerHTML = rows.map((l, i) => {
 
-        if(selectedUser){
+        let viewed = false;
+        let completed = false;
+        let dur = 0;
+        let viewedAt = '';
+        let device = '—';
+
+        if (selectedUser) {
+
             const v = viewedMap[String(l.id)];
-            viewed=v?.viewed||false; completed=v?.completed||false;
-            dur=v?.watch_duration||0; viewedAt=v?.viewed_at||''; device=v?.device||'—';
-        } else {
-            // Tính % user đã xem
-            const lid=String(l.id);
-            let vCount=0, dCount=0;
-            allUsers.forEach(u=>{
-                const v=(viewedMap[String(u.id)]||{})[lid];
-                if(v?.completed) dCount++;
-                else if(v?.viewed) vCount++;
-            });
-            const total=allUsers.length||1;
-            // Hiển thị dạng tỉ lệ thay vì badge
-            return `
-            <tr>
-                <td class="text-gray-300 font-black text-xs">${i+1}</td>
-                <td>
-                    <div class="font-bold text-blue-900 text-xs leading-tight line-clamp-2">${l.title}</div>
-                </td>
-                <td class="hidden md:table-cell text-gray-400 text-xs">${topicMap[l.topic_id]||'—'}</td>
-                <td>
-                    <div class="flex flex-col gap-1">
-                        <div class="text-[9px] font-black text-gray-500">${dCount} hoàn thành · ${vCount} đã xem · ${total-dCount-vCount} chưa xem</div>
-                        <div class="prog-track w-20"><div class="prog-fill ${dCount>0?'bg-green-500':'bg-blue-400'}" style="width:${Math.round((dCount+vCount)/total*100)}%"></div></div>
-                    </div>
-                </td>
-                <td class="hidden md:table-cell text-gray-300 text-xs">—</td>
-                <td class="hidden lg:table-cell text-gray-300 text-xs">—</td>
-                <td class="hidden lg:table-cell text-gray-300 text-xs">—</td>
-            </tr>`;
+
+            viewed = v?.viewed || false;
+            completed = v?.completed || false;
+            dur = v?.watch_duration || 0;
+            viewedAt = v?.viewed_at || '';
+            device = v?.device || '—';
         }
 
-        const badgeHtml = completed
-            ? `<span class="badge badge-done"><i class="fas fa-check-circle"></i> Hoàn thành</span>`
+        const badge = completed
+            ? `<span class="badge badge-done">Hoàn thành</span>`
             : viewed
-                ? `<span class="badge badge-viewed"><i class="fas fa-history"></i> Đã xem</span>`
-                : `<span class="badge badge-unseen badge-pulse">Chưa xem</span>`;
+                ? `<span class="badge badge-viewed">Đã xem</span>`
+                : `<span class="badge badge-unseen">Chưa xem</span>`;
 
         return `
-        <tr>
-            <td class="text-gray-300 font-black text-xs">${i+1}</td>
-            <td>
-                <div class="font-bold text-blue-900 text-xs leading-tight line-clamp-2">${l.title}</div>
-                <div class="text-[9px] text-gray-300 mt-0.5">${fmtDate(l.created_at)}</div>
-            </td>
-            <td class="hidden md:table-cell text-gray-400 text-xs">${topicMap[l.topic_id]||'—'}</td>
-            <td>${badgeHtml}</td>
-            <td class="hidden md:table-cell text-gray-500 font-bold text-xs">${fmtDur(dur)}</td>
-            <td class="hidden lg:table-cell text-gray-400 text-xs">${timeAgo(viewedAt)}</td>
-            <td class="hidden lg:table-cell">
-                ${device !== '—' ? `<span class="text-[9px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold">${device}</span>` : '<span class="text-gray-200 text-xs">—</span>'}
-            </td>
-        </tr>`;
+            <tr>
+                <td>${i + 1}</td>
+
+                <td>
+                    <div class="font-bold text-blue-900 text-xs">
+                        ${l.title}
+                    </div>
+                </td>
+
+                <td class="hidden md:table-cell text-xs text-gray-500">
+                    ${topicMap[l.topic_id] || '—'}
+                </td>
+
+                <td>${badge}</td>
+
+                <td class="hidden md:table-cell text-xs">
+                    ${fmtDur(dur)}
+                </td>
+
+                <td class="hidden lg:table-cell text-xs">
+                    ${timeAgo(viewedAt)}
+                </td>
+
+                <td class="hidden lg:table-cell text-xs">
+                    ${device}
+                </td>
+            </tr>
+        `;
     }).join('');
 }
 
-// ── 9. Render bảng tổng hợp nhiều user ───────
-function renderMultiUser(){
+// ======================================================
+// MULTI USER TABLE
+// ======================================================
+
+function renderMultiUser() {
+
     const total = allLessons.length;
-    const rows = allUsers.map(u=>{
+
+    const rows = allUsers.map(u => {
+
         const uMap = viewedMap[String(u.id)] || {};
-        let viewed=0, done=0, lastAt='';
-        allLessons.forEach(l=>{
+
+        let viewed = 0;
+        let done = 0;
+        let lastAt = '';
+
+        allLessons.forEach(l => {
+
             const v = uMap[String(l.id)];
-            if(v?.completed){ done++; if(!lastAt||v.viewed_at>lastAt) lastAt=v.viewed_at; }
-            else if(v?.viewed){ viewed++; if(!lastAt||v.viewed_at>lastAt) lastAt=v.viewed_at; }
+
+            if (v?.completed) {
+                done++;
+                if (!lastAt || v.viewed_at > lastAt) {
+                    lastAt = v.viewed_at;
+                }
+            }
+
+            else if (v?.viewed) {
+                viewed++;
+                if (!lastAt || v.viewed_at > lastAt) {
+                    lastAt = v.viewed_at;
+                }
+            }
         });
-        const pct = total>0 ? Math.round((viewed+done)/total*100) : 0;
-        return { u, viewed, done, pct, lastAt };
-    }).sort((a,b)=>b.pct-a.pct);
 
-    document.getElementById('multi-body').innerHTML = rows.map((r,i)=>{
-        const barColor = r.pct>=80 ? '#22c55e' : r.pct>=40 ? '#3b82f6' : '#f97316';
-        return `
+        const pct = total > 0
+            ? Math.round((viewed + done) / total * 100)
+            : 0;
+
+        return {
+            u,
+            viewed,
+            done,
+            pct,
+            lastAt
+        };
+
+    }).sort((a, b) => b.pct - a.pct);
+
+    document.getElementById('multi-body').innerHTML = rows.map((r, i) => `
+
         <tr>
-            <td class="text-gray-300 font-black text-xs">${i+1}</td>
+
+            <td>${i + 1}</td>
+
             <td>
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-black text-xs flex-shrink-0">
-                        ${r.u.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <div class="font-bold text-blue-900 text-xs">${r.u.name}</div>
-                        <button onclick="selectUser('${r.u.id}')" class="text-[9px] text-blue-500 hover:underline font-black uppercase">Xem chi tiết →</button>
-                    </div>
+                <div class="font-bold text-blue-900 text-xs">
+                    ${r.u.name}
                 </div>
             </td>
-            <td><span class="font-black text-blue-600 text-sm">${r.viewed}</span><span class="text-gray-400 text-xs">/${allLessons.length}</span></td>
-            <td><span class="font-black text-green-600 text-sm">${r.done}</span><span class="text-gray-400 text-xs">/${allLessons.length}</span></td>
+
+            <td>${r.viewed}</td>
+
+            <td>${r.done}</td>
+
             <td>
                 <div class="flex items-center gap-2">
-                    <div class="prog-track w-20"><div class="prog-fill" style="width:${r.pct}%;background:${barColor}"></div></div>
-                    <span class="text-xs font-black" style="color:${barColor}">${r.pct}%</span>
+                    <div class="prog-track w-20">
+                        <div class="prog-fill bg-blue-500"
+                             style="width:${r.pct}%">
+                        </div>
+                    </div>
+
+                    <span class="text-xs font-black">
+                        ${r.pct}%
+                    </span>
                 </div>
             </td>
-            <td class="hidden md:table-cell text-gray-400 text-xs">${timeAgo(r.lastAt)}</td>
-        </tr>`;
-    }).join('') || `<tr><td colspan="6" class="text-center py-8 text-gray-300 text-xs italic">Chưa có học viên nào đăng ký</td></tr>`;
+
+            <td class="hidden md:table-cell text-xs text-gray-500">
+                ${timeAgo(r.lastAt)}
+            </td>
+
+        </tr>
+
+    `).join('');
 }
 
-// ── 10. Shortcut chọn user từ bảng multi ─────
-function selectUser(uid){
-    document.getElementById('sel-user').value = uid;
-    onUserChange();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+// ======================================================
+// FILTER
+// ======================================================
 
-// ── 11. Filter pills ──────────────────────────
-function setFilter(f, el){
+function setFilter(f, el) {
+
     filterState = f;
-    document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+
+    document.querySelectorAll('.pill')
+        .forEach(p => p.classList.remove('active'));
+
     el.classList.add('active');
+
     renderTable();
 }
 
-// ── 12. Export CSV ────────────────────────────
-function exportCSV(){
-    if(!allLessons.length){ alert('Chưa có dữ liệu!'); return; }
-    const head = ['STT','Bài học','Chủ đề','Trạng thái','Thời gian xem (s)','Xem lần cuối'];
-    const rows = allLessons.map((l,i)=>{
-        let status='Chưa xem', dur=0, viewedAt='';
-        if(selectedUser){
-            const v=viewedMap[String(l.id)];
-            if(v?.completed){ status='Hoàn thành'; dur=v.watch_duration||0; viewedAt=v.viewed_at||''; }
-            else if(v?.viewed){ status='Đã xem'; dur=v.watch_duration||0; viewedAt=v.viewed_at||''; }
-        }
-        return [i+1, `"${l.title}"`, `"${topicMap[l.topic_id]||''}"`, status, dur, viewedAt].join(',');
+// ======================================================
+// SELECT USER
+// ======================================================
+
+function selectUser(uid) {
+
+    document.getElementById('sel-user').value = uid;
+
+    onUserChange();
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
     });
-    const csv = [head.join(','), ...rows].join('\n');
-    const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
-    const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
-    const uName = selectedUser ? allUsers.find(u=>String(u.id)===String(selectedUser))?.name||'hoc-vien' : 'tat-ca';
-    a.download = `tien-do-${uName}.csv`; a.click();
 }
 
-// ── Helpers ───────────────────────────────────
-function resetView(){
-    selectedCourse=''; selectedUser=''; allLessons=[]; allUsers=[]; viewedMap={};
-    document.getElementById('sel-user').innerHTML='<option value="">— Tất cả học viên —</option>';
-    document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="text-center py-10 text-gray-400 text-xs font-bold uppercase italic">← Chọn khóa học để xem tiến độ</td></tr>';
-    document.getElementById('multi-user-wrap').style.display='none';
-    document.getElementById('progress-wrap').style.display='none';
-    ['s-total','s-unseen','s-viewed','s-done'].forEach(id=>document.getElementById(id).textContent='--');
+// ======================================================
+// EXPORT CSV
+// ======================================================
+
+function exportCSV() {
+
+    if (!allLessons.length) {
+        alert('Không có dữ liệu!');
+        return;
+    }
+
+    const head = [
+        'STT',
+        'Bài học',
+        'Chủ đề',
+        'Trạng thái'
+    ];
+
+    const rows = allLessons.map((l, i) => {
+
+        let status = 'Chưa xem';
+
+        if (selectedUser) {
+
+            const v = viewedMap[String(l.id)];
+
+            if (v?.completed) status = 'Hoàn thành';
+            else if (v?.viewed) status = 'Đã xem';
+        }
+
+        return [
+            i + 1,
+            `"${l.title}"`,
+            `"${topicMap[l.topic_id] || ''}"`,
+            status
+        ].join(',');
+    });
+
+    const csv = [head.join(','), ...rows].join('\n');
+
+    const blob = new Blob(
+        ['\ufeff' + csv],
+        { type: 'text/csv;charset=utf-8' }
+    );
+
+    const a = document.createElement('a');
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download = 'tien-do.csv';
+
+    a.click();
 }
-function showLoading(){
-    document.getElementById('table-body').innerHTML=
-        '<tr><td colspan="7" class="text-center py-10"><i class="fas fa-circle-notch animate-spin text-2xl text-blue-300"></i><p class="text-gray-300 mt-2 text-xs font-bold uppercase">Đang tải...</p></td></tr>';
+
+// ======================================================
+// RESET
+// ======================================================
+
+function resetView() {
+
+    selectedCourse = '';
+    selectedUser = '';
+
+    allLessons = [];
+    allUsers = [];
+    viewedMap = {};
+
+    document.getElementById('sel-user').innerHTML =
+        `<option value="">— Tất cả học viên —</option>`;
+
+    document.getElementById('table-body').innerHTML = `
+        <tr>
+            <td colspan="7"
+                class="text-center py-10 text-gray-400 text-xs">
+                ← Chọn khóa học
+            </td>
+        </tr>
+    `;
+
+    document.getElementById('multi-user-wrap').style.display = 'none';
+
+    document.getElementById('progress-wrap').style.display = 'none';
+
+    ['s-total','s-unseen','s-viewed','s-done']
+        .forEach(id => {
+            document.getElementById(id).textContent = '--';
+        });
+}
+
+// ======================================================
+// LOADING
+// ======================================================
+
+function showLoading() {
+
+    document.getElementById('table-body').innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center py-10">
+                <i class="fas fa-circle-notch animate-spin text-2xl text-blue-300"></i>
+
+                <p class="text-gray-300 mt-2 text-xs font-bold uppercase">
+                    Đang tải...
+                </p>
+            </td>
+        </tr>
+    `;
 }
 </script>
 </body>
