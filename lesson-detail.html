@@ -24,6 +24,17 @@
     .dropdown-user.active { display: flex; }
     .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; transition: all 0.2s; }
     .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
+
+    /* ── Watch badge bên dưới video ── */
+    #watch-badge { display:none; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; }
+    #watch-badge.watched   { background:#dcfce7; color:#15803d; display:flex; }
+    #watch-badge.watching  { background:#eff6ff; color:#1d4ed8; display:flex; }
+    #watch-badge.completed { background:#f0fdf4; color:#15803d; display:flex; border:1px solid #bbf7d0; }
+
+    /* ── Pulse dot cho trạng thái đang xem ── */
+    .live-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; animation:livepulse 1.4s ease-in-out infinite; flex-shrink:0; }
+    @keyframes livepulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.6)} }
+
     @media (max-width: 1023px) {
       #layout-wrap { flex-direction: column; }
       #sidebar-wrap { height: 38vh; width: 100%; }
@@ -72,9 +83,9 @@
   <!-- MAIN -->
   <main id="main-wrap" class="flex-1 overflow-y-auto flex flex-col bg-gray-50">
     <div class="p-4 md:p-6 flex-1">
-      <div class="max-w-5xl mx-auto space-y-5">
+      <div class="max-w-5xl mx-auto space-y-4">
 
-        <!-- VIDEO PLAYER (YouTube IFrame API cần div, không dùng iframe trực tiếp) -->
+        <!-- VIDEO PLAYER -->
         <div class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white">
           <div id="yt-player" class="absolute inset-0 w-full h-full"></div>
           <div id="no-video" class="absolute inset-0 flex items-center justify-center flex-col gap-2 text-gray-500 bg-gray-900">
@@ -83,10 +94,11 @@
           </div>
         </div>
 
-        <!-- BADGE TRẠNG THÁI XEM -->
-        <div id="watch-badge" class="hidden flex items-center gap-2 text-[11px] font-black uppercase">
+        <!-- BADGE TRẠNG THÁI XEM (ngay dưới video) -->
+        <div id="watch-badge">
           <span id="watch-badge-icon"></span>
           <span id="watch-badge-text"></span>
+          <span id="watch-badge-timer" class="ml-auto text-[10px] opacity-60 font-bold tabular-nums"></span>
         </div>
 
         <!-- BÀI BỊ KHÓA -->
@@ -142,27 +154,26 @@
   const courseIdParam = params.get('course_id');
 
   // ═══════════════════════════════════════════════════════
-  // WATCH TRACKER — đếm giây xem thực tế qua YT IFrame API
+  // WATCH TRACKER
   // ═══════════════════════════════════════════════════════
-  let ytPlayer        = null;   // instance YouTube player
-  let watchSeconds    = 0;      // tổng giây đã xem phiên này
-  let watchInterval   = null;   // interval đếm giây
-  let currentYtId     = null;   // YouTube video ID hiện tại
-  let trackerLessonId = null;   // lesson đang track
-  let saveTimeout     = null;   // debounce lưu
+  let ytPlayer          = null;
+  let watchSeconds      = 0;      // giây xem phiên hiện tại (chưa lưu)
+  let watchInterval     = null;
+  let timerInterval     = null;   // interval cập nhật badge đếm giây
+  let currentYtId       = null;
+  let trackerLessonId   = null;
+  let hasStartedWatching= false;  // ← CHỈ ghi viewed_at khi Play lần đầu
+  let sessionPrevSecs   = 0;      // giây đã lưu DB trước đó (để cộng dồn hiển thị)
 
-  // Khởi tạo YouTube IFrame API (load script 1 lần)
+  // Load YouTube IFrame API một lần
   function loadYTApi() {
-    if (window.YT) return; // đã load rồi
+    if (window.YT) return;
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
   }
 
-  // Callback toàn cục mà YouTube API gọi khi sẵn sàng
-  window.onYouTubeIframeAPIReady = function () {
-    // Không tạo player ở đây — chờ renderVideo() gọi
-  };
+  window.onYouTubeIframeAPIReady = function () { /* chờ renderVideo gọi */ };
 
   function getYtId(url) {
     if (!url) return null;
@@ -170,12 +181,9 @@
     return m ? m[1] : null;
   }
 
-  // Tạo hoặc load lại YouTube player
   function renderVideo(url) {
     const noVid = document.getElementById('no-video');
     const ytId  = getYtId(url);
-
-    // Dừng tracker bài cũ trước
     stopWatchTimer();
 
     if (!ytId) {
@@ -184,65 +192,67 @@
       currentYtId = null;
       return;
     }
-
     noVid.classList.add('hidden');
     currentYtId = ytId;
 
     if (ytPlayer) {
-      // Player đã tồn tại → load video mới vào
       ytPlayer.loadVideoById(ytId);
     } else {
-      // Tạo player lần đầu
       ytPlayer = new YT.Player('yt-player', {
         videoId: ytId,
         playerVars: { rel: 0, modestbranding: 1 },
-        events: {
-          onStateChange: onPlayerStateChange
-        }
+        events: { onStateChange: onPlayerStateChange }
       });
     }
   }
 
-  // Xử lý sự kiện YouTube player
+  // ── XỬ LÝ SỰ KIỆN YOUTUBE ──────────────────────────────
   function onPlayerStateChange(event) {
     const state = event.data;
+
     if (state === YT.PlayerState.PLAYING) {
-      startWatchTimer();
-    } else {
-      // PAUSED, ENDED, BUFFERING, CUED → dừng đếm và lưu
-      stopWatchTimer();
-      if (state === YT.PlayerState.ENDED) {
-        // Video kết thúc → đánh dấu completed = true
-        saveWatchData(true);
-      } else {
-        saveWatchData(false);
+      // ① Lần đầu nhấn Play → ghi viewed_at (xác nhận "đã bắt đầu xem")
+      if (!hasStartedWatching) {
+        hasStartedWatching = true;
+        markFirstView(trackerLessonId);
       }
+      startWatchTimer();
+      updateBadgePlaying();
+
+    } else if (state === YT.PlayerState.ENDED) {
+      stopWatchTimer();
+      saveWatchData(true);   // completed = true
+
+    } else {
+      // PAUSED / BUFFERING / CUED → dừng đếm, lưu DB
+      stopWatchTimer();
+      if (watchSeconds > 0) saveWatchData(false);
+      if (state === YT.PlayerState.PAUSED) updateBadgePaused();
     }
   }
 
   function startWatchTimer() {
-    if (watchInterval) return; // đang chạy rồi
+    if (watchInterval) return;
     watchInterval = setInterval(() => {
       watchSeconds++;
-      // Lưu Supabase mỗi 30 giây để không mất data nếu tắt ngang
+      updateBadgeTimer();
+      // Auto-save mỗi 30 giây để không mất data khi đóng ngang
       if (watchSeconds % 30 === 0) saveWatchData(false);
     }, 1000);
   }
 
   function stopWatchTimer() {
-    if (watchInterval) {
-      clearInterval(watchInterval);
-      watchInterval = null;
-    }
+    if (watchInterval) { clearInterval(watchInterval); watchInterval = null; }
   }
 
-  // Lưu watch_duration lên Supabase
+  // ── LƯU WATCH DATA LÊN SUPABASE ────────────────────────
   async function saveWatchData(completed) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user || !trackerLessonId) return;
     const uid = user.id || user.uid;
+    const secsToAdd = watchSeconds;
 
-    // Lấy record hiện tại để cộng dồn (không ghi đè giây cũ)
+    // Lấy record hiện tại để cộng dồn
     const { data: existing } = await sb
       .from('lesson_views')
       .select('watch_duration, completed')
@@ -250,29 +260,32 @@
       .eq('lesson_id', trackerLessonId)
       .maybeSingle();
 
-    const prevSeconds  = existing?.watch_duration || 0;
-    const alreadyDone  = existing?.completed || false;
+    const prevSecs    = existing?.watch_duration || 0;
+    const alreadyDone = existing?.completed || false;
+    const newTotal    = prevSecs + secsToAdd;
 
     await sb.from('lesson_views').upsert({
       user_id:        uid,
       lesson_id:      trackerLessonId,
-      viewed_at:      existing ? existing.viewed_at : new Date().toISOString(),
-      watch_duration: prevSeconds + watchSeconds,   // cộng dồn
+      viewed_at:      existing?.viewed_at || new Date().toISOString(),
+      watch_duration: newTotal,
       completed:      alreadyDone || completed,
       device:         window.innerWidth < 768 ? 'mobile' : 'desktop'
     }, { onConflict: 'user_id,lesson_id' });
 
-    // Reset bộ đếm phiên (đã cộng vào DB rồi)
-    watchSeconds = 0;
+    sessionPrevSecs = newTotal;  // cập nhật để badge hiển thị đúng
+    watchSeconds    = 0;         // reset bộ đếm phiên (đã cộng vào DB)
+
+    if (completed) updateBadgeCompleted(newTotal);
   }
 
-  // Ghi nhận lần đầu click vào bài (viewed_at) — không cần watch_duration ở đây
-  async function markViewed(lessonId) {
+  // ── GHI viewed_at LẦN ĐẦU KHI NHẤN PLAY ───────────────
+  // (Chỉ tạo record nếu chưa có — không ghi đè watch_duration)
+  async function markFirstView(lessonId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
+    if (!user || !lessonId) return;
     const uid = user.id || user.uid;
 
-    // Chỉ tạo record nếu chưa có (không ghi đè watched_duration đã lưu)
     const { data: existing } = await sb
       .from('lesson_views')
       .select('id')
@@ -282,22 +295,22 @@
 
     if (!existing) {
       await sb.from('lesson_views').insert({
-        user_id:   uid,
-        lesson_id: parseInt(lessonId),
-        viewed_at: new Date().toISOString(),
-        device:    window.innerWidth < 768 ? 'mobile' : 'desktop'
+        user_id:        uid,
+        lesson_id:      parseInt(lessonId),
+        viewed_at:      new Date().toISOString(),
+        watch_duration: 0,
+        completed:      false,
+        device:         window.innerWidth < 768 ? 'mobile' : 'desktop'
       });
     }
   }
 
-  // Lưu khi thoát trang (beforeunload)
+  // ── LƯU KHI ĐÓNG TAB (beforeunload) ────────────────────
   window.addEventListener('beforeunload', () => {
     stopWatchTimer();
     if (watchSeconds > 0) {
-      // Dùng sendBeacon để gửi ngay cả khi đóng tab
-      // Vì Supabase JS không hỗ trợ sendBeacon, ta lưu vào localStorage để trang chủ sync sau
       const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const user    = JSON.parse(localStorage.getItem('user') || 'null');
       if (user && trackerLessonId) {
         pending[trackerLessonId] = (pending[trackerLessonId] || 0) + watchSeconds;
         localStorage.setItem('pending_watch', JSON.stringify(pending));
@@ -305,22 +318,18 @@
     }
   });
 
-  // Sync pending watch data khi trang load (xử lý trường hợp đóng ngang)
+  // Sync pending watch khi mở trang lại
   async function syncPendingWatch() {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) return;
     const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
     if (!Object.keys(pending).length) return;
-
     const uid = user.id || user.uid;
     for (const [lid, secs] of Object.entries(pending)) {
       if (secs <= 0) continue;
       const { data: existing } = await sb
-        .from('lesson_views')
-        .select('watch_duration')
-        .eq('user_id', uid)
-        .eq('lesson_id', parseInt(lid))
-        .maybeSingle();
+        .from('lesson_views').select('watch_duration')
+        .eq('user_id', uid).eq('lesson_id', parseInt(lid)).maybeSingle();
       await sb.from('lesson_views').upsert({
         user_id:        uid,
         lesson_id:      parseInt(lid),
@@ -328,6 +337,65 @@
       }, { onConflict: 'user_id,lesson_id' });
     }
     localStorage.removeItem('pending_watch');
+  }
+
+  // ── BADGE TRẠNG THÁI XEM ────────────────────────────────
+  function fmtTime(s) {
+    const m = Math.floor(s / 60), sec = s % 60;
+    return m > 0 ? `${m} phút ${sec} giây` : `${sec} giây`;
+  }
+
+  function updateBadgePlaying() {
+    const badge = document.getElementById('watch-badge');
+    badge.className = 'watching';
+    document.getElementById('watch-badge-icon').innerHTML = '<div class="live-dot"></div>';
+    document.getElementById('watch-badge-text').textContent = 'Đang xem';
+    updateBadgeTimer();
+  }
+
+  function updateBadgePaused() {
+    const badge = document.getElementById('watch-badge');
+    badge.className = 'watching';
+    document.getElementById('watch-badge-icon').innerHTML = '<i class="fas fa-pause-circle"></i>';
+    document.getElementById('watch-badge-text').textContent = 'Đã tạm dừng';
+    updateBadgeTimer();
+  }
+
+  function updateBadgeCompleted(totalSecs) {
+    const badge = document.getElementById('watch-badge');
+    badge.className = 'completed';
+    document.getElementById('watch-badge-icon').innerHTML = '<i class="fas fa-check-circle"></i>';
+    document.getElementById('watch-badge-text').textContent = 'Đã hoàn thành';
+    document.getElementById('watch-badge-timer').textContent = 'Tổng: ' + fmtTime(totalSecs);
+  }
+
+  function updateBadgeTimer() {
+    const total = sessionPrevSecs + watchSeconds;
+    document.getElementById('watch-badge-timer').textContent =
+      total > 0 ? 'Đã xem: ' + fmtTime(total) : '';
+  }
+
+  // Hiển thị badge từ DB khi load bài (lần xem trước)
+  async function showWatchBadge(lessonId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+    const uid = user.id || user.uid;
+    const { data } = await sb.from('lesson_views')
+      .select('watch_duration, completed')
+      .eq('user_id', uid).eq('lesson_id', lessonId).maybeSingle();
+    if (!data) return;
+
+    sessionPrevSecs = data.watch_duration || 0;
+
+    if (data.completed) {
+      updateBadgeCompleted(sessionPrevSecs);
+    } else if (sessionPrevSecs > 0) {
+      const badge = document.getElementById('watch-badge');
+      badge.className = 'watching';
+      document.getElementById('watch-badge-icon').innerHTML = '<i class="fas fa-history"></i>';
+      document.getElementById('watch-badge-text').textContent = 'Đã xem trước đó';
+      document.getElementById('watch-badge-timer').textContent = fmtTime(sessionPrevSecs);
+    }
   }
 
   // ═══════════════════════════════════════════════════════
@@ -407,7 +475,7 @@
     if (opening) { sub.classList.add('open'); icon?.classList.add('rotate-180'); }
   }
 
-  function renderSidebar(topics, lessons, currentTopicId) {
+  function renderSidebar(topics, lessons, currentTopicId, viewedIds) {
     const sidebar = document.getElementById('sidebar-content');
     if (!topics?.length) {
       sidebar.innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Không có chuyên đề</div>`;
@@ -418,15 +486,19 @@
       const isCurrent = topic.id === currentTopicId;
       const items = tLessons.length
         ? tLessons.map(l => {
-            const active = String(l.id) === String(currentLessonId);
-            const locked = l.status === 'locked';
+            const active  = String(l.id) === String(currentLessonId);
+            const locked  = l.status === 'locked';
+            const viewed  = viewedIds.includes(String(l.id));
+            // Dot màu: xanh = đã xem, đỏ = chưa xem, xám = locked
+            const dotColor = locked ? '#d1d5db' : (viewed ? '#22c55e' : '#ef4444');
             return `
-              <div class="lesson-item px-3 py-2.5 pl-9 text-[11px] rounded-lg mx-1 my-0.5
+              <div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
                           ${active ? 'active' : 'text-gray-600'}
                           ${locked && !active ? 'locked' : ''}"
-                   onclick="${locked ? 'alert(\'Bài học này chưa được mở!\')' : `goLesson(${l.id})`}">
-                <i class="fas ${locked ? 'fa-lock' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} mr-2 text-[9px]"></i>
-                <span class="truncate">${l.title}</span>
+                   onclick="${locked ? "alert('Bài học này chưa được mở!')" : `goLesson(${l.id})`}">
+                <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
+                <i class="fas ${locked ? 'fa-lock' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} text-[9px] flex-shrink-0"></i>
+                <span class="truncate flex-1">${l.title}</span>
               </div>`;
           }).join('')
         : `<div class="px-9 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`;
@@ -445,11 +517,9 @@
   }
 
   function goLesson(id) {
-    // Lưu data bài cũ trước khi chuyển
     stopWatchTimer();
     if (watchSeconds > 0) saveWatchData(false);
     watchSeconds = 0;
-
     currentLessonId = String(id);
     window.history.pushState({}, '', `?id=${id}`);
     loadLesson(id);
@@ -471,7 +541,18 @@
         .from('lessons').select('id, title, topic_id, status')
         .in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
       if (e2) throw e2;
-      renderSidebar(topics, lessons || [], currentTopicId);
+
+      // Lấy danh sách đã xem để hiện dot màu trong sidebar
+      let viewedIds = [];
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user) {
+        const uid = user.id || user.uid;
+        const { data: views } = await sb
+          .from('lesson_views').select('lesson_id').eq('user_id', uid);
+        viewedIds = (views || []).map(v => String(v.lesson_id));
+      }
+
+      renderSidebar(topics, lessons || [], currentTopicId, viewedIds);
     } catch (err) {
       document.getElementById('sidebar-content').innerHTML =
         `<div class="p-3 text-red-400 text-[10px] font-bold">Lỗi: ${err.message}</div>`;
@@ -482,6 +563,7 @@
   // LOAD LESSON
   // ═══════════════════════════════════════════════════════
   async function loadLesson(id) {
+    // Reset UI
     document.getElementById('lesson-title').innerHTML = '<i class="fas fa-spinner animate-spin text-blue-200"></i>';
     document.getElementById('lesson-content').innerHTML = '';
     document.getElementById('lesson-topic-name').textContent = '';
@@ -489,14 +571,23 @@
     document.getElementById('error-box').classList.add('hidden');
     document.getElementById('locked-box').classList.add('hidden');
     document.getElementById('lesson-body').classList.remove('hidden');
-    document.getElementById('watch-badge').classList.add('hidden');
+
+    // Reset badge
+    const badge = document.getElementById('watch-badge');
+    badge.className = '';
+    badge.style.display = 'none';
+    document.getElementById('watch-badge-icon').innerHTML  = '';
+    document.getElementById('watch-badge-text').textContent= '';
+    document.getElementById('watch-badge-timer').textContent='';
 
     const lessonId = parseInt(id);
     if (isNaN(lessonId)) { showError('ID bài học không hợp lệ'); return; }
 
-    // Đặt tracker cho bài mới
-    trackerLessonId = lessonId;
-    watchSeconds    = 0;
+    // ← QUAN TRỌNG: reset tracker cho bài mới
+    trackerLessonId    = lessonId;
+    watchSeconds       = 0;
+    sessionPrevSecs    = 0;
+    hasStartedWatching = false;   // chưa nhấn Play bài mới này
 
     try {
       const { data: lesson, error: e1 } = await sb
@@ -511,13 +602,13 @@
         renderVideo(null); renderDocs(null);
         if (lesson.topic_id) {
           const { data: topic } = await sb.from('topics').select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
-          if (topic) { document.getElementById('lesson-topic-name').textContent = topic.topic_name; await loadSidebar(topic.course_id, lesson.topic_id); }
+          if (topic) {
+            document.getElementById('lesson-topic-name').textContent = topic.topic_name;
+            await loadSidebar(topic.course_id, lesson.topic_id);
+          }
         }
         return;
       }
-
-      // Ghi nhận đã xem (tạo record nếu chưa có)
-      await markViewed(lessonId);
 
       // Hiển thị nội dung
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
@@ -529,11 +620,11 @@
         insEl.classList.remove('hidden');
       }
 
-      // Load video — tracker sẽ bắt đầu khi học sinh nhấn play
+      // Load video — tracker bắt đầu khi người dùng nhấn Play
       renderVideo(lesson.video_url);
       renderDocs(lesson.documents);
 
-      // Hiển thị badge giây đã xem (nếu có)
+      // Hiển thị badge từ lịch sử xem DB (nếu đã xem trước đó)
       await showWatchBadge(lessonId);
 
       if (!lesson.topic_id) return;
@@ -545,35 +636,6 @@
     } catch (err) {
       showError(err.message);
     }
-  }
-
-  // Hiển thị badge "Đã xem X phút" bên dưới video
-  async function showWatchBadge(lessonId) {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
-    const uid = user.id || user.uid;
-    const { data } = await sb.from('lesson_views')
-      .select('watch_duration, completed')
-      .eq('user_id', uid).eq('lesson_id', lessonId).maybeSingle();
-    if (!data) return;
-
-    const badge   = document.getElementById('watch-badge');
-    const icon    = document.getElementById('watch-badge-icon');
-    const text    = document.getElementById('watch-badge-text');
-    const mins    = Math.floor((data.watch_duration || 0) / 60);
-    const secs    = (data.watch_duration || 0) % 60;
-    const timeStr = mins > 0 ? `${mins} phút ${secs} giây` : `${secs} giây`;
-
-    if (data.completed) {
-      badge.className = 'flex items-center gap-2 text-[11px] font-black uppercase text-green-600';
-      icon.textContent  = '✓';
-      text.textContent  = `Đã hoàn thành · Tổng thời gian xem: ${timeStr}`;
-    } else if (data.watch_duration > 0) {
-      badge.className = 'flex items-center gap-2 text-[11px] font-black uppercase text-blue-600';
-      icon.textContent  = '▶';
-      text.textContent  = `Đã xem: ${timeStr}`;
-    }
-    badge.classList.remove('hidden');
   }
 
   async function loadFromCourse(courseId) {
@@ -601,8 +663,8 @@
   // ═══════════════════════════════════════════════════════
   window.addEventListener('DOMContentLoaded', async () => {
     checkLogin();
-    loadYTApi();           // load YouTube IFrame API
-    syncPendingWatch();    // sync data bị mất do đóng ngang
+    loadYTApi();
+    syncPendingWatch();
 
     if (currentLessonId) {
       await loadLesson(currentLessonId);
