@@ -450,120 +450,143 @@
             }).join('');
         }
 
-        // ── Quản lý bài đã xem (localStorage) ──
-        async function getViewedLessons(userId) {
-  const { data } = await sb.from('lesson_views')
-    .select('lesson_id')
-    .eq('user_id', userId);
-  return (data || []).map(r => String(r.lesson_id));
+// ── Quản lý bài đã xem (Supabase) ──
+async function getViewedLessons(userId) {
+    const { data } = await sb.from('lesson_views')
+        .select('lesson_id')
+        .eq('user_id', userId);
+    return (data || []).map(r => String(r.lesson_id));
 }
-        async function markViewed(lessonId) {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (!user) return;
-  
-  // UPSERT: nếu đã có thì cập nhật viewed_at, nếu chưa thì tạo mới
-  await sb.from('lesson_views').upsert({
-    user_id: user.id,
-    lesson_id: lessonId,
-    viewed_at: new Date().toISOString(),
-    device: window.innerWidth < 768 ? 'mobile' : 'desktop'
-  }, { onConflict: 'user_id,lesson_id' });
+
+async function markViewed(lessonId) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+    const uid = user.id || user.uid;
+    await sb.from('lesson_views').upsert({
+        user_id: uid,
+        lesson_id: parseInt(lessonId),   // ← int4
+        viewed_at: new Date().toISOString(),
+        device: window.innerWidth < 768 ? 'mobile' : 'desktop'
+    }, { onConflict: 'user_id,lesson_id' });
 }
-        function getTimeAgo(dateStr) {
-            const diff = Date.now() - new Date(dateStr).getTime();
-            const mins = Math.floor(diff/60000), hours = Math.floor(diff/3600000), days = Math.floor(diff/86400000);
-            if (mins < 60) return `${mins} phút trước`;
-            if (hours < 24) return `${hours} giờ trước`;
-            if (days < 7) return `${days} ngày trước`;
-            return new Date(dateStr).toLocaleDateString('vi-VN');
-        }
 
-        // ── Bài giảng mới nhất (CÓ BADGE CHƯA XEM) ──
-        async function loadLessons() {
-            const grid = document.getElementById('video-grid');
-            const user = JSON.parse(localStorage.getItem('user'));
+// ── Tiến độ học tập ─────────────────
+async function loadProgress(userId) {
+    document.getElementById('progress-section').classList.remove('hidden');
+    const { data: enrolls } = await sb.from('course_enrollments')
+        .select('course_id, courses:course_id(course_name)')
+        .eq('user_id', userId);
+    if (!enrolls?.length) {
+        document.getElementById('progress-content').innerHTML =
+            `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
+        return;
+    }
+    const { data: lessons } = await sb.from('lessons')
+        .select('id, topics:topic_id(course_id)')
+        .eq('status', 'Active');
 
-            // Lấy 6 bài mới nhất đang mở
-            const { data: lessons } = await sb.from('lessons')
-                .select('id, title, content, status, created_at, topic_id')
-                .eq('status', 'Active')
-                .order('created_at', { ascending: false })
-                .limit(6);
+    // ← await getViewedLessons
+    const viewed = await getViewedLessons(userId);
 
-            if (!lessons?.length) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                    <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
-                    <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p></div>`;
-                return;
-            }
+    document.getElementById('progress-content').innerHTML = enrolls.map(e => {
+        const courseLessons = (lessons || []).filter(l => l.topics?.course_id === e.course_id);
+        const total = courseLessons.length;
+        const viewedCount = courseLessons.filter(l => viewed.includes(String(l.id))).length;
+        const pct = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
+        return `<div class="mb-4">
+            <div class="flex justify-between mb-1">
+                <span class="text-sm font-bold text-blue-900">${e.courses?.course_name || 'Khóa học'}</span>
+                <span class="text-xs font-black text-blue-600">${viewedCount}/${total} bài · ${pct}%</span>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('');
+}
 
-            // Danh sách bài đã xem (chỉ có nghĩa khi đã đăng nhập)
-            const viewed = user ? getViewedLessons() : [];
+// ── Bài giảng mới nhất ──────────────
+async function loadLessons() {
+    const grid = document.getElementById('video-grid');
+    const user = JSON.parse(localStorage.getItem('user'));
 
-            // Lấy course_id của các bài (để biết học sinh có được học không)
-            const topicIds = [...new Set(lessons.map(l => l.topic_id).filter(Boolean))];
-            let topicCourseMap = {};
-            if (topicIds.length) {
-                const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
-                (topics||[]).forEach(t => { topicCourseMap[t.id] = t.course_id; });
-            }
+    const { data: lessons } = await sb.from('lessons')
+        .select('id, title, content, status, created_at, topic_id')
+        .eq('status', 'Active')
+        .order('created_at', { ascending: false })
+        .limit(6);
 
-            // Lấy khóa học học sinh đang đăng ký
-            let enrolledIds = [];
-            if (user) {
-                const uid = user.id || user.uid;
-                const { data: enrolls } = await sb.from('course_enrollments').select('course_id').eq('user_id', uid);
-                enrolledIds = (enrolls||[]).map(e => e.course_id);
-            }
+    if (!lessons?.length) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
+            <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p></div>`;
+        return;
+    }
 
-            grid.innerHTML = lessons.map(l => {
-                const lid = String(l.id);
-                const courseId = topicCourseMap[l.topic_id];
-                const isEnrolled = user && enrolledIds.includes(courseId);
-                const isViewed = viewed.includes(lid);
+    // Lấy course_id của các bài
+    const topicIds = [...new Set(lessons.map(l => l.topic_id).filter(Boolean))];
+    let topicCourseMap = {};
+    if (topicIds.length) {
+        const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
+        (topics || []).forEach(t => { topicCourseMap[t.id] = t.course_id; });
+    }
 
-                // Badge chỉ hiện nếu đã đăng nhập và học sinh có trong khóa học đó
-                const showBadge = user && isEnrolled;
-                const isUnread = showBadge && !isViewed;
+    // Khóa học học sinh đang đăng ký + bài đã xem
+    let enrolledIds = [];
+    let viewed = [];
+    if (user) {
+        const uid = user.id || user.uid;
+        const [enrollRes, viewRes] = await Promise.all([
+            sb.from('course_enrollments').select('course_id').eq('user_id', uid),
+            getViewedLessons(uid)   // ← await bằng Promise.all
+        ]);
+        enrolledIds = (enrollRes.data || []).map(e => e.course_id);
+        viewed = viewRes;
+    }
 
-                return `
-                <a href="lesson-detail.html?id=${l.id}"
-                   class="lesson-card ${isUnread ? 'unread' : ''} group"
-                   onclick="markViewed('${lid}')">
+    grid.innerHTML = lessons.map(l => {
+        const lid = String(l.id);
+        const courseId = topicCourseMap[l.topic_id];
+        const isEnrolled = user && enrolledIds.includes(courseId);
+        const isViewed = viewed.includes(lid);
+        const showBadge = user && isEnrolled;
+        const isUnread = showBadge && !isViewed;
 
-                    <!-- Badge trạng thái -->
-                    ${showBadge ? `
-                    <div class="absolute top-2.5 left-2.5 z-10">
-                        ${isUnread
-                            ? `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Chưa xem
-                               </span>`
-                            : `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">
-                                ✓ Đã xem
-                               </span>`
-                        }
-                    </div>` : ''}
+        return `
+        <a href="lesson-detail.html?id=${l.id}"
+           class="lesson-card ${isUnread ? 'unread' : ''} group"
+           onclick="markViewed('${lid}')">
 
-                    <div class="lesson-thumb relative">
-                        <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
-                        ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all"></div>' : ''}
-                    </div>
+            ${showBadge ? `
+            <div class="absolute top-2.5 left-2.5 z-10">
+                ${isUnread
+                    ? `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Chưa xem
+                       </span>`
+                    : `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">
+                        ✓ Đã xem
+                       </span>`
+                }
+            </div>` : ''}
 
-                    <div class="p-4 flex-1">
-                        <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2 ${isUnread ? 'pr-2' : ''}">${l.title}</div>
-                        <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g,'') : 'Xem ngay cùng Thầy Thành'}</div>
-                        <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
-                    </div>
+            <div class="lesson-thumb relative">
+                <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
+                ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all"></div>' : ''}
+            </div>
 
-                    <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
-                        <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
-                        <div class="w-6 h-6 ${isUnread ? 'bg-red-500' : 'bg-blue-900'} rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
-                            <i class="fas fa-arrow-right text-white text-[8px]"></i>
-                        </div>
-                    </div>
-                </a>`;
-            }).join('');
-        }
+            <div class="p-4 flex-1">
+                <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title}</div>
+                <div class="text-gray-400 text-xs line-clamp-2 mb-2">${l.content ? l.content.replace(/<[^>]*>/g, '') : 'Xem ngay cùng Thầy Thành'}</div>
+                <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
+            </div>
+
+            <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
+                <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
+                <div class="w-6 h-6 ${isUnread ? 'bg-red-500' : 'bg-blue-900'} rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                    <i class="fas fa-arrow-right text-white text-[8px]"></i>
+                </div>
+            </div>
+        </a>`;
+    }).join('');
+}
 
         // ── Đăng nhập ───────────────────────
         function checkLogin() {
