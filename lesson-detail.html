@@ -10,8 +10,6 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     html, body { height: 100%; margin: 0; }
     body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; background: #f9fafb; overflow: hidden; }
-
-    /* Sidebar */
     .sidebar-scroll::-webkit-scrollbar { width: 4px; }
     .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
     .lesson-item { transition: background 0.15s; cursor: pointer; }
@@ -21,17 +19,11 @@
     .submenu { display: none; }
     .submenu.open { display: block; }
     .chevron { transition: transform 0.25s; }
-
-    /* Menu */
     .thanh-menu-ngang { background: #1e3a8a; }
-
-    /* Dropdown */
     .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 1000; border: 1px solid #f0f0f0; }
     .dropdown-user.active { display: flex; }
     .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; transition: all 0.2s; }
     .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
-
-    /* Layout mobile */
     @media (max-width: 1023px) {
       #layout-wrap { flex-direction: column; }
       #sidebar-wrap { height: 38vh; width: 100%; }
@@ -63,7 +55,6 @@
 </header>
 
 <div id="layout-wrap" class="flex flex-1 overflow-hidden">
-
   <!-- SIDEBAR -->
   <aside id="sidebar-wrap" class="w-full lg:w-80 bg-white border-r flex flex-col z-40 flex-none">
     <div class="p-3 bg-gray-50 border-b flex justify-between items-center flex-none">
@@ -83,14 +74,19 @@
     <div class="p-4 md:p-6 flex-1">
       <div class="max-w-5xl mx-auto space-y-5">
 
-        <!-- VIDEO -->
+        <!-- VIDEO PLAYER (YouTube IFrame API cần div, không dùng iframe trực tiếp) -->
         <div class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white">
-          <iframe id="video-frame" class="absolute inset-0 w-full h-full" src="" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <div id="yt-player" class="absolute inset-0 w-full h-full"></div>
           <div id="no-video" class="absolute inset-0 flex items-center justify-center flex-col gap-2 text-gray-500 bg-gray-900">
             <i class="fas fa-video-slash text-3xl"></i>
             <span class="text-xs font-bold uppercase tracking-widest">Chưa có video</span>
           </div>
+        </div>
+
+        <!-- BADGE TRẠNG THÁI XEM -->
+        <div id="watch-badge" class="hidden flex items-center gap-2 text-[11px] font-black uppercase">
+          <span id="watch-badge-icon"></span>
+          <span id="watch-badge-text"></span>
         </div>
 
         <!-- BÀI BỊ KHÓA -->
@@ -101,8 +97,6 @@
         </div>
 
         <div id="lesson-body" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          <!-- NỘI DUNG BÀI HỌC -->
           <div class="lg:col-span-2">
             <div class="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100">
               <div id="lesson-topic-name" class="text-blue-500 font-black uppercase text-[10px] tracking-[0.2em] mb-2 italic"></div>
@@ -112,8 +106,6 @@
               <div id="lesson-content" class="text-gray-600 leading-relaxed text-sm space-y-3"></div>
             </div>
           </div>
-
-          <!-- TÀI LIỆU + INSIGHT -->
           <div class="lg:col-span-1">
             <div class="bg-white p-5 rounded-2xl md:rounded-3xl shadow-sm border border-blue-100 lg:sticky lg:top-4">
               <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
@@ -127,14 +119,11 @@
           </div>
         </div>
 
-        <!-- LỖI -->
         <div id="error-box" class="hidden p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-bold">
           <i class="fas fa-exclamation-triangle mr-2"></i><span id="error-msg"></span>
         </div>
-
       </div>
     </div>
-
     <footer class="bg-white border-t py-6 text-center flex-none">
       <div class="font-black text-blue-900 uppercase text-xs tracking-[0.3em] mb-1">Toán Thầy Thành</div>
       <div class="text-gray-400 text-[9px] font-bold italic uppercase tracking-widest">Dạy học từ tâm - Nâng tầm kiến thức</div>
@@ -148,22 +137,207 @@
   const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
   const sb = supabase.createClient(SB_URL, SB_KEY);
 
-  // Đọc params từ URL
-  const params   = new URLSearchParams(window.location.search);
-  // id = int4 của lessons, course_id = uuid của courses
+  const params        = new URLSearchParams(window.location.search);
   let currentLessonId = params.get('id');
-  const courseIdParam  = params.get('course_id');
+  const courseIdParam = params.get('course_id');
 
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
+  // WATCH TRACKER — đếm giây xem thực tế qua YT IFrame API
+  // ═══════════════════════════════════════════════════════
+  let ytPlayer        = null;   // instance YouTube player
+  let watchSeconds    = 0;      // tổng giây đã xem phiên này
+  let watchInterval   = null;   // interval đếm giây
+  let currentYtId     = null;   // YouTube video ID hiện tại
+  let trackerLessonId = null;   // lesson đang track
+  let saveTimeout     = null;   // debounce lưu
+
+  // Khởi tạo YouTube IFrame API (load script 1 lần)
+  function loadYTApi() {
+    if (window.YT) return; // đã load rồi
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  }
+
+  // Callback toàn cục mà YouTube API gọi khi sẵn sàng
+  window.onYouTubeIframeAPIReady = function () {
+    // Không tạo player ở đây — chờ renderVideo() gọi
+  };
+
+  function getYtId(url) {
+    if (!url) return null;
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([^?&\s]{11})/);
+    return m ? m[1] : null;
+  }
+
+  // Tạo hoặc load lại YouTube player
+  function renderVideo(url) {
+    const noVid = document.getElementById('no-video');
+    const ytId  = getYtId(url);
+
+    // Dừng tracker bài cũ trước
+    stopWatchTimer();
+
+    if (!ytId) {
+      noVid.classList.remove('hidden');
+      if (ytPlayer) { ytPlayer.destroy(); ytPlayer = null; }
+      currentYtId = null;
+      return;
+    }
+
+    noVid.classList.add('hidden');
+    currentYtId = ytId;
+
+    if (ytPlayer) {
+      // Player đã tồn tại → load video mới vào
+      ytPlayer.loadVideoById(ytId);
+    } else {
+      // Tạo player lần đầu
+      ytPlayer = new YT.Player('yt-player', {
+        videoId: ytId,
+        playerVars: { rel: 0, modestbranding: 1 },
+        events: {
+          onStateChange: onPlayerStateChange
+        }
+      });
+    }
+  }
+
+  // Xử lý sự kiện YouTube player
+  function onPlayerStateChange(event) {
+    const state = event.data;
+    if (state === YT.PlayerState.PLAYING) {
+      startWatchTimer();
+    } else {
+      // PAUSED, ENDED, BUFFERING, CUED → dừng đếm và lưu
+      stopWatchTimer();
+      if (state === YT.PlayerState.ENDED) {
+        // Video kết thúc → đánh dấu completed = true
+        saveWatchData(true);
+      } else {
+        saveWatchData(false);
+      }
+    }
+  }
+
+  function startWatchTimer() {
+    if (watchInterval) return; // đang chạy rồi
+    watchInterval = setInterval(() => {
+      watchSeconds++;
+      // Lưu Supabase mỗi 30 giây để không mất data nếu tắt ngang
+      if (watchSeconds % 30 === 0) saveWatchData(false);
+    }, 1000);
+  }
+
+  function stopWatchTimer() {
+    if (watchInterval) {
+      clearInterval(watchInterval);
+      watchInterval = null;
+    }
+  }
+
+  // Lưu watch_duration lên Supabase
+  async function saveWatchData(completed) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user || !trackerLessonId) return;
+    const uid = user.id || user.uid;
+
+    // Lấy record hiện tại để cộng dồn (không ghi đè giây cũ)
+    const { data: existing } = await sb
+      .from('lesson_views')
+      .select('watch_duration, completed')
+      .eq('user_id', uid)
+      .eq('lesson_id', trackerLessonId)
+      .maybeSingle();
+
+    const prevSeconds  = existing?.watch_duration || 0;
+    const alreadyDone  = existing?.completed || false;
+
+    await sb.from('lesson_views').upsert({
+      user_id:        uid,
+      lesson_id:      trackerLessonId,
+      viewed_at:      existing ? existing.viewed_at : new Date().toISOString(),
+      watch_duration: prevSeconds + watchSeconds,   // cộng dồn
+      completed:      alreadyDone || completed,
+      device:         window.innerWidth < 768 ? 'mobile' : 'desktop'
+    }, { onConflict: 'user_id,lesson_id' });
+
+    // Reset bộ đếm phiên (đã cộng vào DB rồi)
+    watchSeconds = 0;
+  }
+
+  // Ghi nhận lần đầu click vào bài (viewed_at) — không cần watch_duration ở đây
+  async function markViewed(lessonId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+    const uid = user.id || user.uid;
+
+    // Chỉ tạo record nếu chưa có (không ghi đè watched_duration đã lưu)
+    const { data: existing } = await sb
+      .from('lesson_views')
+      .select('id')
+      .eq('user_id', uid)
+      .eq('lesson_id', parseInt(lessonId))
+      .maybeSingle();
+
+    if (!existing) {
+      await sb.from('lesson_views').insert({
+        user_id:   uid,
+        lesson_id: parseInt(lessonId),
+        viewed_at: new Date().toISOString(),
+        device:    window.innerWidth < 768 ? 'mobile' : 'desktop'
+      });
+    }
+  }
+
+  // Lưu khi thoát trang (beforeunload)
+  window.addEventListener('beforeunload', () => {
+    stopWatchTimer();
+    if (watchSeconds > 0) {
+      // Dùng sendBeacon để gửi ngay cả khi đóng tab
+      // Vì Supabase JS không hỗ trợ sendBeacon, ta lưu vào localStorage để trang chủ sync sau
+      const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user && trackerLessonId) {
+        pending[trackerLessonId] = (pending[trackerLessonId] || 0) + watchSeconds;
+        localStorage.setItem('pending_watch', JSON.stringify(pending));
+      }
+    }
+  });
+
+  // Sync pending watch data khi trang load (xử lý trường hợp đóng ngang)
+  async function syncPendingWatch() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+    const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
+    if (!Object.keys(pending).length) return;
+
+    const uid = user.id || user.uid;
+    for (const [lid, secs] of Object.entries(pending)) {
+      if (secs <= 0) continue;
+      const { data: existing } = await sb
+        .from('lesson_views')
+        .select('watch_duration')
+        .eq('user_id', uid)
+        .eq('lesson_id', parseInt(lid))
+        .maybeSingle();
+      await sb.from('lesson_views').upsert({
+        user_id:        uid,
+        lesson_id:      parseInt(lid),
+        watch_duration: (existing?.watch_duration || 0) + secs
+      }, { onConflict: 'user_id,lesson_id' });
+    }
+    localStorage.removeItem('pending_watch');
+  }
+
+  // ═══════════════════════════════════════════════════════
   // LOGIN
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   function checkLogin() {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) { window.location.href = 'login.html'; return null; }
-
     const adminOpt = user.role === 'admin'
       ? `<a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic"><i class="fas fa-cog mr-3 opacity-60"></i>Quản trị</a>` : '';
-
     document.getElementById('user-section').innerHTML = `
       <div class="flex items-center gap-2 cursor-pointer" onclick="toggleMenu(event)">
         <div class="text-right hidden md:block leading-tight">
@@ -184,46 +358,27 @@
       </div>`;
     return user;
   }
-
   function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
-  function logout() { localStorage.removeItem('user'); window.location.href = 'login.html'; }
+  function logout() {
+    stopWatchTimer();
+    saveWatchData(false).finally(() => {
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    });
+  }
   window.addEventListener('click', () => document.getElementById('dropdownUser')?.classList.remove('active'));
 
-  // ────────────────────────────────────────────
-  // YOUTUBE
-  // ────────────────────────────────────────────
-  function getYtId(url) {
-    if (!url) return null;
-    const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([^?&\s]{11})/);
-    return m ? m[1] : null;
-  }
-
-  function renderVideo(url) {
-    const frame = document.getElementById('video-frame');
-    const noVid = document.getElementById('no-video');
-    const ytId  = getYtId(url);
-    if (ytId) {
-      frame.src = `https://www.youtube.com/embed/${ytId}?rel=0`;
-      noVid.classList.add('hidden');
-    } else {
-      frame.src = '';
-      noVid.classList.remove('hidden');
-    }
-  }
-
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   // TÀI LIỆU
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   function renderDocs(docs) {
     const el = document.getElementById('document-container');
     let list = null;
     try { list = (typeof docs === 'string') ? JSON.parse(docs) : docs; } catch(e) {}
-
     if (!list || !Array.isArray(list) || !list.length) {
       el.innerHTML = `<div class="p-4 bg-gray-50 text-gray-400 text-[10px] text-center rounded-xl border border-dashed uppercase italic">Chưa có tài liệu</div>`;
       return;
     }
-
     el.innerHTML = list.map(f => `
       <div class="p-3 bg-gray-50 rounded-xl border mb-2 hover:border-blue-200 transition-all">
         <div class="text-[10px] font-bold text-blue-900 mb-2 flex items-center gap-1 truncate">
@@ -240,9 +395,9 @@
       </div>`).join('');
   }
 
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   // SIDEBAR
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   function toggleTopic(btn) {
     const sub  = btn.nextElementSibling;
     const icon = btn.querySelector('.chevron');
@@ -258,26 +413,23 @@
       sidebar.innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Không có chuyên đề</div>`;
       return;
     }
-
     sidebar.innerHTML = topics.map(topic => {
       const tLessons = lessons.filter(l => l.topic_id === topic.id);
       const isCurrent = topic.id === currentTopicId;
-
       const items = tLessons.length
         ? tLessons.map(l => {
-            const active  = String(l.id) === String(currentLessonId);
-            const locked  = l.status === 'locked';
+            const active = String(l.id) === String(currentLessonId);
+            const locked = l.status === 'locked';
             return `
               <div class="lesson-item px-3 py-2.5 pl-9 text-[11px] rounded-lg mx-1 my-0.5
                           ${active ? 'active' : 'text-gray-600'}
                           ${locked && !active ? 'locked' : ''}"
-                   onclick="${locked ? 'alert(\"Bài học này chưa được mở!\")' : `goLesson(${l.id})`}">
+                   onclick="${locked ? 'alert(\'Bài học này chưa được mở!\')' : `goLesson(${l.id})`}">
                 <i class="fas ${locked ? 'fa-lock' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} mr-2 text-[9px]"></i>
                 <span class="truncate">${l.title}</span>
               </div>`;
           }).join('')
         : `<div class="px-9 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`;
-
       return `
         <div class="mb-1">
           <button class="topic-btn w-full text-left px-3 py-2.5 text-[10px] font-black uppercase rounded-xl
@@ -293,50 +445,43 @@
   }
 
   function goLesson(id) {
+    // Lưu data bài cũ trước khi chuyển
+    stopWatchTimer();
+    if (watchSeconds > 0) saveWatchData(false);
+    watchSeconds = 0;
+
     currentLessonId = String(id);
     window.history.pushState({}, '', `?id=${id}`);
     loadLesson(id);
-    // Cuộn lên đầu main
     document.getElementById('main-wrap').scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function loadSidebar(courseId, currentTopicId) {
     try {
       const { data: topics, error: e1 } = await sb
-        .from('topics')
-        .select('id, topic_name, order_index')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true });
-
+        .from('topics').select('id, topic_name, order_index')
+        .eq('course_id', courseId).order('order_index', { ascending: true });
       if (e1) throw e1;
       if (!topics?.length) {
         document.getElementById('sidebar-content').innerHTML =
           `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`;
         return;
       }
-
-      const topicIds = topics.map(t => t.id);
       const { data: lessons, error: e2 } = await sb
-        .from('lessons')
-        .select('id, title, topic_id, status')
-        .in('topic_id', topicIds)
-        .order('id', { ascending: true });
-
+        .from('lessons').select('id, title, topic_id, status')
+        .in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
       if (e2) throw e2;
       renderSidebar(topics, lessons || [], currentTopicId);
-
     } catch (err) {
-      console.error('Sidebar lỗi:', err);
       document.getElementById('sidebar-content').innerHTML =
         `<div class="p-3 text-red-400 text-[10px] font-bold">Lỗi: ${err.message}</div>`;
     }
   }
 
-  // ────────────────────────────────────────────
-  // LOAD LESSON CHÍNH
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
+  // LOAD LESSON
+  // ═══════════════════════════════════════════════════════
   async function loadLesson(id) {
-    // Reset UI
     document.getElementById('lesson-title').innerHTML = '<i class="fas fa-spinner animate-spin text-blue-200"></i>';
     document.getElementById('lesson-content').innerHTML = '';
     document.getElementById('lesson-topic-name').textContent = '';
@@ -344,134 +489,105 @@
     document.getElementById('error-box').classList.add('hidden');
     document.getElementById('locked-box').classList.add('hidden');
     document.getElementById('lesson-body').classList.remove('hidden');
+    document.getElementById('watch-badge').classList.add('hidden');
 
-    // lessons.id là int4 — phải parseInt
     const lessonId = parseInt(id);
-    if (isNaN(lessonId)) {
-      showError('ID bài học không hợp lệ (cần là số nguyên, nhận được: ' + id + ')');
-      return;
-    }
+    if (isNaN(lessonId)) { showError('ID bài học không hợp lệ'); return; }
+
+    // Đặt tracker cho bài mới
+    trackerLessonId = lessonId;
+    watchSeconds    = 0;
 
     try {
-      // ── Bước 1: Lấy lesson theo id (int4) ──
       const { data: lesson, error: e1 } = await sb
-        .from('lessons')
-        .select('*')
-        .eq('id', lessonId)
-        .single();
-
+        .from('lessons').select('*').eq('id', lessonId).single();
       if (e1) throw new Error('Không lấy được bài học: ' + e1.message);
-      if (!lesson) { showError('Không tìm thấy bài học ID=' + lessonId); return; }
+      if (!lesson) { showError('Không tìm thấy bài học'); return; }
 
-      // ── Bước 2: Kiểm tra status ──
       if (lesson.status === 'locked') {
         document.getElementById('lesson-title').textContent = lesson.title || 'Bài học bị khóa';
         document.getElementById('lesson-body').classList.add('hidden');
         document.getElementById('locked-box').classList.remove('hidden');
-        renderVideo(null); // Ẩn video
-        renderDocs(null);  // Không hiện tài liệu
-        // Vẫn load sidebar
+        renderVideo(null); renderDocs(null);
         if (lesson.topic_id) {
           const { data: topic } = await sb.from('topics').select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
-          if (topic) {
-            document.getElementById('lesson-topic-name').textContent = topic.topic_name;
-            await loadSidebar(topic.course_id, lesson.topic_id);
-          }
+          if (topic) { document.getElementById('lesson-topic-name').textContent = topic.topic_name; await loadSidebar(topic.course_id, lesson.topic_id); }
         }
         return;
       }
 
-      // ── Bước 3: Hiển thị nội dung ──
+      // Ghi nhận đã xem (tạo record nếu chưa có)
+      await markViewed(lessonId);
+
+      // Hiển thị nội dung
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
       document.getElementById('lesson-content').innerHTML = lesson.content
         || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
-
       if (lesson.insight) {
         const insEl = document.getElementById('lesson-insight');
         insEl.innerHTML = '💡 ' + lesson.insight;
         insEl.classList.remove('hidden');
       }
 
+      // Load video — tracker sẽ bắt đầu khi học sinh nhấn play
       renderVideo(lesson.video_url);
       renderDocs(lesson.documents);
 
-      // ── Bước 4: Lấy topic (topic_id là uuid) ──
-      if (!lesson.topic_id) {
-        document.getElementById('sidebar-content').innerHTML =
-          `<div class="text-center py-8 text-gray-300 text-xs italic">Bài học chưa thuộc chuyên đề nào</div>`;
-        return;
-      }
+      // Hiển thị badge giây đã xem (nếu có)
+      await showWatchBadge(lessonId);
 
-      const { data: topic, error: e2 } = await sb
-        .from('topics')
-        .select('id, topic_name, course_id')
-        .eq('id', lesson.topic_id)
-        .single();
-
+      if (!lesson.topic_id) return;
+      const { data: topic, error: e2 } = await sb.from('topics').select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
       if (e2) throw new Error('Không lấy được chuyên đề: ' + e2.message);
-      if (!topic) { showError('Không tìm thấy chuyên đề'); return; }
-
-      document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
-
-      // ── Bước 5: Load sidebar ──
+      document.getElementById('lesson-topic-name').textContent = topic?.topic_name || '';
       await loadSidebar(topic.course_id, lesson.topic_id);
 
     } catch (err) {
-      console.error('loadLesson lỗi:', err);
       showError(err.message);
     }
   }
 
-  // ────────────────────────────────────────────
-  // LOAD TỪ COURSE_ID (khi vào từ khoa-hoc-cua-toi)
-  // ────────────────────────────────────────────
+  // Hiển thị badge "Đã xem X phút" bên dưới video
+  async function showWatchBadge(lessonId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+    const uid = user.id || user.uid;
+    const { data } = await sb.from('lesson_views')
+      .select('watch_duration, completed')
+      .eq('user_id', uid).eq('lesson_id', lessonId).maybeSingle();
+    if (!data) return;
+
+    const badge   = document.getElementById('watch-badge');
+    const icon    = document.getElementById('watch-badge-icon');
+    const text    = document.getElementById('watch-badge-text');
+    const mins    = Math.floor((data.watch_duration || 0) / 60);
+    const secs    = (data.watch_duration || 0) % 60;
+    const timeStr = mins > 0 ? `${mins} phút ${secs} giây` : `${secs} giây`;
+
+    if (data.completed) {
+      badge.className = 'flex items-center gap-2 text-[11px] font-black uppercase text-green-600';
+      icon.textContent  = '✓';
+      text.textContent  = `Đã hoàn thành · Tổng thời gian xem: ${timeStr}`;
+    } else if (data.watch_duration > 0) {
+      badge.className = 'flex items-center gap-2 text-[11px] font-black uppercase text-blue-600';
+      icon.textContent  = '▶';
+      text.textContent  = `Đã xem: ${timeStr}`;
+    }
+    badge.classList.remove('hidden');
+  }
+
   async function loadFromCourse(courseId) {
     try {
-      // Lấy topic đầu tiên
-      const { data: firstTopic } = await sb
-        .from('topics')
-        .select('id')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true })
-        .limit(1)
-        .single();
-
-      if (!firstTopic) {
-        document.getElementById('lesson-title').textContent = 'Khóa học chưa có chuyên đề';
-        document.getElementById('sidebar-content').innerHTML =
-          `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`;
-        renderVideo(null); renderDocs(null);
-        return;
-      }
-
-      // Lấy bài học đầu tiên (ưu tiên bài open)
-      const { data: firstLesson } = await sb
-        .from('lessons')
-        .select('id, status')
-        .eq('topic_id', firstTopic.id)
-        .order('id', { ascending: true })
-        .limit(1)
-        .single();
-
-      if (!firstLesson) {
-        document.getElementById('lesson-title').textContent = 'Khóa học chưa có bài giảng';
-        await loadSidebar(courseId, firstTopic.id);
-        renderVideo(null); renderDocs(null);
-        return;
-      }
-
+      const { data: firstTopic } = await sb.from('topics').select('id').eq('course_id', courseId).order('order_index', { ascending: true }).limit(1).single();
+      if (!firstTopic) { document.getElementById('lesson-title').textContent = 'Khóa học chưa có chuyên đề'; renderVideo(null); renderDocs(null); return; }
+      const { data: firstLesson } = await sb.from('lessons').select('id, status').eq('topic_id', firstTopic.id).order('id', { ascending: true }).limit(1).single();
+      if (!firstLesson) { document.getElementById('lesson-title').textContent = 'Khóa học chưa có bài giảng'; await loadSidebar(courseId, firstTopic.id); renderVideo(null); renderDocs(null); return; }
       currentLessonId = String(firstLesson.id);
       window.history.replaceState({}, '', `?id=${firstLesson.id}`);
       await loadLesson(firstLesson.id);
-
-    } catch (err) {
-      showError('Không thể tải khóa học: ' + err.message);
-    }
+    } catch (err) { showError('Không thể tải khóa học: ' + err.message); }
   }
 
-  // ────────────────────────────────────────────
-  // HIỆN LỖI
-  // ────────────────────────────────────────────
   function showError(msg) {
     document.getElementById('lesson-title').textContent = 'Có lỗi xảy ra';
     document.getElementById('error-box').classList.remove('hidden');
@@ -480,28 +596,23 @@
     renderVideo(null);
   }
 
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   // KHỞI ĐỘNG
-  // ────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════
   window.addEventListener('DOMContentLoaded', async () => {
     checkLogin();
+    loadYTApi();           // load YouTube IFrame API
+    syncPendingWatch();    // sync data bị mất do đóng ngang
 
     if (currentLessonId) {
-      // Có id bài học cụ thể
       await loadLesson(currentLessonId);
-
     } else if (courseIdParam) {
-      // Vào từ trang khóa học → tìm bài đầu tiên
       document.getElementById('lesson-title').innerHTML = '<span class="text-gray-400 italic text-sm">Đang tải bài học...</span>';
       await loadFromCourse(courseIdParam);
-
     } else {
-      // Không có gì
       document.getElementById('lesson-title').textContent = 'Vui lòng chọn bài học từ danh sách';
-      document.getElementById('document-container').innerHTML =
-        `<div class="text-gray-300 text-[10px] italic text-center py-4">Chưa chọn bài học</div>`;
-      document.getElementById('sidebar-content').innerHTML =
-        `<div class="text-center py-8 text-gray-300 text-xs italic">Vui lòng chọn bài học</div>`;
+      document.getElementById('document-container').innerHTML = `<div class="text-gray-300 text-[10px] italic text-center py-4">Chưa chọn bài học</div>`;
+      document.getElementById('sidebar-content').innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Vui lòng chọn bài học</div>`;
       renderVideo(null);
     }
   });
