@@ -475,7 +475,7 @@
             document.getElementById('courses-section').classList.remove('hidden');
             document.getElementById('courses-grid').innerHTML = enrolls.map(e => {
                 const c = e.courses;
-                return `<a href="hoc-bai-giang.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
+                return `<a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
                     <img src="${c.thumbnail_url || 'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
                     <div class="flex-1 min-w-0">
                         <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
@@ -555,7 +555,7 @@
                 // Màu mũi tên + border theo trạng thái
                 const arrowBg    = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#1e3a8a');
 
-                const destUrl = `hoc-bai-giang.html?id=${l.id}`;
+                const destUrl = `lesson-detail.html?id=${l.id}`;
                 return `
                 <div class="lesson-card ${isUnread ? 'unread' : ''} group"
                      style="cursor:pointer;"
