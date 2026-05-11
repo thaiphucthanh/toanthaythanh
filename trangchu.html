@@ -61,6 +61,11 @@
         .lesson-card:hover { box-shadow: 0 10px 28px rgba(30,58,138,0.12); transform: translateY(-3px); border-color: #bfdbfe; }
         .lesson-card.unread { border-color: #fca5a5; }
         .lesson-card.unread:hover { border-color: #ef4444; }
+
+        /* ── Badge chưa xem có dot nhấp nháy ── */
+        .badge-unread-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#fff; animation:badgepulse 1.4s ease-in-out infinite; margin-right:3px; }
+        @keyframes badgepulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
         .lesson-thumb { width: 100%; aspect-ratio: 16/9; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
         .play-btn { width: 44px; height: 44px; background: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; transition: transform 0.2s; }
         .lesson-card:hover .play-btn { transform: scale(1.1); }
@@ -305,8 +310,8 @@
 
         new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 } });
 
-        // ── Mobile menu ─────────────────────
-        function openMob() { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow = 'hidden'; }
+        // ── Mobile menu ─────────────────────────────────────────────────────────
+        function openMob()  { document.getElementById('mob-menu').classList.add('open'); document.body.style.overflow = 'hidden'; }
         function closeMob() { document.getElementById('mob-menu').classList.remove('open'); document.body.style.overflow = ''; }
         function toggleSearch() {
             const b = document.getElementById('mob-search');
@@ -314,7 +319,7 @@
             if (!b.classList.contains('hidden')) b.querySelector('input').focus();
         }
 
-        // ── Lời nhắn theo giờ ───────────────
+        // ── Lời nhắn theo giờ ────────────────────────────────────────────────────
         function showMotivation(name) {
             const h = new Date().getHours();
             const n = name ? `, ${name}` : '';
@@ -335,7 +340,7 @@
                 </div>`;
         }
 
-        // ── Đếm ngược ───────────────────────
+        // ── Đếm ngược ────────────────────────────────────────────────────────────
         function pad(n) { return String(n).padStart(2, '0'); }
         let examDate = null;
         async function startCountdown() {
@@ -364,7 +369,7 @@
             if (diff === 0) document.getElementById('exam-date-txt').textContent = '🎉 Hôm nay là ngày thi! Chúc làm bài tốt!';
         }
 
-        // ── Admin chỉnh ngày thi ─────────────
+        // ── Admin chỉnh ngày thi ──────────────────────────────────────────────────
         async function openEditDate() {
             const cv = examDate ? `${examDate.getFullYear()}-${pad(examDate.getMonth() + 1)}-${pad(examDate.getDate())}T${pad(examDate.getHours())}:${pad(examDate.getMinutes())}` : '';
             const { value } = await Swal.fire({
@@ -394,7 +399,7 @@
             Swal.fire({ icon: 'success', title: 'Đã lưu ngày thi!', timer: 1500, showConfirmButton: false });
         }
 
-        // ── Tip toán ────────────────────────
+        // ── Tip toán ─────────────────────────────────────────────────────────────
         const TIPS = [
             'Định lý Pythagore: a² + b² = c² (c là cạnh huyền). Áp dụng cho mọi tam giác vuông.',
             'Phương trình bậc 2: tính Δ = b²-4ac trước, Δ≥0 mới có nghiệm thực.',
@@ -409,29 +414,27 @@
         ];
         function showTip() { document.getElementById('tip-text').textContent = TIPS[new Date().getDate() % TIPS.length]; }
 
-        // ── Quản lý bài đã xem (Supabase) ──────────────────────────────────────
-        // Lấy danh sách lesson_id đã xem của user từ Supabase
-        async function getViewedLessons(userId) {
-            const { data } = await sb.from('lesson_views')
-                .select('lesson_id')
+        // ══════════════════════════════════════════════════════════════════════════
+        // ĐỌC TRẠNG THÁI XEM TỪ SUPABASE (lesson_views)
+        // ══════════════════════════════════════════════════════════════════════════
+        // Trả về Map: lessonId (string) → { viewed, completed, watch_duration }
+        async function getViewedMap(userId) {
+            const { data } = await sb
+                .from('lesson_views')
+                .select('lesson_id, completed, watch_duration')
                 .eq('user_id', userId);
-            return (data || []).map(r => String(r.lesson_id));
+            const map = {};
+            (data || []).forEach(r => {
+                map[String(r.lesson_id)] = {
+                    viewed:         true,
+                    completed:      r.completed || false,
+                    watch_duration: r.watch_duration || 0
+                };
+            });
+            return map;
         }
 
-        // Ghi nhận học sinh vừa click vào bài → UPSERT lên Supabase
-        async function markViewed(lessonId) {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) return;
-            const uid = user.id || user.uid;
-            await sb.from('lesson_views').upsert({
-                user_id: uid,
-                lesson_id: parseInt(lessonId),
-                viewed_at: new Date().toISOString(),
-                device: window.innerWidth < 768 ? 'mobile' : 'desktop'
-            }, { onConflict: 'user_id,lesson_id' });
-        }
-
-        // ── Tiến độ học tập ──────────────────────────────────────────────────────
+        // ── Tiến độ học tập ───────────────────────────────────────────────────────
         async function loadProgress(userId) {
             document.getElementById('progress-section').classList.remove('hidden');
             const { data: enrolls } = await sb.from('course_enrollments')
@@ -442,28 +445,28 @@
                     `<p class="text-gray-400 text-sm italic text-center py-3">Chưa đăng ký khóa học nào.</p>`;
                 return;
             }
-            // Lấy lessons và bài đã xem song song
-            const [lessonsRes, viewed] = await Promise.all([
+            const [lessonsRes, viewedMap] = await Promise.all([
                 sb.from('lessons').select('id, topics:topic_id(course_id)').eq('status', 'Active'),
-                getViewedLessons(userId)
+                getViewedMap(userId)
             ]);
             const lessons = lessonsRes.data || [];
             document.getElementById('progress-content').innerHTML = enrolls.map(e => {
-                const courseLessons = lessons.filter(l => l.topics?.course_id === e.course_id);
-                const total = courseLessons.length;
-                const viewedCount = courseLessons.filter(l => viewed.includes(String(l.id))).length;
+                const courseLessons  = lessons.filter(l => l.topics?.course_id === e.course_id);
+                const total          = courseLessons.length;
+                const viewedCount    = courseLessons.filter(l => viewedMap[String(l.id)]?.viewed).length;
+                const completedCount = courseLessons.filter(l => viewedMap[String(l.id)]?.completed).length;
                 const pct = total > 0 ? Math.round((viewedCount / total) * 100) : 0;
                 return `<div class="mb-4">
                     <div class="flex justify-between mb-1">
                         <span class="text-sm font-bold text-blue-900">${e.courses?.course_name || 'Khóa học'}</span>
-                        <span class="text-xs font-black text-blue-600">${viewedCount}/${total} bài · ${pct}%</span>
+                        <span class="text-xs font-black text-blue-600">${viewedCount}/${total} đã xem · ${completedCount} hoàn thành · ${pct}%</span>
                     </div>
                     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
                 </div>`;
             }).join('');
         }
 
-        // ── Khóa học nổi bật ────────────────────────────────────────────────────
+        // ── Khóa học nổi bật ──────────────────────────────────────────────────────
         async function loadCourses(userId) {
             const { data: enrolls } = await sb.from('course_enrollments')
                 .select('courses:course_id(id,course_name,description,thumbnail_url)')
@@ -472,7 +475,7 @@
             document.getElementById('courses-section').classList.remove('hidden');
             document.getElementById('courses-grid').innerHTML = enrolls.map(e => {
                 const c = e.courses;
-                return `<a href="lesson-detail.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
+                return `<a href="hoc-bai-giang.html?course_id=${c.id}" class="bg-white rounded-xl border border-gray-100 p-3 flex gap-3 hover:shadow-md hover:border-blue-200 transition-all">
                     <img src="${c.thumbnail_url || 'logo.png'}" onerror="this.src='logo.png'" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50">
                     <div class="flex-1 min-w-0">
                         <div class="font-black text-blue-900 text-sm uppercase tracking-tight line-clamp-2 mb-1">${c.course_name}</div>
@@ -483,7 +486,7 @@
             }).join('');
         }
 
-        // ── Bài giảng mới nhất ──────────────────────────────────────────────────
+        // ── Bài giảng mới nhất ────────────────────────────────────────────────────
         function getTimeAgo(dateStr) {
             const diff = Date.now() - new Date(dateStr).getTime();
             const mins = Math.floor(diff / 60000), hours = Math.floor(diff / 3600000), days = Math.floor(diff / 86400000);
@@ -493,11 +496,17 @@
             return new Date(dateStr).toLocaleDateString('vi-VN');
         }
 
+        function fmtWatchTime(secs) {
+            if (!secs || secs < 10) return null;
+            const m = Math.floor(secs / 60), s = secs % 60;
+            return m > 0 ? `${m} phút ${s} giây` : `${s} giây`;
+        }
+
         async function loadLessons() {
             const grid = document.getElementById('video-grid');
             const user = JSON.parse(localStorage.getItem('user'));
 
-            // Lấy 6 bài mới nhất đang active
+            // 6 bài mới nhất đang active
             const { data: lessons } = await sb.from('lessons')
                 .select('id, title, content, status, created_at, topic_id')
                 .eq('status', 'Active')
@@ -519,41 +528,50 @@
                 (topics || []).forEach(t => { topicCourseMap[t.id] = t.course_id; });
             }
 
-            // Lấy khóa học đã đăng ký + danh sách đã xem (song song)
+            // Lấy khóa học đã đăng ký + trạng thái xem từ Supabase (song song)
             let enrolledIds = [];
-            let viewed = [];
+            let viewedMap   = {};
             if (user) {
                 const uid = user.id || user.uid;
                 const [enrollRes, viewedRes] = await Promise.all([
                     sb.from('course_enrollments').select('course_id').eq('user_id', uid),
-                    getViewedLessons(uid)
+                    getViewedMap(uid)   // ← đọc từ Supabase, không phải localStorage
                 ]);
                 enrolledIds = (enrollRes.data || []).map(e => e.course_id);
-                viewed = viewedRes;
+                viewedMap   = viewedRes;
             }
 
             grid.innerHTML = lessons.map(l => {
-                const lid = String(l.id);
-                const courseId = topicCourseMap[l.topic_id];
+                const lid        = String(l.id);
+                const courseId   = topicCourseMap[l.topic_id];
                 const isEnrolled = user && enrolledIds.includes(courseId);
-                const isViewed = viewed.includes(lid);
-                const showBadge = user && isEnrolled;
-                const isUnread = showBadge && !isViewed;
+                const vData      = viewedMap[lid];           // { viewed, completed, watch_duration }
+                const isViewed   = !!(vData?.viewed);
+                const isCompleted= !!(vData?.completed);
+                const watchTime  = fmtWatchTime(vData?.watch_duration);
+                const showBadge  = user && isEnrolled;
+                const isUnread   = showBadge && !isViewed;
+
+                // Màu mũi tên + border theo trạng thái
+                const arrowBg    = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#1e3a8a');
 
                 return `
-                <a href="lesson-detail.html?id=${l.id}"
-                   class="lesson-card ${isUnread ? 'unread' : ''} group"
-                   onclick="markViewed('${lid}')">
+                <a href="hoc-bai-giang.html?id=${l.id}"
+                   class="lesson-card ${isUnread ? 'unread' : ''} group">
 
                     ${showBadge ? `
                     <div class="absolute top-2.5 left-2.5 z-10">
-                        ${isUnread
-                            ? `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Chưa xem
+                        ${isCompleted
+                            ? `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                <i class="fas fa-check-circle text-[8px]"></i> Hoàn thành
                                </span>`
-                            : `<span class="bg-green-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">
-                                ✓ Đã xem
-                               </span>`
+                            : isViewed
+                                ? `<span class="bg-blue-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                    <i class="fas fa-history text-[8px]"></i> Đã xem${watchTime ? ' · ' + watchTime : ''}
+                                   </span>`
+                                : `<span class="bg-red-500 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                    <span class="badge-unread-dot"></span> Chưa xem
+                                   </span>`
                         }
                     </div>` : ''}
 
@@ -570,7 +588,8 @@
 
                     <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5">
                         <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
-                        <div class="w-6 h-6 ${isUnread ? 'bg-red-500' : 'bg-blue-900'} rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity"
+                             style="background:${arrowBg}">
                             <i class="fas fa-arrow-right text-white text-[8px]"></i>
                         </div>
                     </div>
@@ -578,7 +597,7 @@
             }).join('');
         }
 
-        // ── Đăng nhập ───────────────────────────────────────────────────────────
+        // ── Đăng nhập ─────────────────────────────────────────────────────────────
         function checkLogin() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) {
