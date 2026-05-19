@@ -863,193 +863,326 @@ async function loadLessons() {
     }
 }
 
-// ════════════════════════════════════════════════
-// THÔNG BÁO (BELL)
-// ════════════════════════════════════════════════
-let _notifOpen = false;
+// ================================
+// NOTIFICATION SYSTEM NEW DATABASE
+// ================================
 
-function buildBell() {
+let bellLoaded = false;
 
-    return `
+// Toggle bell
+async function toggleBell(event) {
 
-    <div id="bell-wrap" class="relative flex items-center">
+    event.stopPropagation();
 
-        <button id="bell-btn"
-            onclick="toggleBell(event)"
+    const dropdown = document.getElementById("bell-dropdown");
 
-            class="relative w-10 h-10 rounded-full bg-gray-100
-            text-gray-500 flex items-center justify-center
-            hover:bg-blue-50 hover:text-blue-900
-            transition-all duration-300 shadow-sm">
+    if (!dropdown) return;
 
-            <i class="fas fa-bell text-sm"></i>
+    dropdown.classList.toggle("hidden");
 
-        </button>
+    if (!bellLoaded) {
+        await loadNotifications();
+        bellLoaded = true;
+    }
+}
 
-        <span id="bell-badge"
-            class="hidden absolute -top-1 -right-1 bg-red-500
-            text-white text-[9px] font-black rounded-full
-            min-w-[18px] h-[18px] flex items-center justify-center
-            px-1 border-2 border-white shadow">
+// Load notifications
+async function loadNotifications() {
 
-        </span>
+    try {
 
-        <div id="bell-dropdown"
-            class="hidden absolute right-0 bg-white rounded-2xl border border-gray-100 z-[999]"
-            style="top:calc(100% + 10px);
-            width:320px;
-            box-shadow:0 20px 50px rgba(0,0,0,0.12)">
+        const user = JSON.parse(localStorage.getItem("user"));
 
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        if (!user) return;
 
-                <span class="font-black text-blue-900 text-sm uppercase tracking-tight">
-                    Thông báo
-                </span>
+        const { data, error } = await supabase
+            .from("notifications")
+            .select(`
+                *,
+                courses (
+                    course_name
+                )
+            `)
+            .eq("recipient_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
 
-                <button onclick="markAllRead()"
-                    class="text-[10px] font-bold text-blue-500 hover:text-blue-700 uppercase">
-                    Đọc tất cả
-                </button>
+        if (error) throw error;
 
+        renderNotifications(data || []);
+
+    } catch (err) {
+
+        console.error("Load notification error:", err);
+
+        document.getElementById("bell-list").innerHTML = `
+            <div class="text-center py-6 text-red-400 text-sm">
+                Không tải được thông báo
             </div>
+        `;
+    }
+}
 
-            <div id="bell-list"
-                class="max-h-80 overflow-y-auto">
+// Render notifications
+function renderNotifications(list) {
 
-                <div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">
-                    Đang tải...
+    const container = document.getElementById("bell-list");
+
+    if (!container) return;
+
+    if (list.length === 0) {
+
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-400 text-sm">
+                Chưa có thông báo nào
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = list.map(item => {
+
+        const time = formatTimeAgo(item.created_at);
+
+        return `
+
+        <div
+            onclick="markRead(${item.id})"
+            class="p-4 border-b border-gray-100 hover:bg-blue-50 transition cursor-pointer
+            ${item.is_read ? 'bg-white' : 'bg-blue-50/60'}">
+
+            <div class="flex gap-3">
+
+                <div class="mt-1">
+
+                    <div class="
+                        w-10 h-10 rounded-full
+                        bg-blue-100 text-blue-700
+                        flex items-center justify-center">
+
+                        <i class="fas fa-bell"></i>
+
+                    </div>
+
                 </div>
 
-            </div>
+                <div class="flex-1 min-w-0">
 
-            <div class="border-t border-gray-100 px-4 py-3 text-center">
+                    <div class="flex items-start justify-between gap-2">
 
-                <a href="thong-bao.html"
-                    class="text-[11px] font-black text-blue-500 hover:text-blue-700 uppercase">
-                    Xem tất cả
-                </a>
+                        <h4 class="font-bold text-sm text-gray-800 line-clamp-1">
+                            ${item.title || 'Thông báo'}
+                        </h4>
+
+                        ${!item.is_read
+                            ? `<span class="w-2 h-2 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>`
+                            : ''
+                        }
+
+                    </div>
+
+                    <p class="text-sm text-gray-600 mt-1 line-clamp-2">
+                        ${item.content || ''}
+                    </p>
+
+                    ${item.courses?.course_name
+                        ? `
+                        <div class="mt-2 text-[11px] font-bold text-blue-600 uppercase">
+                            ${item.courses.course_name}
+                        </div>
+                        `
+                        : ''
+                    }
+
+                    <div class="mt-2 text-[11px] text-gray-400">
+                        ${time}
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
+        `;
+    }).join("");
 
-    </div>
-    `;
+    updateBellBadge();
 }
 
-function toggleBell(e) {
-    e.stopPropagation();
-    _notifOpen = !_notifOpen;
-    document.getElementById('bell-dropdown').classList.toggle('hidden', !_notifOpen);
-    if (_notifOpen) loadNotifications();
-}
-
-async function loadNotifications() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const uid  = user.id || user.uid;
-    const list = document.getElementById('bell-list');
-    try {
-        const { data, error } = await sb
-            .from('notifications')
-            .select('*')
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
-            .order('created_at', { ascending: false })
-            .limit(10);
-        if (error) throw error;
-        if (!data?.length) {
-            list.innerHTML = `<div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">Không có thông báo</div>`;
-            return;
-        }
-        const icons = {
-            new_lesson:    { icon: 'fa-play-circle', bg: '#dbeafe', color: '#1e40af' },
-            exam_reminder: { icon: 'fa-clock',        bg: '#fef3c7', color: '#92400e' },
-            announcement:  { icon: 'fa-bullhorn',     bg: '#dcfce7', color: '#166534' },
-            system:        { icon: 'fa-info-circle',  bg: '#f3e8ff', color: '#6b21a8' },
-        };
-        list.innerHTML = data.map(n => {
-            const ic      = icons[n.type] || icons.system;
-            const isUnread = !n.is_read;
-            return `
-            <div onclick="clickNotif('${n.id}','${n.link_url || ''}')"
-                 class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
-                     style="background:${ic.bg};color:${ic.color}">
-                    <i class="fas ${ic.icon}"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="font-black text-blue-900 text-xs leading-tight mb-0.5 line-clamp-1">${n.title || ''}</div>
-                    <div class="text-gray-400 text-[11px] leading-snug line-clamp-2">${n.body || ''}</div>
-                    <div class="text-[10px] text-gray-300 font-bold mt-1">${getTimeAgo(n.created_at)}</div>
-                </div>
-                ${isUnread ? '<div class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>' : ''}
-            </div>`;
-        }).join('');
-    } catch(e) {
-        console.error('[loadNotifications]', e.message);
-        list.innerHTML = `<div class="text-center py-6 text-red-300 text-xs font-bold uppercase">Lỗi tải thông báo</div>`;
-    }
-}
-
-async function clickNotif(id, url) {
-    const user = getCurrentUser();
-    if (!user) return;
-    try {
-        await sb.from('notifications').update({ is_read: true }).eq('id', id);
-        await updateBellBadge();
-    } catch(e) { /* bỏ qua lỗi đọc */ }
-    document.getElementById('bell-dropdown').classList.add('hidden');
-    _notifOpen = false;
-    if (url) window.location.href = url;
-}
-
-async function markAllRead() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const uid = user.id || user.uid;
-    try {
-        await sb.from('notifications')
-            .update({ is_read: true })
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
-            .eq('is_read', false);
-        document.getElementById('bell-badge').classList.add('hidden');
-        loadNotifications();
-    } catch(e) { console.error('[markAllRead]', e.message); }
-}
-
+// Update unread badge
 async function updateBellBadge() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const uid = user.id || user.uid;
+
     try {
-        const { count, error } = await sb
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
-            .eq('is_read', false);
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!user) return;
+
+        const badge = document.getElementById("bell-badge");
+
+        if (!badge) return;
+
+        const { count, error } = await supabase
+            .from("notifications")
+            .select("*", {
+                count: "exact",
+                head: true
+            })
+            .eq("recipient_id", user.id)
+            .eq("is_read", false);
+
         if (error) throw error;
-        const badge = document.getElementById('bell-badge');
-        if (badge) {
-            if (count > 0) {
-                badge.textContent = count > 9 ? '9+' : String(count);
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
+
+        if (!count || count <= 0) {
+
+            badge.classList.add("hidden");
+
+        } else {
+
+            badge.classList.remove("hidden");
+
+            badge.innerText = count > 99 ? "99+" : count;
         }
-    } catch(e) { console.warn('[updateBellBadge]', e.message); }
+
+    } catch (err) {
+
+        console.error("Badge error:", err);
+    }
 }
 
-// Đóng dropdown khi click ra ngoài
-document.addEventListener('click', e => {
-    if (!e.target.closest('#bell-wrap')) {
-        document.getElementById('bell-dropdown')?.classList.add('hidden');
-        _notifOpen = false;
+// Mark one as read
+async function markRead(id) {
+
+    try {
+
+        await supabase
+            .from("notifications")
+            .update({
+                is_read: true
+            })
+            .eq("id", id);
+
+        await loadNotifications();
+
+    } catch (err) {
+
+        console.error(err);
     }
-    if (!e.target.closest('.cum-tai-khoan')) {
-        document.getElementById('dropdownUser')?.classList.remove('active');
+}
+
+// Mark all read
+async function markAllRead() {
+
+    try {
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!user) return;
+
+        await supabase
+            .from("notifications")
+            .update({
+                is_read: true
+            })
+            .eq("recipient_id", user.id)
+            .eq("is_read", false);
+
+        await loadNotifications();
+
+    } catch (err) {
+
+        console.error(err);
+    }
+}
+
+// Time ago
+function formatTimeAgo(dateString) {
+
+    const now = new Date();
+    const date = new Date(dateString);
+
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "Vừa xong";
+
+    const minutes = Math.floor(seconds / 60);
+
+    if (minutes < 60)
+        return minutes + " phút trước";
+
+    const hours = Math.floor(minutes / 60);
+
+    if (hours < 24)
+        return hours + " giờ trước";
+
+    const days = Math.floor(hours / 24);
+
+    if (days < 30)
+        return days + " ngày trước";
+
+    return date.toLocaleDateString("vi-VN");
+}
+
+// Close dropdown outside
+document.addEventListener("click", function () {
+
+    const dropdown = document.getElementById("bell-dropdown");
+
+    if (dropdown) {
+
+        dropdown.classList.add("hidden");
     }
 });
+
+// Prevent close when click inside
+document.addEventListener("click", function (e) {
+
+    const dropdown = document.getElementById("bell-dropdown");
+
+    if (
+        dropdown &&
+        dropdown.contains(e.target)
+    ) {
+
+        e.stopPropagation();
+    }
+});
+
+// Realtime notification
+async function initNotificationRealtime() {
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) return;
+
+    supabase
+        .channel("notification-channel")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "notifications",
+                filter: `recipient_id=eq.${user.id}`
+            },
+            async () => {
+
+                await updateBellBadge();
+
+                if (!document
+                    .getElementById("bell-dropdown")
+                    ?.classList.contains("hidden")) {
+
+                    await loadNotifications();
+                }
+            }
+        )
+        .subscribe();
+}
+
+// Start realtime
+initNotificationRealtime();
 
 // ════════════════════════════════════════════════
 // QUẢN LÝ USER SESSION
