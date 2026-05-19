@@ -393,20 +393,54 @@
                 }
             }
 
-            const { error } = await supabaseClient.from('lessons').insert([{
-                topic_id: topicId,
-                title: formValues.title,
-                video_url: formValues.video || null,
-                insight: formValues.insight || null,
-                status: formValues.status,
-                documents: finalDocs
-            }]);
+            const { data: lesson, error } = await supabaseClient
+                .from('lessons')
+                .insert([{
+                    topic_id: topicId,
+                    title: formValues.title,
+                    video_url: formValues.video || null,
+                    insight: formValues.insight || null,
+                    status: formValues.status,
+                    documents: finalDocs
+                }])
+                .select()
+                .single();
+            if (error) {
+    Swal.fire('Lỗi!', error.message, 'error');
+}
+else {
 
-            if (error) Swal.fire('Lỗi!', error.message, 'error');
-            else {
-                Swal.fire({ icon: 'success', title: 'Đã thêm bài học!', timer: 1200, showConfirmButton: false });
-                fetchLessons();
-            }
+    // lấy toàn bộ học sinh
+    const { data: students } = await supabaseClient
+        .from('accounts')
+        .select('id')
+        .eq('role', 'student');
+
+    // tạo notifications
+    if (students?.length) {
+
+        const notifications = students.map(s => ({
+            recipient_id: s.id,
+            lesson_id: lesson.id,
+            title: 'Bài giảng mới',
+            content: lesson.title,
+            type: 'new_lesson'
+        }));
+
+        await supabaseClient
+            .from('notifications')
+            .insert(notifications);
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Đã thêm bài học!',
+        timer: 1200,
+        showConfirmButton: false
+    });
+
+    fetchLessons();
+}
         }
 
         // =====================
