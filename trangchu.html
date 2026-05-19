@@ -998,7 +998,7 @@ console.log(error);
             const ic      = icons[n.type] || icons.system;
             const isUnread = !n.is_read;
             return `
-            <div <div onclick="clickNotif('${n.id}', '${n.lesson_id}')"
+            <div onclick="clickNotif('${n.id}', '${n.lesson_id}')"
                  class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
                      style="background:${ic.bg};color:${ic.color}">
