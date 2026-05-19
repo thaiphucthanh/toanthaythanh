@@ -504,7 +504,7 @@ else {
             }
         }
 
-        async function deleteLesson(id) {
+      async function deleteLesson(id) {
 
     const res = await Swal.fire({
         title: 'Xóa bài học này?',
@@ -521,24 +521,28 @@ else {
     try {
 
         // xóa notifications
-        await supabaseClient
+        const { error: notifError } = await supabaseClient
             .from('notifications')
             .delete()
             .eq('lesson_id', id);
 
+        if (notifError) throw notifError;
+
         // xóa lượt xem
-        await supabaseClient
+        const { error: viewError } = await supabaseClient
             .from('lesson_views')
             .delete()
             .eq('lesson_id', id);
 
+        if (viewError) throw viewError;
+
         // xóa bài học
-        const { error } = await supabaseClient
+        const { error: lessonError } = await supabaseClient
             .from('lessons')
             .delete()
             .eq('id', id);
 
-        if (error) throw error;
+        if (lessonError) throw lessonError;
 
         Swal.fire(
             'Đã xóa!',
