@@ -526,24 +526,61 @@ else {
             }
         }
 
-        // =====================
-        // XÓA BÀI HỌC
-        // =====================
         async function deleteLesson(id) {
-            const res = await Swal.fire({
-                title: 'Xóa bài học này?',
-                text: 'Hành động này không thể hoàn tác!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'Xóa',
-                cancelButtonText: 'Hủy'
-            });
-            if (res.isConfirmed) {
-                await supabaseClient.from('lessons').delete().eq('id', id);
-                fetchLessons();
-            }
-        }
+
+    const res = await Swal.fire({
+        title: 'Xóa bài học này?',
+        text: 'Hành động này không thể hoàn tác!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy'
+    });
+
+    if (!res.isConfirmed) return;
+
+    try {
+
+        // xóa notifications
+        await supabaseClient
+            .from('notifications')
+            .delete()
+            .eq('lesson_id', id);
+
+        // xóa lượt xem
+        await supabaseClient
+            .from('lesson_views')
+            .delete()
+            .eq('lesson_id', id);
+
+        // xóa bài học
+        const { error } = await supabaseClient
+            .from('lessons')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        Swal.fire(
+            'Đã xóa!',
+            'Bài học đã được xóa.',
+            'success'
+        );
+
+        fetchLessons();
+
+    } catch(e) {
+
+        console.error(e);
+
+        Swal.fire(
+            'Lỗi',
+            e.message,
+            'error'
+        );
+    }
+}
 
         // =====================
         // TIỆN ÍCH
