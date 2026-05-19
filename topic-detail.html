@@ -410,27 +410,37 @@
 }
 else {
 
-    // lấy toàn bộ học sinh
-    const { data: students } = await supabaseClient
-        .from('accounts')
-        .select('id')
-        .eq('role', 'student');
+    // lấy course_id từ topic
+const { data: topicData } = await supabaseClient
+    .from('topics')
+    .select('course_id')
+    .eq('id', topicId)
+    .single();
 
-    // tạo notifications
-    if (students?.length) {
+const courseId = topicData?.course_id;
 
-        const notifications = students.map(s => ({
-            recipient_id: s.id,
-            lesson_id: lesson.id,
-            title: 'Bài giảng mới',
-            content: lesson.title,
-            type: 'new_lesson'
-        }));
+// lấy học sinh đã đăng ký khóa học
+const { data: enrollments } = await supabaseClient
+    .from('course_enrollments')
+    .select('user_id')
+    .eq('course_id', courseId);
 
-        await supabaseClient
-            .from('notifications')
-            .insert(notifications);
-    }
+// tạo notifications
+if (enrollments?.length) {
+
+    const notifications = enrollments.map(e => ({
+        recipient_id: e.user_id,
+        lesson_id: lesson.id,
+        course_id: courseId,
+        title: 'Bài giảng mới',
+        content: lesson.title,
+        type: 'new_lesson'
+    }));
+
+    await supabaseClient
+        .from('notifications')
+        .insert(notifications);
+}
 
     Swal.fire({
         icon: 'success',
