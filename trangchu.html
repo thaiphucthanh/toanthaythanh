@@ -15,7 +15,17 @@
         html, body { margin: 0; }
         body { font-family: 'Inter', sans-serif; background: #f9fafb; display: flex; flex-direction: column; min-height: 100vh; }
         main { flex: 1; }
+        #bell-wrap {
+            position: relative;
+            overflow: visible !important;
+        }
 
+        #bell-dropdown {
+            position: absolute;
+            right: 0;
+            top: 120%;
+            z-index: 99999;
+        }
         /* ── Dropdown user ── */
         .dropdown-user {
             position: absolute; top: 120%; right: 0; width: 220px;
@@ -959,8 +969,7 @@ function toggleBell(e) {
 }
 
 async function loadNotifications() {
-    console.log(data);
-console.log(error);
+    
     const user = getCurrentUser();
     if (!user) return;
     const uid  = user.id || user.uid;
@@ -972,6 +981,8 @@ console.log(error);
             .eq('recipient_id', uid)
             .order('created_at', { ascending: false })
             .limit(10);
+        console.log(data);
+console.log(error);
         if (error) throw error;
         if (!data?.length) {
             list.innerHTML = `<div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">Không có thông báo</div>`;
@@ -987,7 +998,7 @@ console.log(error);
             const ic      = icons[n.type] || icons.system;
             const isUnread = !n.is_read;
             return `
-            <div onclick="clickNotif('${n.id}')"
+            <div onclick="clickNotif('${n.id}','${n.link_url || ''}')"
                  class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
                      style="background:${ic.bg};color:${ic.color}">
@@ -1007,7 +1018,7 @@ console.log(error);
     }
 }
 
-async function clickNotif(id) {
+async function clickNotif(id, url) {
     const user = getCurrentUser();
     if (!user) return;
     try {
