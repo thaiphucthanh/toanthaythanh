@@ -959,6 +959,8 @@ function toggleBell(e) {
 }
 
 async function loadNotifications() {
+    console.log(data);
+console.log(error);
     const user = getCurrentUser();
     if (!user) return;
     const uid  = user.id || user.uid;
@@ -967,7 +969,7 @@ async function loadNotifications() {
         const { data, error } = await sb
             .from('notifications')
             .select('*')
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
+            .eq('recipient_id', uid)
             .order('created_at', { ascending: false })
             .limit(10);
         if (error) throw error;
@@ -985,7 +987,7 @@ async function loadNotifications() {
             const ic      = icons[n.type] || icons.system;
             const isUnread = !n.is_read;
             return `
-            <div onclick="clickNotif('${n.id}','${n.link_url || ''}')"
+            <div onclick="clickNotif('${n.id}')"
                  class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
                      style="background:${ic.bg};color:${ic.color}">
@@ -993,7 +995,7 @@ async function loadNotifications() {
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="font-black text-blue-900 text-xs leading-tight mb-0.5 line-clamp-1">${n.title || ''}</div>
-                    <div class="text-gray-400 text-[11px] leading-snug line-clamp-2">${n.body || ''}</div>
+                    <div class="text-gray-400 text-[11px] leading-snug line-clamp-2">${n.content || ''}</div>
                     <div class="text-[10px] text-gray-300 font-bold mt-1">${getTimeAgo(n.created_at)}</div>
                 </div>
                 ${isUnread ? '<div class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>' : ''}
@@ -1005,7 +1007,7 @@ async function loadNotifications() {
     }
 }
 
-async function clickNotif(id, url) {
+async function clickNotif(id) {
     const user = getCurrentUser();
     if (!user) return;
     try {
@@ -1024,7 +1026,7 @@ async function markAllRead() {
     try {
         await sb.from('notifications')
             .update({ is_read: true })
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
+            .eq('recipient_id', uid)
             .eq('is_read', false);
         document.getElementById('bell-badge').classList.add('hidden');
         loadNotifications();
@@ -1039,7 +1041,7 @@ async function updateBellBadge() {
         const { count, error } = await sb
             .from('notifications')
             .select('id', { count: 'exact', head: true })
-            .or(`is_global.eq.true,user_id.eq.${uid}`)
+            .eq('recipient_id', uid)
             .eq('is_read', false);
         if (error) throw error;
         const badge = document.getElementById('bell-badge');
