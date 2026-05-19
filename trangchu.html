@@ -627,10 +627,8 @@
 
         function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
         function logout() { if (confirm('Bạn muốn đăng xuất?')) { localStorage.removeItem('user'); window.location.reload(); } }
-
-        window.onload = () => { checkLogin(); startCountdown(); showTip(); loadLessons(); };
-        window.onclick = e => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
-        let _notifOpen = false;
+        // ── NOTIFICATIONS ─────────────────────────────────────
+let _notifOpen = false;
 
 function toggleBell(e) {
     e.stopPropagation();
@@ -729,6 +727,9 @@ document.addEventListener('click', e => {
         _notifOpen = false;
     }
 });
+        window.onload = () => { checkLogin(); startCountdown(); showTip(); loadLessons(); };
+        window.onclick = e => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+        
     </script>
 </body>
 </html>
