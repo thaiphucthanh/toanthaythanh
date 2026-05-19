@@ -410,38 +410,6 @@
 }
 else {
 
-    // lấy course_id từ topic
-const { data: topicData } = await supabaseClient
-    .from('topics')
-    .select('course_id')
-    .eq('id', topicId)
-    .single();
-
-const courseId = topicData?.course_id;
-
-// lấy học sinh đã đăng ký khóa học
-const { data: enrollments } = await supabaseClient
-    .from('course_enrollments')
-    .select('user_id')
-    .eq('course_id', courseId);
-
-// tạo notifications
-if (enrollments?.length) {
-
-    const notifications = enrollments.map(e => ({
-        recipient_id: e.user_id,
-        lesson_id: lesson.id,
-        course_id: courseId,
-        title: 'Bài giảng mới',
-        content: lesson.title,
-        type: 'new_lesson'
-    }));
-
-    await supabaseClient
-        .from('notifications')
-        .insert(notifications);
-}
-
     Swal.fire({
         icon: 'success',
         title: 'Đã thêm bài học!',
