@@ -998,7 +998,7 @@ console.log(error);
             const ic      = icons[n.type] || icons.system;
             const isUnread = !n.is_read;
             return `
-            <div onclick="clickNotif('${n.id}','${n.link_url || ''}')"
+            <div <div onclick="clickNotif('${n.id}', '${n.lesson_id}')"
                  class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
                      style="background:${ic.bg};color:${ic.color}">
@@ -1018,16 +1018,35 @@ console.log(error);
     }
 }
 
-async function clickNotif(id, url) {
+async function clickNotif(id, lessonId = null) {
+
     const user = getCurrentUser();
     if (!user) return;
+
     try {
-        await sb.from('notifications').update({ is_read: true }).eq('id', id);
+
+        await sb
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('id', id);
+
         await updateBellBadge();
-    } catch(e) { /* bỏ qua lỗi đọc */ }
-    document.getElementById('bell-dropdown').classList.add('hidden');
+
+    } catch(e) {
+        console.error(e);
+    }
+
+    // đóng dropdown
+    document.getElementById('bell-dropdown')
+        ?.classList.add('hidden');
+
     _notifOpen = false;
-    if (url) window.location.href = url;
+
+    // chuyển trang bài giảng
+    if (lessonId) {
+        window.location.href =
+            `lesson-detail.html?id=${lessonId}`;
+    }
 }
 
 async function markAllRead() {
