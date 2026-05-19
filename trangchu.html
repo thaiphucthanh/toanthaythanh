@@ -107,10 +107,34 @@
             <div class="flex items-center gap-2">
                 <button class="md:hidden w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-sm" onclick="toggleSearch()"><i class="fas fa-search"></i></button>
                 <div class="cum-tai-khoan relative" id="user-section">
-                    <div class="flex gap-1.5">
-                        <button class="hidden md:block px-3 py-1.5 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
-                        <button class="hidden md:block px-4 py-1.5 bg-blue-900 text-white rounded-full font-bold text-sm hover:bg-blue-800 transition-all">Đăng ký</button>
-                    </div>
+                    <div class="flex items-center gap-2">
+    <!-- Nút chuông (chỉ hiện khi đã đăng nhập, JS sẽ xử lý) -->
+    <div id="bell-wrap" class="hidden relative">
+        <button id="bell-btn" onclick="toggleBell(event)"
+            class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-blue-50 hover:text-blue-900 transition-all"
+            aria-label="Thông báo">
+            <i class="fas fa-bell text-sm"></i>
+        </button>
+        <span id="bell-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 border-2 border-white"></span>
+        <!-- Dropdown thông báo -->
+        <div id="bell-dropdown" class="hidden absolute right-0 top-[calc(100%+8px)] w-80 bg-white rounded-2xl border border-gray-100 shadow-xl z-[999]" style="box-shadow:0 10px 40px rgba(0,0,0,0.12)">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <span class="font-black text-blue-900 text-sm uppercase tracking-tight">Thông báo</span>
+                <button onclick="markAllRead()" class="text-[10px] font-bold text-blue-500 hover:text-blue-700 uppercase">Đọc tất cả</button>
+            </div>
+            <div id="bell-list" class="max-h-80 overflow-y-auto">
+                <div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">Đang tải...</div>
+            </div>
+            <div class="border-t border-gray-100 px-4 py-2.5 text-center">
+                <a href="thong-bao.html" class="text-[11px] font-black text-blue-500 hover:text-blue-700 uppercase">Xem tất cả</a>
+            </div>
+        </div>
+    </div>
+    <div class="flex gap-1.5">
+        <button class="hidden md:block px-3 py-1.5 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
+        <button class="hidden md:block px-4 py-1.5 bg-blue-900 text-white rounded-full font-bold text-sm hover:bg-blue-800 transition-all">Đăng ký</button>
+    </div>
+</div>
                 </div>
                 <button onclick="openMob()" class="md:hidden w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center text-sm flex-shrink-0"><i class="fas fa-bars"></i></button>
             </div>
@@ -597,6 +621,8 @@
             } else {
                 showMotivation(null);
             }
+            document.getElementById('bell-wrap').classList.remove('hidden');
+            updateBellBadge();
         }
 
         function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
@@ -604,6 +630,105 @@
 
         window.onload = () => { checkLogin(); startCountdown(); showTip(); loadLessons(); };
         window.onclick = e => { if (!e.target.closest('.cum-tai-khoan')) document.getElementById('dropdownUser')?.classList.remove('active'); };
+        let _notifOpen = false;
+
+function toggleBell(e) {
+    e.stopPropagation();
+    _notifOpen = !_notifOpen;
+    document.getElementById('bell-dropdown').classList.toggle('hidden', !_notifOpen);
+    if (_notifOpen) loadNotifications();
+}
+
+async function loadNotifications() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+    const uid = user.id || user.uid;
+    const list = document.getElementById('bell-list');
+
+    const { data } = await sb.from('notifications')
+        .select('*')
+        .or(`is_global.eq.true,user_id.eq.${uid}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    if (!data?.length) {
+        list.innerHTML = `<div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">Không có thông báo</div>`;
+        return;
+    }
+
+    const icons = {
+        new_lesson:    { icon: 'fa-play-circle', bg: '#dbeafe', color: '#1e40af' },
+        exam_reminder: { icon: 'fa-clock',        bg: '#fef3c7', color: '#92400e' },
+        announcement:  { icon: 'fa-bullhorn',     bg: '#dcfce7', color: '#166534' },
+        system:        { icon: 'fa-info-circle',  bg: '#f3e8ff', color: '#6b21a8' },
+    };
+
+    list.innerHTML = data.map(n => {
+        const ic = icons[n.type] || icons.system;
+        const isUnread = !n.is_read;
+        const timeAgo = getTimeAgo(n.created_at);
+        return `
+        <div onclick="clickNotif('${n.id}','${n.link_url||''}')"
+             class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
+                 style="background:${ic.bg};color:${ic.color}">
+                <i class="fas ${ic.icon}"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="font-black text-blue-900 text-xs leading-tight mb-0.5 line-clamp-1">${n.title}</div>
+                <div class="text-gray-400 text-[11px] leading-snug line-clamp-2">${n.body||''}</div>
+                <div class="text-[10px] text-gray-300 font-bold mt-1">${timeAgo}</div>
+            </div>
+            ${isUnread ? '<div class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>' : ''}
+        </div>`;
+    }).join('');
+}
+
+async function clickNotif(id, url) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+    await sb.from('notifications').update({ is_read: true }).eq('id', id);
+    updateBellBadge();
+    if (url) window.location.href = url;
+    else document.getElementById('bell-dropdown').classList.add('hidden');
+}
+
+async function markAllRead() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+    const uid = user.id || user.uid;
+    await sb.from('notifications')
+        .update({ is_read: true })
+        .or(`is_global.eq.true,user_id.eq.${uid}`)
+        .eq('is_read', false);
+    document.getElementById('bell-badge').classList.add('hidden');
+    loadNotifications();
+}
+
+async function updateBellBadge() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+    const uid = user.id || user.uid;
+    const { count } = await sb.from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .or(`is_global.eq.true,user_id.eq.${uid}`)
+        .eq('is_read', false);
+    const badge = document.getElementById('bell-badge');
+    if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// Đóng dropdown khi click ra ngoài
+document.addEventListener('click', e => {
+    if (!e.target.closest('#bell-wrap')) {
+        document.getElementById('bell-dropdown')?.classList.add('hidden');
+        _notifOpen = false;
+    }
+});
     </script>
 </body>
 </html>
