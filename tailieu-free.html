@@ -182,6 +182,10 @@
         /* Search highlight */
         #search-docs:focus { outline: none; box-shadow: 0 0 0 3px rgba(30,58,138,0.15); }
 
+        /* Bell notification */
+        #bell-wrap { position: relative; overflow: visible !important; }
+        #bell-dropdown { position: absolute; right: 0; top: 120%; z-index: 99999; }
+
         /* Skeleton loader */
         .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -206,8 +210,8 @@
                     oninput="filterDocs()">
             </div>
 
-            <div class="cum-tai-khoan relative" id="user-section">
-                <button class="px-5 py-2 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
+            <div class="flex items-center gap-2 md:gap-3" id="user-section">
+                <button class="px-5 py-2 text-blue-900 font-bold text-sm" onclick="location.href='login.html'" id="guest-btn">Đăng nhập</button>
             </div>
         </div>
 
@@ -217,6 +221,7 @@
                     <li><a href="trangchu.html" class="item-menu opacity-80 hover:opacity-100">Trang chủ</a></li>
                     <li><a href="khoa-hoc-cua-toi.html" class="item-menu opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
                     <li><a href="tailieu-free.html" class="item-menu opacity-100 border-b-2 border-yellow-400 pb-1">Tài liệu miễn phí</a></li>
+                    <li><a href="thi-thu.html" class="item-menu opacity-80 hover:opacity-100">Thi thử</a></li>
                 </ul>
             </div>
         </nav>
@@ -395,25 +400,6 @@
         </div>
     </div>
 
-    <!-- User template -->
-    <script id="user-logged-template" type="text/template">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
-            <div class="text-right hidden md:block">
-                <div class="text-blue-900 font-black text-sm uppercase leading-tight">{fullname}</div>
-                <div class="text-gray-400 text-[10px] font-bold tracking-widest">{role_text}</div>
-            </div>
-            <img src="logo.png" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm" onerror="this.style.display='none'">
-            <div class="dropdown-user shadow-2xl" id="dropdownUser">
-                {admin_option}
-                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i> Thông tin cá nhân</a>
-                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3"></i> Khóa học của tôi</a>
-                <a href="tailieu-free.html" class="item-dropdown text-blue-700 bg-blue-50"><i class="fas fa-file-pdf mr-3"></i> Tài liệu miễn phí</a>
-                <div class="divider"></div>
-                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i> Đăng xuất</a>
-            </div>
-        </div>
-    </script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
@@ -424,6 +410,7 @@
         let allDocs = [];
         let currentFilter = 'all';
         let selectedFile = null;
+        let _notifOpen = false;
 
         const CAT_LABELS = {
             'de-cuong': 'Đề cương',
@@ -441,26 +428,188 @@
             'khac': '#d97706'
         };
 
-        // ──────────────── AUTH ────────────────
+        function getTimeAgo(dateStr) {
+            if (!dateStr) return '';
+            const diff  = Date.now() - new Date(dateStr).getTime();
+            const mins  = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days  = Math.floor(diff / 86400000);
+            if (mins  < 60) return `${mins} phút trước`;
+            if (hours < 24) return `${hours} giờ trước`;
+            if (days  <  7) return `${days} ngày trước`;
+            return new Date(dateStr).toLocaleDateString('vi-VN');
+        }
+
+        // ──────────────── BELL HTML ────────────────
+        function buildBell() {
+            return `
+            <div id="bell-wrap" class="relative flex items-center justify-center">
+                <button id="bell-btn" onclick="toggleBell(event)"
+                    class="relative w-10 h-10 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-500 hover:text-blue-800 transition-all duration-300 flex items-center justify-center shadow-sm">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span id="bell-badge"
+                        class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white">
+                    </span>
+                </button>
+                <div id="bell-dropdown"
+                    class="hidden absolute right-0 top-[120%] w-[320px] bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden z-[9999]">
+                    <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                        <div class="font-bold text-blue-900">Thông báo</div>
+                        <button onclick="markAllRead()" class="text-xs text-blue-500 font-bold hover:text-blue-700">Đọc tất cả</button>
+                    </div>
+                    <div id="bell-list" class="max-h-[400px] overflow-y-auto">
+                        <div class="text-center py-6 text-gray-400 text-sm">Đang tải...</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function toggleBell(e) {
+            e.stopPropagation();
+            _notifOpen = !_notifOpen;
+            document.getElementById('bell-dropdown').classList.toggle('hidden', !_notifOpen);
+            if (_notifOpen) loadNotifications();
+        }
+
+        async function loadNotifications() {
+            if (!userLocal) return;
+            const uid  = userLocal.id || userLocal.uid;
+            const list = document.getElementById('bell-list');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('notifications')
+                    .select('*')
+                    .eq('recipient_id', uid)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                if (error) throw error;
+                if (!data?.length) {
+                    list.innerHTML = `<div class="text-center py-6 text-gray-300 text-xs font-bold uppercase">Không có thông báo</div>`;
+                    return;
+                }
+                const icons = {
+                    new_lesson:    { icon: 'fa-play-circle', bg: '#dbeafe', color: '#1e40af' },
+                    exam_reminder: { icon: 'fa-clock',        bg: '#fef3c7', color: '#92400e' },
+                    announcement:  { icon: 'fa-bullhorn',     bg: '#dcfce7', color: '#166534' },
+                    system:        { icon: 'fa-info-circle',  bg: '#f3e8ff', color: '#6b21a8' },
+                };
+                list.innerHTML = data.map(n => {
+                    const ic = icons[n.type] || icons.system;
+                    const isUnread = !n.is_read;
+                    return `
+                    <div onclick="clickNotif('${n.id}', '${n.lesson_id || ''}')"
+                         class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${isUnread ? 'bg-blue-50/50' : ''}">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
+                             style="background:${ic.bg};color:${ic.color}">
+                            <i class="fas ${ic.icon}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-black text-blue-900 text-xs leading-tight mb-0.5 line-clamp-1">${n.title || ''}</div>
+                            <div class="text-gray-400 text-[11px] leading-snug line-clamp-2">${n.content || ''}</div>
+                            <div class="text-[10px] text-gray-300 font-bold mt-1">${getTimeAgo(n.created_at)}</div>
+                        </div>
+                        ${isUnread ? '<div class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>' : ''}
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                list.innerHTML = `<div class="text-center py-6 text-red-300 text-xs font-bold uppercase">Lỗi tải thông báo</div>`;
+            }
+        }
+
+        async function clickNotif(id, lessonId) {
+            try {
+                await supabaseClient.from('notifications').update({ is_read: true }).eq('id', id);
+                await updateBellBadge();
+            } catch(e) { console.error(e); }
+            document.getElementById('bell-dropdown')?.classList.add('hidden');
+            _notifOpen = false;
+            if (lessonId) window.location.href = `lesson-detail.html?id=${lessonId}`;
+        }
+
+        async function markAllRead() {
+            if (!userLocal) return;
+            const uid = userLocal.id || userLocal.uid;
+            try {
+                await supabaseClient.from('notifications').update({ is_read: true })
+                    .eq('recipient_id', uid).eq('is_read', false);
+                document.getElementById('bell-badge').classList.add('hidden');
+                loadNotifications();
+            } catch(e) { console.error(e); }
+        }
+
+        async function updateBellBadge() {
+            if (!userLocal) return;
+            const uid = userLocal.id || userLocal.uid;
+            try {
+                const { count, error } = await supabaseClient
+                    .from('notifications')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('recipient_id', uid)
+                    .eq('is_read', false);
+                if (error) throw error;
+                const badge = document.getElementById('bell-badge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count > 9 ? '9+' : String(count);
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // ──────────────── AUTH / RENDER USER ────────────────
+        function renderUserMenu(user) {
+            const roleText = user.role === 'admin' ? 'Quản trị viên' : 'Học sinh';
+            const adminLink = user.role === 'admin' ? `
+                <a href="admin.html" class="item-dropdown" style="color:#1e40af;background:#eff6ff;font-weight:700">
+                    <i class="fas fa-user-shield" style="margin-right:12px;color:#3b82f6"></i>Quản trị
+                </a><div class="divider"></div>` : '';
+
+            document.getElementById('user-section').innerHTML = `
+                ${buildBell()}
+                <div class="flex items-center gap-2 cursor-pointer relative bg-gray-50 hover:bg-gray-100 transition-all rounded-full pl-2 pr-2 py-1 border border-gray-100"
+                    onclick="toggleUserMenu(event)">
+                    <div class="text-right hidden md:block leading-tight">
+                        <div class="text-blue-900 font-black text-xs uppercase">${user.fullname || 'Học sinh'}</div>
+                        <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">${roleText}</div>
+                    </div>
+                    <img src="logo.png" onerror="this.src='logo.png'"
+                        class="w-9 h-9 rounded-full border-2 border-blue-900 object-cover shadow-sm flex-shrink-0">
+                    <div class="dropdown-user" id="dropdownUser">
+                        ${adminLink}
+                        <a href="thong-tin-ca-nhan.html" class="item-dropdown">
+                            <i class="fas fa-user-circle" style="margin-right:12px;color:#3b82f6"></i>Thông tin cá nhân
+                        </a>
+                        <a href="khoa-hoc-cua-toi.html" class="item-dropdown">
+                            <i class="fas fa-book-open" style="margin-right:12px;color:#22c55e"></i>Khóa học của tôi
+                        </a>
+                        <a href="tailieu-free.html" class="item-dropdown" style="color:#1e40af;background:#eff6ff;">
+                            <i class="fas fa-file-pdf" style="margin-right:12px;color:#1e40af"></i>Tài liệu miễn phí
+                        </a>
+                        <a href="thi-thu.html" class="item-dropdown">
+                            <i class="fas fa-file-alt w-4 text-blue-300 text-sm"></i> Thi thử
+                        </a>
+                        <div class="divider"></div>
+                        <a href="javascript:void(0)" onclick="logout()" class="item-dropdown" style="color:#ef4444;">
+                            <i class="fas fa-sign-out-alt" style="margin-right:12px"></i>Đăng xuất
+                        </a>
+                    </div>
+                </div>`;
+
+            if (user.role === 'admin') {
+                document.getElementById('btn-upload-admin').classList.remove('hidden');
+                document.getElementById('btn-upload-admin').classList.add('flex');
+            }
+            updateBellBadge();
+        }
+
         function checkLogin() {
             const data = localStorage.getItem('user');
             if (data) {
                 userLocal = JSON.parse(data);
-                let template = document.getElementById('user-logged-template').innerHTML;
-                let adminOption = userLocal.role === 'admin' ? `
-                    <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
-                        <i class="fas fa-user-shield mr-3"></i> Trang quản trị
-                    </a><div class="divider"></div>` : '';
-                template = template
-                    .replace('{fullname}', userLocal.fullname)
-                    .replace('{role_text}', userLocal.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
-                    .replace('{admin_option}', adminOption);
-                document.getElementById('user-section').innerHTML = template;
-
-                if (userLocal.role === 'admin') {
-                    document.getElementById('btn-upload-admin').classList.remove('hidden');
-                    document.getElementById('btn-upload-admin').classList.add('flex');
-                }
+                renderUserMenu(userLocal);
             }
         }
 
@@ -829,7 +978,15 @@
             }
         });
 
-        window.onclick = () => { document.getElementById('dropdownUser')?.classList.remove('active'); };
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#bell-wrap')) {
+                document.getElementById('bell-dropdown')?.classList.add('hidden');
+                _notifOpen = false;
+            }
+            if (!e.target.closest('#user-section')) {
+                document.getElementById('dropdownUser')?.classList.remove('active');
+            }
+        });
 
         // ──────────────── INIT ────────────────
         window.onload = () => {
