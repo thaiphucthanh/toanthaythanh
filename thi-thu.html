@@ -939,13 +939,22 @@ async function loadHomepageFreeLessons() {
                 player.classList.remove('hidden');
                 
                 // Thuật toán tự động chuẩn hóa URL Youtube thông thường sang link Embed
+                // sao không lấy dạng nhu này url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([^?&\s]{11})/);
                 let embedUrl = videoUrl;
-                if (videoUrl.includes('watch?v=')) {
-                    embedUrl = videoUrl.replace('watch?v=', 'embed/');
-                } else if (videoUrl.includes('youtu.be/')) {
-                    embedUrl = videoUrl.replace('youtu.be/', 'embed/');
+                const ytId = getYtId(videoUrl);
+                if (ytId) {
+                    embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+                } else if (videoUrl.includes('youtube.com/embed/')) {
+                    // Nếu đã là link embed, đảm bảo có tham số autoplay
+                    if (!videoUrl.includes('autoplay=1')) {
+                        embedUrl += (videoUrl.includes('?') ? '&' : '?') + 'autoplay=1&rel=0';
+                    }
+                } else {
+                    // Nếu không phải link Youtube, có thể xử lý thêm cho các nền tảng khác nếu cần
+                    console.warn('URL video không phải Youtube, sử dụng trực tiếp:', videoUrl);
                 }
                 player.src = embedUrl;
+                
             }
             
             if (document.getElementById('home-playing-topic')) document.getElementById('home-playing-topic').innerText = topicName;
