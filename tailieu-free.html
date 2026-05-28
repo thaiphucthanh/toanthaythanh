@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài liệu miễn phí - Toán Thầy Thành</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+        html, body { height: 100%; margin: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main { flex: 1; }
+
+        .dropdown-user {
+            position: absolute; top: 120%; right: 0; width: 220px;
+            background: white; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none; flex-direction: column; padding: 10px 0;
+            z-index: 100; border: 1px solid #f0f0f0;
+        }
+        .dropdown-user.active { display: flex; }
+        .item-dropdown {
+            padding: 12px 20px; font-size: 14px; font-weight: 600;
+            color: #374151; transition: all 0.2s; display: flex; align-items: center;
+            text-decoration: none;
+        }
+        .item-dropdown:hover { background: #f3f4f6; color: #1e40af; }
+        .divider { height: 1px; background: #eee; margin: 5px 0; }
+
+        .thanh-menu-ngang { background: #1e3a8a; color: white; }
+        .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+        .danh-sach-menu { display: flex; gap: 20px; list-style: none; padding: 10px 0; margin: 0; }
+        .item-menu { font-weight: bold; font-size: 15px; color: white; text-decoration: none; }
+        .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .anh-dai-dien-logo { width: 50px; height: 50px; border-radius: 50%; }
+        .ten-thuong-hieu-to { font-size: 20px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-thuong-hieu-nho { font-size: 10px; color: #6b7280; font-weight: bold; }
+
+        /* PDF Viewer Modal */
+        .pdf-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); padding: 16px;
+        }
+        .pdf-modal-overlay.open { display: flex; }
+        .pdf-modal {
+            background: #1e293b; border-radius: 24px; width: 100%; max-width: 900px;
+            height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+        .pdf-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 24px; background: #1e3a8a; flex-shrink: 0;
+        }
+        .pdf-modal-title {
+            font-weight: 900; color: white; font-size: 14px;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;
+        }
+        .pdf-modal-close {
+            background: rgba(255,255,255,0.15); border: none; color: white;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            font-size: 16px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .pdf-modal-close:hover { background: rgba(255,255,255,0.3); }
+        .pdf-iframe-wrapper { flex: 1; overflow: hidden; background: #374151; }
+        .pdf-iframe-wrapper iframe { width: 100%; height: 100%; border: none; }
+
+        /* Upload Modal */
+        .upload-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 9998; display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); padding: 16px;
+        }
+        .upload-modal-overlay.open { display: flex; }
+        .upload-modal {
+            background: white; border-radius: 28px; width: 100%; max-width: 520px;
+            padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2.5px dashed #cbd5e1; border-radius: 20px;
+            padding: 48px 24px; text-align: center; cursor: pointer;
+            transition: all 0.25s; background: #f8fafc;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #1e3a8a; background: #eff6ff;
+        }
+        .drop-zone input[type="file"] { display: none; }
+
+        /* Doc card */
+        .doc-card {
+            background: white; border-radius: 24px; border: 1.5px solid #e5e7eb;
+            overflow: hidden; transition: all 0.25s;
+            display: flex; flex-direction: column;
+        }
+        .doc-card:hover { border-color: #1e3a8a; box-shadow: 0 12px 32px rgba(30,58,138,0.10); transform: translateY(-3px); }
+        .doc-card-thumb {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);
+            padding: 28px; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .doc-card-thumb::after {
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 12px);
+        }
+        .doc-card-body { padding: 20px 22px 22px; flex: 1; display: flex; flex-direction: column; }
+        .doc-card-tag {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #eff6ff; color: #1e40af; border-radius: 20px;
+            font-size: 9px; font-weight: 900; padding: 4px 10px;
+            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
+        }
+        .doc-card-title {
+            font-size: 15px; font-weight: 900; color: #1e3a8a;
+            text-transform: uppercase; letter-spacing: -0.01em;
+            line-height: 1.35; margin-bottom: 8px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .doc-card-desc {
+            font-size: 11px; color: #6b7280; line-height: 1.6;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            flex: 1; margin-bottom: 16px;
+        }
+        .btn-view-pdf {
+            display: flex; align-items: center; justify-content: center; gap-8: 8px;
+            width: 100%; padding: 13px; background: #1e3a8a; color: white;
+            border-radius: 14px; font-weight: 900; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            border: none; cursor: pointer; transition: background 0.2s;
+            gap: 8px;
+        }
+        .btn-view-pdf:hover { background: #1d4ed8; }
+
+        /* Admin delete btn */
+        .btn-delete-doc {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(239,68,68,0.9); color: white; border: none;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-size: 12px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; z-index: 10;
+        }
+        .btn-delete-doc:hover { background: #dc2626; }
+
+        /* Category filter */
+        .filter-btn {
+            padding: 8px 20px; border-radius: 20px; font-size: 12px; font-weight: 700;
+            border: 2px solid #e5e7eb; background: white; cursor: pointer;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: #1e3a8a; color: white; border-color: #1e3a8a;
+        }
+
+        /* Progress bar */
+        .upload-progress-bar {
+            height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-top: 12px;
+        }
+        .upload-progress-fill {
+            height: 100%; background: #1e3a8a; border-radius: 99px;
+            transition: width 0.3s; width: 0%;
+        }
+
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1; text-align: center; padding: 80px 20px;
+            background: white; border-radius: 32px; border: 2px dashed #e5e7eb;
+        }
+
+        /* Search highlight */
+        #search-docs:focus { outline: none; box-shadow: 0 0 0 3px rgba(30,58,138,0.15); }
+
+        /* Skeleton loader */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="bg-white shadow-md sticky top-0 z-[1000]">
+        <div class="khung-trang flex items-center justify-between py-4">
+            <a href="trangchu.html" class="cum-logo">
+                <img src="logo.png" class="anh-dai-dien-logo border border-blue-100" onerror="this.style.display='none'">
+                <div>
+                    <div class="ten-thuong-hieu-to tracking-tighter uppercase">Toán</div>
+                    <div class="ten-thuong-hieu-nho uppercase tracking-widest">Thầy Thành</div>
+                </div>
+            </a>
+
+            <div class="hidden md:block flex-1 max-w-md mx-10">
+                <input type="text" id="search-docs" placeholder="Tìm tài liệu..."
+                    class="w-full bg-gray-100 border-none p-2 px-4 rounded-full text-sm transition-all"
+                    oninput="filterDocs()">
+            </div>
+
+            <div class="cum-tai-khoan relative" id="user-section">
+                <button class="px-5 py-2 text-blue-900 font-bold text-sm" onclick="location.href='login.html'">Đăng nhập</button>
+            </div>
+        </div>
+
+        <nav class="thanh-menu-ngang">
+            <div class="khung-trang">
+                <ul class="danh-sach-menu">
+                    <li><a href="trangchu.html" class="item-menu opacity-80 hover:opacity-100">Trang chủ</a></li>
+                    <li><a href="khoa-hoc-cua-toi.html" class="item-menu opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
+                    <li><a href="tailieu-free.html" class="item-menu opacity-100 border-b-2 border-yellow-400 pb-1">Tài liệu miễn phí</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="khung-trang py-12">
+        <!-- Page Header -->
+        <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+            <div>
+                <h2 class="text-3xl font-black text-blue-900 border-l-8 border-yellow-400 pl-4 uppercase tracking-tight">Tài liệu miễn phí</h2>
+                <p class="text-gray-500 font-medium mt-2 ml-4 italic text-sm">Kho tài liệu ôn thi miễn phí từ Thầy Thành — Tải về &amp; học ngay!</p>
+            </div>
+            <!-- Admin upload button -->
+            <button id="btn-upload-admin" onclick="openUploadModal()"
+                class="hidden items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-black text-sm uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg transition-all">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Tải lên tài liệu
+            </button>
+        </div>
+
+        <!-- Filter categories -->
+        <div id="filter-bar" class="flex flex-wrap gap-3 mb-8">
+            <button class="filter-btn active" data-cat="all" onclick="setFilter(this)">Tất cả</button>
+            <button class="filter-btn" data-cat="de-cuong" onclick="setFilter(this)">Đề cương</button>
+            <button class="filter-btn" data-cat="bai-tap" onclick="setFilter(this)">Bài tập</button>
+            <button class="filter-btn" data-cat="de-thi" onclick="setFilter(this)">Đề thi</button>
+            <button class="filter-btn" data-cat="ly-thuyet" onclick="setFilter(this)">Lý thuyết</button>
+            <button class="filter-btn" data-cat="khac" onclick="setFilter(this)">Khác</button>
+        </div>
+
+        <!-- Document Grid -->
+        <div id="doc-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Skeleton loaders -->
+            <div class="rounded-3xl overflow-hidden skeleton h-72"></div>
+            <div class="rounded-3xl overflow-hidden skeleton h-72"></div>
+            <div class="rounded-3xl overflow-hidden skeleton h-72"></div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #1e3a8a; color: white; padding: 3rem 0 1.5rem; margin-top: 60px;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2.5rem; margin-bottom: 2.5rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #1e3a8a;">T</div>
+                        <div>
+                            <div style="font-size: 18px; font-weight: 900; text-transform: uppercase; font-style: italic; line-height: 1;">Toán</div>
+                            <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6;">Thầy Thành</div>
+                        </div>
+                    </div>
+                    <p style="font-size: 12px; opacity: 0.7; line-height: 1.7; font-style: italic; font-weight: 500;">Chuyên ôn thi tuyển sinh vào 10 — Dạy học từ tâm, nâng tầm kiến thức.</p>
+                </div>
+                <div>
+                    <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 1rem;">Thông tin liên hệ</div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; opacity: 0.85;">
+                            <span>📍</span><span style="font-weight: 500;">TP. Vinh, Nghệ An</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: 0.85;">
+                            <span>📞</span>
+                            <a href="tel:0858520777" style="color: #fbbf24; font-weight: 700; text-decoration: none;">0858 520 777</a>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: 0.85;">
+                            <span>✉️</span>
+                            <a href="mailto:thaiphucthanhttk2005@gmail.com" style="color: #fbbf24; font-weight: 600; text-decoration: none; word-break: break-all;">thaiphucthanhttk2005@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 1rem;">Chịu trách nhiệm nội dung</div>
+                    <div style="font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Thái Phúc Thành</div>
+                    <div style="font-size: 11px; opacity: 0.6; font-style: italic;">Giáo viên Toán — Tác giả website</div>
+                    <div style="margin-top: 1rem; display: inline-block; background: #fbbf24; color: #1e3a8a; padding: 6px 14px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">Toán Thầy Thành</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+                <div style="font-size: 11px; opacity: 0.5; font-weight: 500;">© 2025 Toán Thầy Thành — Chuyên ôn thi tuyển sinh vào 10</div>
+                <div style="font-size: 11px; opacity: 0.4; font-style: italic;">Dạy học từ tâm · Nâng tầm kiến thức</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- PDF Viewer Modal -->
+    <div class="pdf-modal-overlay" id="pdfModal">
+        <div class="pdf-modal">
+            <div class="pdf-modal-header">
+                <div class="pdf-modal-title" id="pdfModalTitle">Đang tải tài liệu...</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+                    <a id="pdfDownloadBtn" href="#" download target="_blank"
+                        class="flex items-center gap-1 bg-yellow-400 text-blue-900 font-black text-xs uppercase px-4 py-2 rounded-full hover:bg-yellow-300 transition-colors"
+                        style="text-decoration:none;">
+                        <i class="fas fa-download"></i> Tải về
+                    </a>
+                    <button class="pdf-modal-close" onclick="closePdfModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="pdf-iframe-wrapper">
+                <iframe id="pdfIframe" src="" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal (Admin only) -->
+    <div class="upload-modal-overlay" id="uploadModal">
+        <div class="upload-modal">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-black text-blue-900 uppercase tracking-tight">
+                    <i class="fas fa-cloud-upload-alt text-yellow-400 mr-2"></i>
+                    Tải lên tài liệu
+                </h3>
+                <button onclick="closeUploadModal()" class="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-lg flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Title -->
+                <div>
+                    <label class="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">Tên tài liệu *</label>
+                    <input type="text" id="upload-title" placeholder="VD: Đề cương ôn thi vào 10 - 2025"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:border-blue-800 outline-none transition-colors">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">Mô tả ngắn</label>
+                    <textarea id="upload-desc" placeholder="Mô tả nội dung tài liệu..." rows="2"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:border-blue-800 outline-none transition-colors resize-none"></textarea>
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">Danh mục *</label>
+                    <select id="upload-category"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:border-blue-800 outline-none transition-colors bg-white">
+                        <option value="de-cuong">Đề cương</option>
+                        <option value="bai-tap">Bài tập</option>
+                        <option value="de-thi">Đề thi</option>
+                        <option value="ly-thuyet">Lý thuyết</option>
+                        <option value="khac">Khác</option>
+                    </select>
+                </div>
+
+                <!-- File drop zone -->
+                <div>
+                    <label class="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">File PDF *</label>
+                    <div class="drop-zone" id="dropZone" onclick="document.getElementById('upload-file-input').click()"
+                        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                        <input type="file" id="upload-file-input" accept=".pdf,application/pdf" onchange="handleFileSelect(event)">
+                        <div id="drop-zone-content">
+                            <i class="fas fa-file-pdf text-4xl text-blue-200 mb-3 block"></i>
+                            <p class="text-sm font-bold text-gray-500">Kéo thả file PDF vào đây<br>hoặc <span class="text-blue-800">nhấn để chọn file</span></p>
+                            <p class="text-xs text-gray-400 mt-1">Chỉ hỗ trợ file .PDF</p>
+                        </div>
+                    </div>
+                    <div class="upload-progress-bar hidden" id="upload-progress-bar">
+                        <div class="upload-progress-fill" id="upload-progress-fill"></div>
+                    </div>
+                    <p id="selected-file-name" class="text-xs text-blue-800 font-bold mt-2 hidden"></p>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeUploadModal()"
+                    class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm uppercase hover:bg-gray-50 transition-colors">
+                    Hủy
+                </button>
+                <button onclick="submitUpload()" id="btn-submit-upload"
+                    class="flex-1 py-3 rounded-xl bg-blue-900 text-white font-black text-sm uppercase tracking-wider hover:bg-blue-800 transition-colors shadow-lg">
+                    <i class="fas fa-upload mr-2"></i>Tải lên
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User template -->
+    <script id="user-logged-template" type="text/template">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="toggleUserMenu(event)">
+            <div class="text-right hidden md:block">
+                <div class="text-blue-900 font-black text-sm uppercase leading-tight">{fullname}</div>
+                <div class="text-gray-400 text-[10px] font-bold tracking-widest">{role_text}</div>
+            </div>
+            <img src="logo.png" class="w-10 h-10 rounded-full border-2 border-blue-900 object-cover shadow-sm" onerror="this.style.display='none'">
+            <div class="dropdown-user shadow-2xl" id="dropdownUser">
+                {admin_option}
+                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i> Thông tin cá nhân</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3"></i> Khóa học của tôi</a>
+                <a href="tailieu-free.html" class="item-dropdown text-blue-700 bg-blue-50"><i class="fas fa-file-pdf mr-3"></i> Tài liệu miễn phí</a>
+                <div class="divider"></div>
+                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i> Đăng xuất</a>
+            </div>
+        </div>
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        let userLocal = null;
+        let allDocs = [];
+        let currentFilter = 'all';
+        let selectedFile = null;
+
+        const CAT_LABELS = {
+            'de-cuong': 'Đề cương',
+            'bai-tap': 'Bài tập',
+            'de-thi': 'Đề thi',
+            'ly-thuyet': 'Lý thuyết',
+            'khac': 'Khác'
+        };
+
+        const CAT_COLORS = {
+            'de-cuong': '#6d28d9',
+            'bai-tap': '#0891b2',
+            'de-thi': '#dc2626',
+            'ly-thuyet': '#059669',
+            'khac': '#d97706'
+        };
+
+        // ──────────────── AUTH ────────────────
+        function checkLogin() {
+            const data = localStorage.getItem('user');
+            if (data) {
+                userLocal = JSON.parse(data);
+                let template = document.getElementById('user-logged-template').innerHTML;
+                let adminOption = userLocal.role === 'admin' ? `
+                    <a href="admin.html" class="item-dropdown text-blue-700 bg-blue-50 font-bold italic">
+                        <i class="fas fa-user-shield mr-3"></i> Trang quản trị
+                    </a><div class="divider"></div>` : '';
+                template = template
+                    .replace('{fullname}', userLocal.fullname)
+                    .replace('{role_text}', userLocal.role === 'admin' ? 'Thầy Thành' : 'Học sinh')
+                    .replace('{admin_option}', adminOption);
+                document.getElementById('user-section').innerHTML = template;
+
+                if (userLocal.role === 'admin') {
+                    document.getElementById('btn-upload-admin').classList.remove('hidden');
+                    document.getElementById('btn-upload-admin').classList.add('flex');
+                }
+            }
+        }
+
+        function toggleUserMenu(event) {
+            event.stopPropagation();
+            document.getElementById('dropdownUser')?.classList.toggle('active');
+        }
+
+        function logout() {
+            if (confirm("Bạn muốn đăng xuất?")) {
+                localStorage.removeItem('user');
+                window.location.href = 'trangchu.html';
+            }
+        }
+
+        // ──────────────── LOAD DOCS ────────────────
+        async function loadDocs() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('free_documents')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                allDocs = data || [];
+                renderDocs(allDocs);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('doc-grid').innerHTML = `
+                    <div class="empty-state col-span-full">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-300 mb-4 block"></i>
+                        <p class="text-red-500 font-bold uppercase text-sm">Lỗi tải dữ liệu</p>
+                        <p class="text-gray-400 text-xs mt-1">${err.message}</p>
+                    </div>`;
+            }
+        }
+
+        function renderDocs(docs) {
+            const grid = document.getElementById('doc-grid');
+            const searchVal = (document.getElementById('search-docs').value || '').toLowerCase().trim();
+
+            let filtered = docs;
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(d => d.category === currentFilter);
+            }
+            if (searchVal) {
+                filtered = filtered.filter(d =>
+                    (d.title || '').toLowerCase().includes(searchVal) ||
+                    (d.description || '').toLowerCase().includes(searchVal)
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open text-5xl text-gray-200 mb-4 block"></i>
+                        <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Chưa có tài liệu nào</p>
+                        ${userLocal?.role === 'admin' ? `<p class="text-blue-800 text-sm font-bold mt-2">Nhấn "Tải lên tài liệu" để thêm tài liệu đầu tiên!</p>` : ''}
+                    </div>`;
+                return;
+            }
+
+            const isAdmin = userLocal?.role === 'admin';
+
+            grid.innerHTML = filtered.map(doc => {
+                const catLabel = CAT_LABELS[doc.category] || 'Tài liệu';
+                const catColor = CAT_COLORS[doc.category] || '#1e3a8a';
+                const dateStr = doc.created_at ? new Date(doc.created_at).toLocaleDateString('vi-VN') : '';
+
+                return `
+                <div class="doc-card" data-id="${doc.id}">
+                    <div class="doc-card-thumb" style="background: linear-gradient(135deg, ${catColor} 0%, ${catColor}cc 100%);">
+                        ${isAdmin ? `<button class="btn-delete-doc" onclick="deleteDoc('${doc.id}', event)" title="Xóa tài liệu"><i class="fas fa-trash"></i></button>` : ''}
+                        <div style="position:relative;z-index:1;text-align:center;">
+                            <i class="fas fa-file-pdf text-white text-5xl mb-2 block" style="opacity:0.9;text-shadow:0 4px 12px rgba(0,0,0,0.2);"></i>
+                            <div style="color:white;font-size:9px;font-weight:900;letter-spacing:0.15em;opacity:0.7;text-transform:uppercase;">PDF</div>
+                        </div>
+                    </div>
+                    <div class="doc-card-body">
+                        <div class="doc-card-tag" style="background:${catColor}15;color:${catColor};">
+                            <i class="fas fa-tag" style="font-size:8px;"></i>
+                            ${catLabel}
+                        </div>
+                        <h3 class="doc-card-title">${doc.title}</h3>
+                        <p class="doc-card-desc">${doc.description || 'Tài liệu ôn tập từ Toán Thầy Thành.'}</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <span style="font-size:10px;color:#9ca3af;font-weight:600;">${dateStr ? `📅 ${dateStr}` : ''}</span>
+                        </div>
+                        <button class="btn-view-pdf" onclick="openPdf('${doc.file_url}', '${escapeAttr(doc.title)}')">
+                            <i class="fas fa-eye"></i>
+                            Xem tài liệu
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function escapeAttr(str) {
+            return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // ──────────────── FILTER ────────────────
+        function setFilter(btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.cat;
+            renderDocs(allDocs);
+        }
+
+        function filterDocs() {
+            renderDocs(allDocs);
+        }
+
+        // ──────────────── PDF VIEWER ────────────────
+        function openPdf(url, title) {
+            if (!url) {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tìm thấy file tài liệu.', confirmButtonColor: '#1e3a8a' });
+                return;
+            }
+            document.getElementById('pdfModalTitle').textContent = title || 'Tài liệu PDF';
+            document.getElementById('pdfDownloadBtn').href = url;
+
+            // Use Google Docs Viewer as fallback for cross-origin PDFs
+            // Prefer direct embed first; if Supabase URL is same origin this works natively
+            let embedUrl = url;
+            // If URL is external or may have CORS issues, use Google viewer
+            if (!url.startsWith('blob:') && !url.includes(window.location.hostname)) {
+                embedUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+            }
+            document.getElementById('pdfIframe').src = embedUrl;
+            document.getElementById('pdfModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').classList.remove('open');
+            document.getElementById('pdfIframe').src = '';
+            document.body.style.overflow = '';
+        }
+
+        // Close on overlay click
+        document.getElementById('pdfModal').addEventListener('click', function(e) {
+            if (e.target === this) closePdfModal();
+        });
+
+        // ──────────────── UPLOAD (ADMIN) ────────────────
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('open');
+            document.body.style.overflow = '';
+            resetUploadForm();
+        }
+
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) closeUploadModal();
+        });
+
+        function resetUploadForm() {
+            document.getElementById('upload-title').value = '';
+            document.getElementById('upload-desc').value = '';
+            document.getElementById('upload-category').value = 'de-cuong';
+            document.getElementById('upload-file-input').value = '';
+            document.getElementById('drop-zone-content').innerHTML = `
+                <i class="fas fa-file-pdf text-4xl text-blue-200 mb-3 block"></i>
+                <p class="text-sm font-bold text-gray-500">Kéo thả file PDF vào đây<br>hoặc <span class="text-blue-800">nhấn để chọn file</span></p>
+                <p class="text-xs text-gray-400 mt-1">Chỉ hỗ trợ file .PDF</p>`;
+            document.getElementById('selected-file-name').classList.add('hidden');
+            document.getElementById('upload-progress-bar').classList.add('hidden');
+            document.getElementById('upload-progress-fill').style.width = '0%';
+            selectedFile = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.add('dragover');
+        }
+        function handleDragLeave(e) {
+            document.getElementById('dropZone').classList.remove('dragover');
+        }
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        }
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        }
+
+        function processFile(file) {
+            if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+                Swal.fire({ icon: 'error', title: 'Sai định dạng', text: 'Vui lòng chọn file PDF!', confirmButtonColor: '#1e3a8a' });
+                return;
+            }
+            selectedFile = file;
+            const sizeStr = file.size > 1024 * 1024
+                ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+                : (file.size / 1024).toFixed(0) + ' KB';
+
+            document.getElementById('drop-zone-content').innerHTML = `
+                <i class="fas fa-check-circle text-4xl text-green-500 mb-2 block"></i>
+                <p class="text-sm font-bold text-green-700">${file.name}</p>
+                <p class="text-xs text-gray-400 mt-1">${sizeStr}</p>`;
+
+            const nameEl = document.getElementById('selected-file-name');
+            nameEl.textContent = `✅ Đã chọn: ${file.name} (${sizeStr})`;
+            nameEl.classList.remove('hidden');
+
+            // Auto-fill title if empty
+            if (!document.getElementById('upload-title').value.trim()) {
+                const nameNoExt = file.name.replace(/\.pdf$/i, '');
+                document.getElementById('upload-title').value = nameNoExt;
+            }
+        }
+
+        async function submitUpload() {
+            const title = document.getElementById('upload-title').value.trim();
+            const desc = document.getElementById('upload-desc').value.trim();
+            const category = document.getElementById('upload-category').value;
+
+            if (!title) {
+                Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập tên tài liệu!', confirmButtonColor: '#1e3a8a' });
+                return;
+            }
+            if (!selectedFile) {
+                Swal.fire({ icon: 'warning', title: 'Chưa chọn file', text: 'Vui lòng chọn file PDF cần tải lên!', confirmButtonColor: '#1e3a8a' });
+                return;
+            }
+
+            const submitBtn = document.getElementById('btn-submit-upload');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch animate-spin mr-2"></i>Đang tải lên...';
+
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressFill = document.getElementById('upload-progress-fill');
+            progressBar.classList.remove('hidden');
+
+            // Fake progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 15, 85);
+                progressFill.style.width = progress + '%';
+            }, 200);
+
+            try {
+                // Upload file to Supabase Storage
+                const fileExt = 'pdf';
+                const fileName = `${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                const filePath = `free-docs/${fileName}`;
+
+                const { data: storageData, error: storageError } = await supabaseClient
+                    .storage
+                    .from('documents')
+                    .upload(filePath, selectedFile, {
+                        contentType: 'application/pdf',
+                        upsert: false
+                    });
+
+                if (storageError) throw storageError;
+
+                // Get public URL
+                const { data: urlData } = supabaseClient
+                    .storage
+                    .from('documents')
+                    .getPublicUrl(filePath);
+
+                const publicUrl = urlData.publicUrl;
+
+                // Insert record to free_documents table
+                const { error: dbError } = await supabaseClient
+                    .from('free_documents')
+                    .insert([{
+                        title,
+                        description: desc,
+                        category,
+                        file_url: publicUrl,
+                        created_by: userLocal.id || userLocal.uid || null
+                    }]);
+
+                if (dbError) throw dbError;
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tải lên thành công!',
+                        text: `"${title}" đã được thêm vào kho tài liệu.`,
+                        confirmButtonColor: '#1e3a8a',
+                        confirmButtonText: 'Tuyệt vời!'
+                    });
+                    closeUploadModal();
+                    loadDocs();
+                }, 400);
+
+            } catch (err) {
+                clearInterval(progressInterval);
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Tải lên thất bại',
+                    text: err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại!',
+                    confirmButtonColor: '#1e3a8a'
+                });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Tải lên';
+                progressBar.classList.add('hidden');
+                progressFill.style.width = '0%';
+            }
+        }
+
+        // ──────────────── DELETE (ADMIN) ────────────────
+        async function deleteDoc(docId, event) {
+            event.stopPropagation();
+            const result = await Swal.fire({
+                title: 'Xóa tài liệu?',
+                text: 'Hành động này không thể hoàn tác!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                // Get file URL to delete from storage
+                const doc = allDocs.find(d => d.id === docId);
+
+                const { error } = await supabaseClient
+                    .from('free_documents')
+                    .delete()
+                    .eq('id', docId);
+
+                if (error) throw error;
+
+                // Also try to delete from storage if possible
+                if (doc?.file_url) {
+                    const path = doc.file_url.split('/documents/')[1];
+                    if (path) {
+                        await supabaseClient.storage.from('documents').remove([path]);
+                    }
+                }
+
+                Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
+                loadDocs();
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: err.message, confirmButtonColor: '#1e3a8a' });
+            }
+        }
+
+        // ──────────────── ESC KEY ────────────────
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePdfModal();
+                closeUploadModal();
+            }
+        });
+
+        window.onclick = () => { document.getElementById('dropdownUser')?.classList.remove('active'); };
+
+        // ──────────────── INIT ────────────────
+        window.onload = () => {
+            checkLogin();
+            loadDocs();
+        };
+    </script>
+</body>
+</html>
