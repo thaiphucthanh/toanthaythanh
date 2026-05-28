@@ -116,7 +116,6 @@
                 <h2 id="topic-title" class="text-xl font-black text-blue-900 uppercase">Đang tải chuyên đề...</h2>
             </div>
             <div class="flex items-center gap-3">
-                <!-- Nút mở/khóa tất cả -->
                 <button onclick="toggleAll('Active')"
                     class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
                     <i class="fas fa-lock-Active mr-1"></i> Mở tất cả
@@ -145,7 +144,6 @@
                     </button>
                 </div>
 
-                <!-- Thống kê nhanh -->
                 <div class="grid grid-cols-3 gap-4 mb-6" id="stats-bar">
                     <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
                         <div class="text-2xl font-black text-blue-900" id="stat-total">--</div>
@@ -156,7 +154,7 @@
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div>
                     </div>
                     <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-                        <div class="text-2xl font-black text-gray-400" id="stat-Inactive">--</div>
+                        <div class="text-2xl font-black text-gray-400" id="stat-inactive">--</div>
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Đang khóa</div>
                     </div>
                 </div>
@@ -171,7 +169,7 @@
                                 <th class="p-5 text-center">Trạng thái</th>
                                 <th class="p-5 text-center">Thao tác</th>
                             </tr>
-                        </thead>
+                        </table>
                         <tbody id="lesson-table-body" class="divide-y divide-gray-50"></tbody>
                     </table>
                     <div id="loading" class="p-20 text-center">
@@ -236,7 +234,14 @@
                                 ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
                             </div>
                             <div>
-                                <div class="font-bold text-blue-900">${l.title}</div>
+                                <div class="font-bold text-blue-900 flex items-center gap-2">
+                                    <span>${l.title}</span>
+                                    ${l.is_free ? `
+                                        <span class="bg-green-100 text-green-700 text-[9px] font-black uppercase px-1.5 py-0.5 rounded border border-green-200 flex items-center gap-0.5">
+                                            <i class="fas fa-unlock text-[8px]"></i> Học thử
+                                        </span>
+                                    ` : ''}
+                                </div>
                                 <div class="text-[10px] text-gray-400 italic">ID: ${l.id}</div>
                             </div>
                         </div>
@@ -275,27 +280,20 @@
             }).join('');
         }
 
-        // =====================
-        // TOGGLE TỪNG BÀI
-        // =====================
         async function toggleLessonStatus(lessonId, isChecked) {
             const newStatus = isChecked ? 'Active' : 'Inactive';
             const { error } = await supabaseClient
                 .from('lessons').update({ status: newStatus }).eq('id', lessonId);
             if (error) {
                 alert('Lỗi: ' + error.message);
-                fetchLessons(); // Reset lại nếu lỗi
+                fetchLessons();
                 return;
             }
-            // Cập nhật local để tính stats
             const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
             if (lesson) lesson.status = newStatus;
             updateStats(currentLessons);
         }
 
-        // =====================
-        // MỞ / KHÓA TẤT CẢ
-        // =====================
         async function toggleAll(status) {
             const label = status === 'Active' ? 'mở tất cả bài học' : 'khóa tất cả bài học';
             const confirm = await Swal.fire({
@@ -317,20 +315,17 @@
             fetchLessons();
         }
 
-        // =====================
-        // THỐNG KÊ
-        // =====================
         function updateStats(lessons) {
             const total = lessons.length;
             const Active = lessons.filter(l => l.status === 'Active').length;
             const Inactive = total - Active;
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-Active').innerText = Active;
-            document.getElementById('stat-Inactive').innerText = Inactive;
+            document.getElementById('stat-inactive').innerText = Inactive;
         }
 
         // =====================
-        // THÊM BÀI HỌC
+        // THÊM BÀI HỌC MỚI
         // =====================
         async function addNewLesson() {
             const { value: formValues } = await Swal.fire({
@@ -344,6 +339,12 @@
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
                             <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div class="flex items-center gap-2 bg-green-50 p-3 rounded-xl border border-green-200 my-2">
+                            <input id="swal-isfree" type="checkbox" class="w-4 h-4 text-green-600 border-gray-300 rounded cursor-pointer">
+                            <label for="swal-isfree" class="text-xs font-bold text-green-800 cursor-pointer select-none">
+                                ⭐ Cấu hình bài học thử (Học sinh chưa mua khóa vẫn xem được)
+                            </label>
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
@@ -373,14 +374,16 @@
                         video: document.getElementById('swal-video').value,
                         insight: document.getElementById('swal-insight').value,
                         status: document.getElementById('swal-status').value,
-                        file: document.getElementById('swal-file').files[0]
+                        file: document.getElementById('swal-file').files[0],
+                        is_free: document.getElementById('swal-isfree').checked // 🌟 Lấy trạng thái check
                     };
                 }
             });
 
             if (!formValues) return;
 
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
+            // Đã sửa 'didActive' thành 'didOpen' đúng tiêu chuẩn của SweetAlert2
+            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             let finalDocs = [];
             if (formValues.file) {
@@ -401,31 +404,25 @@
                     video_url: formValues.video || null,
                     insight: formValues.insight || null,
                     status: formValues.status,
-                    documents: finalDocs
+                    documents: finalDocs,
+                    is_free: formValues.is_free // 🌟 Truyền cột is_free vào câu lệnh insert
                 }])
                 .select()
                 .single();
+
             if (error) {
-    Swal.fire('Lỗi!', error.message, 'error');
-}
-else {
-
-    Swal.fire({
-        icon: 'success',
-        title: 'Đã thêm bài học!',
-        timer: 1200,
-        showConfirmButton: false
-    });
-
-    fetchLessons();
-}
+                Swal.fire('Lỗi!', error.message, 'error');
+            } else {
+                Swal.fire({ icon: 'success', title: 'Đã thêm bài học!', timer: 1200, showConfirmButton: false });
+                fetchLessons();
+            }
         }
 
         // =====================
-        // CHỈNH SỬA BÀI HỌC
+        // CHỈNH SỬA BÀI HỌC CHI TIẾT
         // =====================
         async function editLesson(id) {
-            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
             if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
 
@@ -440,6 +437,12 @@ else {
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
                             <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.video_url || ''}">
+                        </div>
+                        <div class="flex items-center gap-2 bg-green-50 p-3 rounded-xl border border-green-200 my-2">
+                            <input id="swal-isfree" type="checkbox" class="w-4 h-4 text-green-600 border-gray-300 rounded cursor-pointer" ${lesson.is_free ? 'checked' : ''}>
+                            <label for="swal-isfree" class="text-xs font-bold text-green-800 cursor-pointer select-none">
+                                ⭐ Cấu hình bài học thử (Học sinh chưa mua khóa vẫn xem được)
+                            </label>
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
@@ -470,20 +473,22 @@ else {
                         video: document.getElementById('swal-video').value,
                         insight: document.getElementById('swal-insight').value,
                         status: document.getElementById('swal-status').value,
-                        file: document.getElementById('swal-file').files[0]
+                        file: document.getElementById('swal-file').files[0],
+                        is_free: document.getElementById('swal-isfree').checked // 🌟 Lấy trạng thái check mới
                     };
                 }
             });
 
             if (!formValues) return;
 
-            Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didActive: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             let updatedData = {
                 title: formValues.title,
                 video_url: formValues.video || null,
                 insight: formValues.insight || null,
                 status: formValues.status,
+                is_free: formValues.is_free // 🌟 Cập nhật cột is_free vào object dữ liệu gửi đi
             };
 
             if (formValues.file) {
@@ -497,76 +502,60 @@ else {
             }
 
             const { error: updateError } = await supabaseClient.from('lessons').update(updatedData).eq('id', id);
-            if (updateError) Swal.fire('Lỗi!', updateError.message, 'error');
-            else {
+            if (updateError) {
+                Swal.fire('Lỗi!', updateError.message, 'error');
+            } else {
                 Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false });
                 fetchLessons();
             }
         }
 
-      async function deleteLesson(id) {
+        async function deleteLesson(id) {
+            const res = await Swal.fire({
+                title: 'Xóa bài học này?',
+                text: 'Hành động này không thể hoàn tác!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
 
-    const res = await Swal.fire({
-        title: 'Xóa bài học này?',
-        text: 'Hành động này không thể hoàn tác!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Xóa',
-        cancelButtonText: 'Hủy'
-    });
+            if (!res.isConfirmed) return;
 
-    if (!res.isConfirmed) return;
+            try {
+                // xóa notifications
+                const { error: notifError } = await supabaseClient
+                    .from('notifications')
+                    .delete()
+                    .eq('lesson_id', id);
 
-    try {
+                if (notifError) throw notifError;
 
-        // xóa notifications
-        const { error: notifError } = await supabaseClient
-            .from('notifications')
-            .delete()
-            .eq('lesson_id', id);
+                // xóa lượt xem
+                const { error: viewError } = await supabaseClient
+                    .from('lesson_views')
+                    .delete()
+                    .eq('lesson_id', id);
 
-        if (notifError) throw notifError;
+                if (viewError) throw viewError;
 
-        // xóa lượt xem
-        const { error: viewError } = await supabaseClient
-            .from('lesson_views')
-            .delete()
-            .eq('lesson_id', id);
+                // xóa bài học
+                const { error: lessonError } = await supabaseClient
+                    .from('lessons')
+                    .delete()
+                    .eq('id', id);
 
-        if (viewError) throw viewError;
+                if (lessonError) throw lessonError;
 
-        // xóa bài học
-        const { error: lessonError } = await supabaseClient
-            .from('lessons')
-            .delete()
-            .eq('id', id);
+                Swal.fire('Đã xóa!', 'Bài học đã được xóa.', 'success');
+                fetchLessons();
+            } catch(e) {
+                console.error(e);
+                Swal.fire('Lỗi', e.message, 'error');
+            }
+        }
 
-        if (lessonError) throw lessonError;
-
-        Swal.fire(
-            'Đã xóa!',
-            'Bài học đã được xóa.',
-            'success'
-        );
-
-        fetchLessons();
-
-    } catch(e) {
-
-        console.error(e);
-
-        Swal.fire(
-            'Lỗi',
-            e.message,
-            'error'
-        );
-    }
-}
-
-        // =====================
-        // TIỆN ÍCH
-        // =====================
         function slugify(name) {
             const map = {'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ắ':'a','ặ':'a','ằ':'a','ẳ':'a','ẵ':'a','â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a','đ':'d','è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e','ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i','ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o','ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o','ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u','ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y'};
             return name.toLowerCase().split('').map(c => map[c] || c).join('').replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
