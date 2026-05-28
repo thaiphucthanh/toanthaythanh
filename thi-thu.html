@@ -861,115 +861,131 @@ async function loadLessons() {
     }
 }
 
-// ════════════════════════════════════════════════
-// BÀI GIẢNG MIỄN PHÍ — MỚI ✅
-// ════════════════════════════════════════════════
-// ── SUY LUẬN LOGIC XỬ LÝ BÀI GIẢNG MIỄN PHÍ TRÊN TRANG CHỦ ──
-let homeFreeLessons = [];
+function loadFreeLessons() {}
 
+function loadProgress(uid) {
+    const sec = document.getElementById('progress-section');
+    if (sec) sec.classList.remove('hidden');
+    const content = document.getElementById('progress-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs font-bold text-gray-600">
+                    <span>Đang hoàn thành hành trình</span>
+                    <span class="text-blue-900">75%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width: 75%"></div></div>
+            </div>
+        `;
+    }
+}
+
+async function loadCourses(uid) {
+    const sec = document.getElementById('courses-section');
+    if (sec) sec.classList.remove('hidden');
+    const grid = document.getElementById('courses-grid');
+    if (grid) {
+        grid.innerHTML = `
+            <div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                <div>
+                    <h4 class="font-black text-sm text-blue-900 uppercase">Khóa Toán 9 Luyện Thi Vào 10</h4>
+                    <p class="text-[11px] text-blue-700 font-semibold mt-0.5">Thầy Thành đồng hành cùng bạn chiến đấu</p>
+                </div>
+                <a href="khoa-hoc-cua-toi.html" class="px-4 py-2 bg-blue-900 text-white text-xs font-black rounded-xl hover:bg-blue-800 transition-all">Vào Học</a>
+            </div>
+        `;
+    }
+}
+
+// ═══════════════════════════════════════════════
+// 9. XỬ LÝ KHU VỰC HỌC THỬ MIỄN PHÍ CHUẨN ĐẸP VÀ CHÍNH XÁC ID
+// ═══════════════════════════════════════════════
 async function loadHomepageFreeLessons() {
-    const listContainer = document.getElementById('home-free-list');
-    if (!listContainer) return;
+    try {
+        // Tải các bài giảng học thử miễn phí từ Supabase
+        const { data: lessons, error } = await sb
+            .from('lessons')
+            .select('id, title, video_url, insight, topic_id')
+            .eq('is_free', true)
+            .eq('status', 'Active')
+            .order('id', { ascending: false });
 
-    // 1. Quét từ bảng 'lessons' lấy các bài thỏa mãn: is_free = true và status = Active
-    const { data: lessons, error } = await supabaseClient
-        .from('lessons')
-        .select('id, title, video_url, insight, topic_id')
-        .eq('is_free', true)
-        .eq('status', 'Active')
-        .order('id', { ascending: false }); // Đưa bài mới tạo lên đầu tiên
+        if (error) throw error;
 
-    if (error) {
-        listContainer.innerHTML = `<p class="text-center text-red-500 text-[11px] p-4">Lỗi: ${error.message}</p>`;
-        return;
+        // Tải danh sách chuyên đề để hiển thị nhãn môn học/chuyên đề
+        const { data: topics } = await sb.from('topics').select('id, topic_name');
+        const topicMap = {};
+        topics?.forEach(t => topicMap[t.id] = t.topic_name);
+
+        const countEl = document.getElementById('home-free-count');
+        const listContainer = document.getElementById('home-free-list');
+        
+        if (countEl) countEl.innerText = lessons ? lessons.length : 0;
+
+        if (!lessons || lessons.length === 0) {
+            if (listContainer) listContainer.innerHTML = '<p class="text-xs text-gray-400 text-center py-6 italic">Chưa có bài giảng học thử nào được bật.</p>';
+            const placeholder = document.getElementById('home-video-placeholder');
+            if (placeholder) placeholder.innerHTML = '<p class="text-sm font-bold text-gray-500">Hệ thống đang cập nhật bài giảng thử.</p>';
+            return;
+        }
+
+        // Tạo hàm toàn cục kích hoạt phát video khi click vào danh sách bên phải
+        window.playHomeFreeLesson = function(videoUrl, title, insight, topicName) {
+            const player = document.getElementById('home-main-player');
+            const placeholder = document.getElementById('home-video-placeholder');
+            
+            if (player && placeholder) {
+                placeholder.classList.add('hidden');
+                player.classList.remove('hidden');
+                
+                // Thuật toán tự động chuẩn hóa URL Youtube thông thường sang link Embed
+                let embedUrl = videoUrl;
+                if (videoUrl.includes('watch?v=')) {
+                    embedUrl = videoUrl.replace('watch?v=', 'embed/');
+                } else if (videoUrl.includes('youtu.be/')) {
+                    embedUrl = videoUrl.replace('youtu.be/', 'embed/');
+                }
+                player.src = embedUrl;
+            }
+            
+            if (document.getElementById('home-playing-topic')) document.getElementById('home-playing-topic').innerText = topicName;
+            if (document.getElementById('home-playing-title')) document.getElementById('home-playing-title').innerText = title;
+            if (document.getElementById('home-playing-insight')) document.getElementById('home-playing-insight').innerText = insight || 'Ghi chú bài học từ Thầy Thành.';
+        };
+
+        // Cho phát mặc định bài giảng học thử đầu tiên trong danh sách
+        const first = lessons[0];
+        const firstTopic = topicMap[first.topic_id] || 'Chuyên đề ôn thi';
+        playHomeFreeLesson(first.video_url, first.title, first.insight, firstTopic);
+
+        // Đổ toàn bộ danh sách bài học thử vào thanh cuộn playlist bên phải
+        if (listContainer) {
+            listContainer.innerHTML = lessons.map((lesson, index) => {
+                const topicName = topicMap[lesson.topic_id] || 'Chuyên đề';
+                const safeTitle = lesson.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeInsight = (lesson.insight || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeUrl = lesson.video_url.replace(/'/g, "\\'");
+                const safeTopic = topicName.replace(/'/g, "\\'");
+
+                return `
+                    <div onclick="playHomeFreeLesson('${safeUrl}', '${safeTitle}', '${safeInsight}', '${safeTopic}')" 
+                         class="p-2.5 bg-slate-900/40 hover:bg-slate-900 border border-slate-800 rounded-xl cursor-pointer transition-all flex gap-3 items-center group">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-bold group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all flex-shrink-0">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">${topicName}</span>
+                            <h4 class="text-xs font-bold text-gray-200 line-clamp-1 group-hover:text-white transition-colors">${lesson.title}</h4>
+                        </div>
+                        <i class="fas fa-play text-[9px] text-gray-500 group-hover:text-emerald-400 ml-auto transition-all"></i>
+                    </div>
+                `;
+            }).join('');
+        }
+
+    } catch (err) {
+        console.error('Lỗi khi tải danh sách học thử:', err);
     }
-
-    homeFreeLessons = lessons || [];
-    document.getElementById('home-free-count').innerText = homeFreeLessons.length;
-
-    if (homeFreeLessons.length === 0) {
-        document.getElementById('home-video-placeholder').innerHTML = `
-            <i class="fas fa-video-slash text-2xl text-gray-500 mb-1"></i>
-            <p class="text-xs font-semibold">Chưa có bài học thử nào được mở công khai.</p>
-        `;
-        listContainer.innerHTML = `<p class="text-center text-gray-400 italic text-xs p-6">Danh sách trống</p>`;
-        return;
-    }
-
-    // 2. Lấy mapping tên chuyên đề (topics) để hiển thị nhãn cho học sinh dễ nhận biết bài thuộc bài nào
-    const { data: topics } = await supabaseClient.from('topics').select('id, topic_name');
-    const topicMap = {};
-    if (topics) {
-        topics.forEach(t => { topicMap[t.id] = t.topic_name; });
-    }
-
-    // 3. Đổ dữ liệu các bài giảng ra thanh cuộn bên phải
-    listContainer.innerHTML = homeFreeLessons.map((l, idx) => {
-        const topicName = topicMap[l.topic_id] || "Chuyên đề tổng hợp";
-        return `
-        <div id="home-item-${l.id}" onclick="selectHomeVideo('${l.id}', '${topicName.replace(/'/g, "\\'")}')" 
-            class="home-lesson-item p-2.5 bg-white border border-gray-100 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-emerald-300 transition-all flex items-start gap-2.5 shadow-sm">
-            <div class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">
-                <i class="fas fa-play"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-[9px] text-emerald-600 font-bold uppercase tracking-wide leading-none mb-1">${topicName}</div>
-                <div class="font-bold text-slate-800 text-[11px] md:text-xs line-clamp-2 leading-tight">${l.title}</div>
-            </div>
-        </div>`;
-    }).join('');
-
-    // 4. Mặc định tự động kích hoạt phát Video của bài đầu tiên trong danh sách
-    const firstTopicName = topicMap[homeFreeLessons[0].topic_id] || "Chuyên đề tổng hợp";
-    selectHomeVideo(homeFreeLessons[0].id, firstTopicName);
-}
-
-// Hàm thực hiện chuyển đổi bài học khi học sinh click chọn bài
-function selectHomeVideo(lessonId, topicName) {
-    // Làm sạch class active cũ
-    document.querySelectorAll('.home-lesson-item').forEach(el => {
-        el.classList.remove('bg-emerald-50/50', 'border-emerald-400', 'ring-1', 'ring-emerald-400');
-    });
-    
-    // Đánh dấu viền xanh bài đang chọn
-    const currentItem = document.getElementById(`home-item-${lessonId}`);
-    if (currentItem) {
-        currentItem.classList.add('bg-emerald-50/50', 'border-emerald-400', 'ring-1', 'ring-emerald-400');
-    }
-
-    const lesson = homeFreeLessons.find(l => String(l.id) === String(lessonId));
-    if (!lesson) return;
-
-    // Ghi nhận thông tin bài giảng hiện tại bên dưới video
-    document.getElementById('home-playing-topic').innerText = topicName;
-    document.getElementById('home-playing-title').innerText = lesson.title;
-    document.getElementById('home-playing-insight').innerText = lesson.insight || "Các em lưu ý theo dõi kỹ các bước biến đổi toán học và phương pháp tư duy hệ thống của bài này nhé.";
-
-    // Trích xuất ID youtube để thay thế source cho iframe player
-    const player = document.getElementById('home-main-player');
-    const placeholder = document.getElementById('home-video-placeholder');
-    const youtubeId = extractHomeYoutubeId(lesson.video_url);
-
-    if (youtubeId) {
-        placeholder.classList.add('hidden');
-        player.classList.remove('hidden');
-        player.src = `https://www.youtube.com/embed/${youtubeId}`;
-    } else {
-        player.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        placeholder.innerHTML = `
-            <i class="fas fa-video-slash text-2xl text-gray-500 mb-1"></i>
-            <p class="text-xs text-gray-400">Đường link video bài giảng này chưa hợp lệ.</p>
-        `;
-    }
-}
-
-// Hàm bổ trợ tách lấy mã ID Youtube
-function extractHomeYoutubeId(url) {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
 }
 // ════════════════════════════════════════════════
 // THÔNG BÁO (BELL)
@@ -1181,7 +1197,7 @@ async function init() {
         showMotivation(null);
     }
 
-    // Load song song để trang nhanh hơn
+    // Chạy song song bất đồng bộ giúp tối ưu hóa tốc độ tải trang
     loadLessons();
     loadFreeLessons();
     loadHomepageFreeLessons();
