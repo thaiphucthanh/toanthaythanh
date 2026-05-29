@@ -123,7 +123,7 @@
                     return;
                 }
 
-                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái Pending (Chờ duyệt)
+                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái inactive (Chờ duyệt)
                 const { error: insertError } = await supabaseClient
                     .from('accounts')
                     .insert([{
@@ -132,7 +132,7 @@
                         sdt: sdtValue,
                         password: passwordValue,
                         role: 'student',
-                        status: 'Pending', // <-- Gán luôn trạng thái chờ duyệt của thầy
+                        status: 'inactive', // <-- Gán luôn trạng thái chờ duyệt của thầy
                         created_at: new Date().toISOString()
                     }]);
 
