@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Tin & Lộ Trình - Toán Thầy Thành</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .active-notice { border-left-color: #1e3a8a; background-color: #f0fdf4; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col">
+
+    <header class="bg-blue-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="w-10 h-10 rounded-full border-2 border-white bg-white">
+                <span class="font-black tracking-tight uppercase text-lg hidden sm:inline">Bảng Tin & Lộ Trình</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="adminPostBtn" onclick="openAdminModal()" class="hidden bg-yellow-500 hover:bg-yellow-600 text-blue-950 font-black px-4 py-2 rounded-xl text-sm shadow transition-all flex items-center gap-2">
+                    <i class="fas fa-edit"></i> Đăng thông báo mới
+                </button>
+                <a href="index.html" class="text-blue-200 hover:text-white font-bold text-sm flex items-center gap-1 transition-colors">
+                    <i class="fas fa-home"></i> Về trang chủ
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="md:col-span-1 bg-white rounded-2xl shadow-md p-4 flex flex-col h-[calc(100vh-120px)] sticky top-20">
+            <h2 class="text-blue-900 font-black text-lg border-b pb-3 mb-3 flex items-center gap-2">
+                <i class="fas fa-bullhorn text-amber-500"></i> Danh mục bài viết
+            </h2>
+            
+            <div id="noticeList" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-spinner animate-spin text-2xl mb-2 block"></i> Đang tải bảng tin...
+                </div>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 bg-white rounded-2xl shadow-md p-6 flex flex-col h-[calc(100vh-120px)] sticky top-20">
+            <div id="noticeDetail" class="h-full flex flex-col justify-between">
+                <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
+                        <i class="fas fa-envelope-open text-3xl"></i>
+                    </div>
+                    <p class="font-semibold text-sm text-center">Chào mừng em đến với Toán Thầy Thành!<br>Hãy chọn một mục thông báo bên trái để xem nội dung chi tiết nhé!</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="adminModal" class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-blue-900 text-white p-6 flex justify-between items-center">
+                <h3 class="font-black text-lg uppercase flex items-center gap-2">
+                    <i class="fas fa-bullhorn"></i> Đăng thông báo lên bảng tin chung
+                </h3>
+                <button onclick="closeAdminModal()" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="adminPostForm" onsubmit="handleAdminPost(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Tiêu đề bài viết</label>
+                    <input type="text" id="postTitle" required placeholder="Ví dụ: [LỘ TRÌNH] Lộ trình luyện thi vào 10 chuyên Toán năm học mới"
+                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                </div>
+                <div>
+                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung thông báo</label>
+                    <textarea id="postContent" required rows="8" placeholder="Nhập nội dung chi tiết gửi học sinh..."
+                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Hủy</button>
+                    <button type="submit" id="btnSubmitPost" class="px-6 py-2.5 bg-blue-700 text-white rounded-xl font-black hover:bg-blue-800 transition-all flex items-center gap-2 shadow-md">
+                        <i class="fas fa-paper-plane"></i> Đăng bài ngay
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. Kết nối Supabase của Thầy Thành
+        const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+        const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
+
+        let currentUser = null;
+        let allAnnouncements = [];
+        let readList = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Đọc thông tin user (nếu có), không bắt buộc phải có thông tin mới cho xem
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                
+                // Nếu đúng là tài khoản Admin hoặc Giáo viên thì mới hiển thị nút đăng bài
+                if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
+                    document.getElementById('adminPostBtn').classList.remove('hidden');
+                }
+            }
+
+            loadAnnouncements();
+        });
+
+        // 2. Tải toàn bộ thông báo từ bảng announcements (Công khai hoàn toàn)
+        async function loadAnnouncements() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('announcements')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                allAnnouncements = data || [];
+                renderNoticeList();
+            } catch (err) {
+                console.error("Lỗi:", err);
+                document.getElementById('noticeList').innerHTML = `<div class="text-center text-red-500 font-semibold text-xs py-4">Không thể kết nối bảng tin!</div>`;
+            }
+        }
+
+        // 3. Render danh sách bài viết ở cột trái
+        function renderNoticeList() {
+            const listEl = document.getElementById('noticeList');
+            if (allAnnouncements.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-gray-400 py-8 text-xs font-medium">Chưa có thông báo hoặc lộ trình nào được đăng.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = allAnnouncements.map(item => {
+                const date = new Date(item.created_at).toLocaleDateString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                const isRead = readList.includes(item.id);
+                return `
+                    <div onclick="viewDetail('${item.id}')" id="card-${item.id}" 
+                         class="p-3 bg-gray-50 border-l-4 border-gray-200 rounded-r-xl cursor-pointer hover:bg-blue-50/50 transition-all relative">
+                        <div class="flex justify-between items-start gap-2">
+                            <h4 class="font-bold text-gray-800 text-sm line-clamp-1 ${!isRead ? 'text-blue-900 font-black' : ''}">${item.title}</h4>
+                            ${!isRead ? '<span id="badge-'+item.id+'" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-1.5 animate-pulse"></span>' : ''}
+                        </div>
+                        <p class="text-[11px] text-gray-400 font-semibold mt-1"><i class="far fa-clock"></i> ${date}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 4. Xem chi tiết thông báo ở cột phải
+        function viewDetail(id) {
+            document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
+            document.getElementById(`card-${id}`)?.classList.add('active-notice');
+
+            const item = allAnnouncements.find(n => n.id == id);
+            if (!item) return;
+
+            // Đánh dấu bài đã xem vào bộ nhớ trình duyệt (LocalStorage)
+            if (!readList.includes(id)) {
+                readList.push(id);
+                localStorage.setItem('read_announcements', JSON.stringify(readList));
+                document.getElementById(`badge-${id}`)?.remove();
+            }
+
+            const date = new Date(item.created_at).toLocaleString('vi-VN');
+            document.getElementById('noticeDetail').innerHTML = `
+                <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                    <h3 class="text-xl font-black text-blue-900 leading-tight">${item.title}</h3>
+                    <div class="text-xs text-gray-400 font-bold flex items-center gap-2 border-b pb-3">
+                        <span><i class="far fa-calendar-alt"></i> Ngày đăng: ${date}</span>
+                        <span>•</span>
+                        <span class="text-blue-600"><i class="fas fa-user-graduate"></i> Tác giả: Thầy Thành</span>
+                    </div>
+                    <div class="text-gray-700 text-sm leading-relaxed font-medium whitespace-pre-line pt-2">
+                        ${item.content}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // QUẢN TRỊ VIÊN (THẦY THÀNH)
+        // ==========================================
+        function openAdminModal() { document.getElementById('adminModal').style.display = 'flex'; }
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+            document.getElementById('adminPostForm').reset();
+        }
+
+        async function handleAdminPost(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btnSubmitPost');
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang tải lên...';
+
+            try {
+                const { error } = await supabaseClient
+                    .from('announcements')
+                    .insert([{ title, content }]);
+
+                if (error) throw error;
+
+                Swal.fire('Thành công', 'Đã đăng bài viết mới lên bảng tin thành công!', 'success');
+                closeAdminModal();
+                loadAnnouncements();
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Lỗi', 'Không thể đẩy bài viết lên Supabase.', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
+            }
+        }
+    </script>
+</body>
+</html>
