@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký thành viên - Toán Thầy Thành</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-4">
+        <div class="bg-blue-900 p-8 text-center relative">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/mathematics.png')]"></div>
+            <a href="index.html" class="inline-block mb-4">
+                <img src="logo.png" alt="Logo" class="w-20 h-20 rounded-full border-4 border-white mx-auto shadow-lg bg-white">
+            </a>
+            <h1 class="text-white text-2xl font-black uppercase tracking-tight">Đăng ký tài khoản!</h1>
+            <p class="text-blue-200 text-sm font-bold mt-2">Tạo tài khoản để cùng Thầy Thành bứt phá điểm số</p>
+        </div>
+
+        <div class="p-8">
+            <form id="registerForm" class="space-y-5">
+                <div>
+                    <label class="block text-blue-900 font-bold mb-2 ml-1">Họ và tên học sinh</label>
+                    <div class="relative">
+                        <i class="fas fa-id-card absolute left-4 top-4 text-gray-400"></i>
+                        <input type="text" id="fullname" placeholder="Ví dụ: Nguyễn Văn An" required
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-blue-900 font-bold mb-2 ml-1">Địa chỉ Email</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-4 top-4 text-gray-400"></i>
+                        <input type="email" id="email" placeholder="Nhập địa chỉ email của em" required
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-blue-900 font-bold mb-2 ml-1">Số điện thoại (Zalo)</label>
+                    <div class="relative">
+                        <i class="fas fa-phone absolute left-4 top-4 text-gray-400"></i>
+                        <input type="tel" id="sdt" placeholder="Nhập số điện thoại đăng ký" required
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-blue-900 font-bold mb-2 ml-1 block">Mật khẩu</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                        <input type="password" id="password" placeholder="Tối thiểu từ 6 ký tự" required
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmit"
+                    class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1 text-lg uppercase flex items-center justify-center gap-2">
+                    <i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-gray-500 font-semibold">
+                    Đã có tài khoản rồi? 
+                    <a href="dang-nhap.html" class="text-blue-600 font-black hover:underline">Đăng nhập ngay</a>
+                </p>
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <a href="index.html" class="text-gray-400 hover:text-blue-900 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Cấu hình kết nối Supabase (Đồng bộ chính xác từ file của thầy)
+        const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+        const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
+
+        // 2. Xử lý sự kiện đăng ký
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            const fullnameValue = document.getElementById('fullname').value.trim();
+            const emailValue = document.getElementById('email').value.trim().toLowerCase();
+            const sdtValue = document.getElementById('sdt').value.trim();
+            const passwordValue = document.getElementById('password').value;
+
+            // Kiểm tra độ dài mật khẩu bảo mật cơ bản
+            if (passwordValue.length < 6) {
+                Swal.fire('Nhắc nhở', 'Mật khẩu cần dài từ 6 ký tự trở lên để bảo mật em nhé.', 'warning');
+                return;
+            }
+
+            // Khóa nút tránh việc kích chuột gửi dữ liệu nhiều lần
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
+
+            try {
+                // 3. Kiểm tra xem email hoặc sdt này đã có ai dùng chưa
+                const { data: existingUser, error: checkError } = await supabaseClient
+                    .from('accounts')
+                    .select('email, sdt')
+                    .or(`email.eq."${emailValue}",sdt.eq."${sdtValue}"`);
+
+                if (checkError) throw checkError;
+
+                if (existingUser && existingUser.length > 0) {
+                    Swal.fire('Lỗi đăng ký', 'Email hoặc Số điện thoại này đã được sử dụng trên hệ thống. Em hãy kiểm tra lại!', 'error');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
+                    return;
+                }
+
+                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái Pending (Chờ duyệt)
+                const { error: insertError } = await supabaseClient
+                    .from('accounts')
+                    .insert([{
+                        fullname: fullnameValue,
+                        email: emailValue,
+                        sdt: sdtValue,
+                        password: passwordValue,
+                        role: 'student',
+                        status: 'Pending', // <-- Gán luôn trạng thái chờ duyệt của thầy
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (insertError) throw insertError;
+
+                // 5. Hiện thông báo hộp thoại cực kỳ xịn sò hướng dẫn học sinh các bước tiếp theo
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ĐĂNG KÝ THÀNH CÔNG!',
+                    html: `
+                        <div class="text-left space-y-3 text-sm text-gray-600 mt-2">
+                            <p>🎯 Tài khoản của em <b>${fullnameValue}</b> đã được tạo trên hệ thống Toán Thầy Thành.</p>
+                            <p class="p-3 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-xl text-xs leading-relaxed">
+                                ⚠️ Trạng thái: <b>CHỜ THẦY DUYỆT</b>.<br>
+                                Để bảo mật lộ trình, tài khoản cần được thầy kích hoạt trước khi mở các video bài giảng.
+                            </p>
+                            <p class="font-black text-gray-800 text-center pt-2">👇 BƯỚC TIẾP THEO CẦN LÀM:</p>
+                            <div class="bg-gray-50 border-2 border-dashed p-3 rounded-xl text-xs space-y-1.5 font-semibold text-gray-700">
+                                <div>1️⃣ Nhắn tin Zalo hoặc Messenger cho Thầy Thành.</div>
+                                <div>2️⃣ Báo Email/SĐT vừa đăng ký: <span class="text-blue-700 font-bold">${emailValue}</span></div>
+                                <div>3️⃣ Thầy sẽ phê duyệt và mở khóa lớp học cho em ngay!</div>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: 'Đã hiểu và quay lại trang chủ',
+                    confirmButtonColor: '#1e3a8a',
+                    allowOutsideClick: false
+                }).then(() => {
+                    window.location.href = 'index.html';
+                });
+
+            } catch (err) {
+                console.error("Lỗi đăng ký:", err);
+                Swal.fire('Lỗi hệ thống', 'Không thể kết nối dữ liệu đến Supabase. Thầy hãy kiểm tra xem bảng accounts đã có cột status chưa nhé!', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
+            }
+        });
+    </script>
+</body>
+</html>
