@@ -663,12 +663,15 @@ async function loadProgress(userId) {
             getViewedMap(userId)
         ]);
         const lessons = lessonsRes.data || [];
+
+        // Lấy topicId → courseId mapping
         const topicIds = [...new Set(lessons.map(l => l.topic_id).filter(Boolean))];
         let topicCourseMap = {};
         if (topicIds.length) {
             const { data: topics } = await sb.from('topics').select('id, course_id').in('id', topicIds);
             (topics || []).forEach(t => { topicCourseMap[String(t.id)] = t.course_id; });
         }
+
         content.innerHTML = enrolls.map(e => {
             const cls        = lessons.filter(l => topicCourseMap[String(l.topic_id)] === e.course_id);
             const total      = cls.length;
@@ -689,7 +692,6 @@ async function loadProgress(userId) {
         content.innerHTML = `<p class="text-red-400 text-sm text-center py-3">Không tải được tiến độ. Vui lòng thử lại.</p>`;
     }
 }
-
 // ════════════════════════════════════════════════
 // KHÓA HỌC NỔI BẬT
 // ════════════════════════════════════════════════
