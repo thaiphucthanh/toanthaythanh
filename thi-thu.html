@@ -154,32 +154,12 @@
         }
         .lesson-card:hover .play-btn { transform: scale(1.12); background: #1d4ed8; }
 
-        /* ── Free lesson card ── */
-        .free-card {
-            background: white; border-radius: 20px; border: 1.5px solid #dcfce7;
-            overflow: hidden; transition: all 0.3s; cursor: pointer;
-            display: flex; flex-direction: column;
-            box-shadow: 0 2px 12px rgba(34,197,94,0.08);
+        /* ── Free playlist scrollbar ── */
+        #home-free-list::-webkit-scrollbar { width: 4px; }
+        #home-free-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @media (min-width: 1024px) {
+            #free-playlist-wrap { height: 100% !important; }
         }
-        .free-card:hover { box-shadow: 0 12px 32px rgba(34,197,94,0.16); transform: translateY(-4px); border-color: #86efac; }
-        .free-thumb {
-            width: 100%; aspect-ratio: 16/9;
-            background: linear-gradient(135deg, #dcfce7, #d1fae5);
-            display: flex; align-items: center; justify-content: center; position: relative;
-            overflow: hidden;
-        }
-        .free-thumb::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(16,185,129,0.08) 100%);
-        }
-        .free-play-btn {
-            width: 48px; height: 48px; background: #16a34a; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 15px; transition: all 0.3s;
-            box-shadow: 0 6px 20px rgba(22,163,74,0.4);
-            position: relative; z-index: 1;
-        }
-        .free-card:hover .free-play-btn { transform: scale(1.12); background: #15803d; }
 
         /* ── Course card ── */
         .course-card {
@@ -465,29 +445,57 @@
         </div>
 
         <!-- ══════════════════════════════════════
-             BÀI GIẢNG MIỄN PHÍ
+             HỌC THỬ MIỄN PHÍ — Player + Playlist
         ═══════════════════════════════════════ -->
-        <div>
-            <!-- Banner đề mục miễn phí -->
-            <div class="free-banner mb-6 relative z-10">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl flex-shrink-0">🎁</div>
-                    <div class="flex-1">
-                        <div class="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-0.5">Không cần đăng ký</div>
-                        <div class="text-white font-black text-lg uppercase" style="font-style:italic;">Bài giảng miễn phí</div>
-                        <div class="text-white/60 text-xs font-bold mt-1">Học thử hoàn toàn miễn phí — không giới hạn!</div>
-                    </div>
-                    <a href="tailieu-free.html" class="flex-shrink-0 bg-white text-green-700 px-4 py-2 rounded-xl font-black text-xs uppercase hover:bg-green-50 transition-all shadow-sm">
-                        Xem tất cả <i class="fas fa-arrow-right ml-1"></i>
-                    </a>
+        <div id="videofree-section">
+            <div class="sec-title mb-4 flex items-center gap-2.5">
+                <div class="sec-bar" style="background:#22c55e;"></div>
+                <div>
+                    <h2 class="font-black text-lg md:text-xl text-blue-900 uppercase tracking-tight">Học Thử Miễn Phí</h2>
+                    <p class="text-[11px] text-gray-500 font-semibold mt-0.5">Trải nghiệm bài giảng chất lượng cao cùng Thầy Thành (Không cần tài khoản)</p>
                 </div>
+                <a href="tailieu-free.html" class="ml-auto flex-shrink-0 inline-flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl font-black text-xs uppercase hover:bg-green-500 hover:-translate-y-0.5 transition-all shadow-sm">
+                    Xem tất cả <i class="fas fa-arrow-right text-[9px]"></i>
+                </a>
             </div>
 
-            <div id="free-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="col-span-full text-center py-12">
-                    <i class="fas fa-circle-notch animate-spin text-3xl text-green-600"></i>
-                    <p class="text-gray-400 mt-3 font-bold text-xs uppercase tracking-widest">Đang tải bài giảng miễn phí...</p>
+            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col lg:flex-row" style="height:auto;">
+
+                <!-- Player bên trái -->
+                <div class="flex-1 bg-slate-950 flex flex-col justify-between relative overflow-hidden" style="min-height:250px;">
+                    <div class="relative w-full bg-black flex items-center justify-center" style="aspect-ratio:16/9;">
+                        <div id="home-video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4 text-center z-10">
+                            <i class="fas fa-circle-notch animate-spin text-3xl text-emerald-500 mb-2"></i>
+                            <p class="font-bold text-xs">Đang chuẩn bị bài giảng thử...</p>
+                        </div>
+                        <iframe id="home-main-player" class="w-full h-full hidden z-20" src="" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                    </div>
+
+                    <div class="p-4 bg-slate-900 border-t border-slate-800 flex-shrink-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="bg-emerald-500 text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                <i class="fas fa-unlock mr-1"></i> Xem Free
+                            </span>
+                            <span id="home-playing-topic" class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Đang tải...</span>
+                        </div>
+                        <h3 id="home-playing-title" class="text-sm md:text-base font-black mt-2 text-white line-clamp-1">Tiêu đề bài giảng</h3>
+                        <p id="home-playing-insight" class="text-xs text-gray-400 mt-1 italic line-clamp-2 border-l-2 border-emerald-500 pl-2">Ghi chú bài học của thầy...</p>
+                    </div>
                 </div>
+
+                <!-- Playlist bên phải -->
+                <div class="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col bg-slate-50/50" style="height:220px;" id="free-playlist-wrap">
+                    <div class="p-3.5 bg-gray-50 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+                        <span class="font-black text-xs text-slate-700 uppercase tracking-wider">
+                            Bài giảng dùng thử (<span id="home-free-count">0</span>)
+                        </span>
+                        <span class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">100% Miễn phí</span>
+                    </div>
+                    <div id="home-free-list" class="flex-1 overflow-y-auto p-2.5 space-y-2"></div>
+                </div>
+
             </div>
         </div>
 
@@ -914,76 +922,127 @@ async function loadLessons() {
 }
 
 // ═══════════════════════════════════════════
-// BÀI GIẢNG MIỄN PHÍ
+// HELPER: YOUTUBE ID
 // ═══════════════════════════════════════════
-async function loadFreeLessons() {
-    const grid = document.getElementById('free-grid');
+function getYtId(url) {
+    if (!url) return null;
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([^?&\s]{11})/);
+    return m ? m[1] : null;
+}
+
+// ═══════════════════════════════════════════
+// HỌC THỬ MIỄN PHÍ — Player + Playlist
+// ═══════════════════════════════════════════
+async function loadHomepageFreeLessons() {
     try {
-        // Thử lấy bài is_free = true trước
-        let { data: lessons, error } = await sb
+        const { data: lessons, error } = await sb
             .from('lessons')
-            .select('id, title, content, status, created_at, topic_id, is_free')
-            .eq('status', 'Active')
+            .select('id, title, video_url, insight, topic_id')
             .eq('is_free', true)
-            .order('created_at', { ascending: false })
-            .limit(6);
+            .eq('status', 'Active')
+            .order('id', { ascending: false });
 
-        // Nếu không có cột is_free hoặc không có dữ liệu, lấy bài cũ nhất (demo)
-        if (error || !lessons?.length) {
-            const res2 = await sb
-                .from('lessons')
-                .select('id, title, content, status, created_at, topic_id')
-                .eq('status', 'Active')
-                .order('created_at', { ascending: true })
-                .limit(6);
-            lessons = res2.data || [];
-        }
+        if (error) throw error;
 
-        // Cập nhật stat
-        document.getElementById('stat-free').textContent = lessons.length + '+';
+        const { data: topics } = await sb.from('topics').select('id, topic_name');
+        const topicMap = {};
+        topics?.forEach(t => topicMap[t.id] = t.topic_name);
 
-        if (!lessons?.length) {
-            grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-2xl border-2 border-dashed border-green-100">
-                <i class="fas fa-gift text-3xl text-green-200 mb-2 block"></i>
-                <p class="text-green-400 text-xs font-bold uppercase italic">Chưa có bài giảng miễn phí</p>
-            </div>`;
+        const countEl = document.getElementById('home-free-count');
+        const listContainer = document.getElementById('home-free-list');
+
+        if (countEl) countEl.innerText = lessons ? lessons.length : 0;
+
+        // Cập nhật stat miễn phí
+        const statFree = document.getElementById('stat-free');
+        if (statFree) statFree.textContent = (lessons?.length || 0) + '+';
+
+        if (!lessons || lessons.length === 0) {
+            if (listContainer) listContainer.innerHTML = '<p class="text-xs text-gray-400 text-center py-6 italic">Chưa có bài giảng học thử nào được bật.</p>';
+            const placeholder = document.getElementById('home-video-placeholder');
+            if (placeholder) placeholder.innerHTML = '<p class="text-sm font-bold text-gray-500 text-center px-4">Hệ thống đang cập nhật bài giảng thử.</p>';
             return;
         }
 
-        grid.innerHTML = lessons.map(l => {
-            const excerpt = stripHtml(l.content || '').slice(0, 85) || 'Học thử miễn phí cùng Thầy Thành';
-            return `
-            <div class="free-card group" onclick="window.location.href='lesson-detail.html?id=${l.id}'">
-                <div style="position:absolute;top:10px;left:10px;z-index:10;pointer-events:none;">
-                    <span style="background:#16a34a;color:white;font-size:9px;padding:2px 10px;border-radius:20px;font-weight:900;text-transform:uppercase;box-shadow:0 2px 8px rgba(22,163,74,0.3);">
-                        ✓ MIỄN PHÍ
-                    </span>
-                </div>
+        // Điều chỉnh chiều cao playlist trên desktop
+        const playlistWrap = document.getElementById('free-playlist-wrap');
+        if (playlistWrap && window.innerWidth >= 1024) {
+            playlistWrap.style.height = 'auto';
+        }
 
-                <div class="free-thumb" style="position:relative;pointer-events:none;">
-                    <div class="free-play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
-                </div>
+        // Hàm phát video
+        window.playHomeFreeLesson = function(videoUrl, title, insight, topicName) {
+            const player = document.getElementById('home-main-player');
+            const placeholder = document.getElementById('home-video-placeholder');
+            if (player && placeholder) {
+                placeholder.classList.add('hidden');
+                player.classList.remove('hidden');
+                let embedUrl = videoUrl;
+                const ytId = getYtId(videoUrl);
+                if (ytId) {
+                    embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+                } else if (videoUrl.includes('youtube.com/embed/')) {
+                    if (!videoUrl.includes('autoplay=1')) embedUrl += (videoUrl.includes('?') ? '&' : '?') + 'autoplay=1&rel=0';
+                }
+                player.src = embedUrl;
+            }
+            const topicEl = document.getElementById('home-playing-topic');
+            const titleEl = document.getElementById('home-playing-title');
+            const insightEl = document.getElementById('home-playing-insight');
+            if (topicEl) topicEl.innerText = topicName;
+            if (titleEl) titleEl.innerText = title;
+            if (insightEl) insightEl.innerText = insight || 'Ghi chú bài học từ Thầy Thành.';
 
-                <div class="p-4 flex-1" style="pointer-events:none;">
-                    <div class="font-black text-green-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2 italic">${l.title || 'Bài giảng'}</div>
-                    <div class="text-gray-400 text-xs line-clamp-2 mb-2">${excerpt}</div>
-                    <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
-                </div>
+            // Highlight mục đang phát
+            document.querySelectorAll('.free-list-item').forEach(el => {
+                el.classList.remove('bg-slate-900', 'border-emerald-500');
+                el.classList.add('bg-slate-900/40', 'border-slate-800');
+            });
+            const activeId = 'free-item-' + (lessons.findIndex(l => l.title === title));
+            const activeEl = document.getElementById(activeId);
+            if (activeEl) {
+                activeEl.classList.remove('bg-slate-900/40', 'border-slate-800');
+                activeEl.classList.add('bg-slate-900', 'border-emerald-500');
+            }
+        };
 
-                <div class="px-4 pb-4 flex items-center justify-between border-t border-gray-50 pt-3" style="pointer-events:none;">
-                    <span class="text-[9px] font-black text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full uppercase">Học miễn phí</span>
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background:#16a34a;">
-                        <i class="fas fa-arrow-right text-white text-[8px]"></i>
+        // Phát bài đầu tiên tự động
+        const first = lessons[0];
+        const firstTopic = topicMap[first.topic_id] || 'Chuyên đề ôn thi';
+        playHomeFreeLesson(first.video_url, first.title, first.insight, firstTopic);
+
+        // Đổ danh sách playlist
+        if (listContainer) {
+            listContainer.innerHTML = lessons.map((lesson, index) => {
+                const topicName = topicMap[lesson.topic_id] || 'Chuyên đề';
+                const safeTitle   = lesson.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeInsight = (lesson.insight || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeUrl     = (lesson.video_url || '').replace(/'/g, "\\'");
+                const safeTopic   = topicName.replace(/'/g, "\\'");
+                const ytId = getYtId(lesson.video_url);
+                const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/default.jpg` : null;
+
+                return `
+                <div id="free-item-${index}"
+                     class="free-list-item p-2.5 ${index === 0 ? 'bg-slate-900 border-emerald-500' : 'bg-slate-900/40 border-slate-800'} border rounded-xl cursor-pointer transition-all flex gap-3 items-center group"
+                     onclick="playHomeFreeLesson('${safeUrl}', '${safeTitle}', '${safeInsight}', '${safeTopic}')">
+                    ${thumb
+                        ? `<img src="${thumb}" class="w-12 h-9 rounded-lg object-cover flex-shrink-0 bg-slate-800">`
+                        : `<div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-bold group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all flex-shrink-0">${index + 1}</div>`
+                    }
+                    <div class="flex-1 min-w-0">
+                        <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">${topicName}</span>
+                        <h4 class="text-xs font-bold text-gray-200 line-clamp-1 group-hover:text-white transition-colors">${lesson.title}</h4>
                     </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch(e) {
-        console.error('[loadFreeLessons]', e.message);
-        grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-2xl border-2 border-dashed border-red-100">
-            <i class="fas fa-exclamation-circle text-2xl text-red-300 mb-2 block"></i>
-            <p class="text-red-400 text-xs font-bold uppercase">Không tải được bài giảng miễn phí.</p>
-        </div>`;
+                    <i class="fas fa-play text-[9px] text-gray-500 group-hover:text-emerald-400 ml-auto transition-all flex-shrink-0"></i>
+                </div>`;
+            }).join('');
+        }
+
+    } catch (err) {
+        console.error('[loadHomepageFreeLessons]', err);
+        const listContainer = document.getElementById('home-free-list');
+        if (listContainer) listContainer.innerHTML = '<p class="text-xs text-red-400 text-center py-6 font-bold">Lỗi tải bài giảng miễn phí.</p>';
     }
 }
 
@@ -1201,7 +1260,7 @@ async function init() {
 
     // Load song song
     loadLessons();
-    loadFreeLessons();
+    loadHomepageFreeLessons();
 }
 
 window.addEventListener('load', init);
