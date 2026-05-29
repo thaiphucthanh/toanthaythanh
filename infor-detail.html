@@ -25,7 +25,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <button id="adminPostBtn" onclick="openAdminModal()" class="hidden bg-yellow-500 hover:bg-yellow-600 text-blue-950 font-black px-4 py-2 rounded-xl text-sm shadow transition-all flex items-center gap-2">
-                    <i class="fas fa-edit"></i> Đăng thông báo mới
+                    <i class="fas fa-plus-circle"></i> Đăng bài mới
                 </button>
                 <a href="index.html" class="text-blue-200 hover:text-white font-bold text-sm flex items-center gap-1 transition-colors">
                     <i class="fas fa-home"></i> Về trang chủ
@@ -54,7 +54,7 @@
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
                         <i class="fas fa-envelope-open text-3xl"></i>
                     </div>
-                    <p class="font-semibold text-sm text-center">Chào mừng em đến với Toán Thầy Thành!<br>Hãy chọn một mục thông báo bên trái để xem nội dung chi tiết nhé!</p>
+                    <p class="font-semibold text-sm text-center">Chào mừng em đến với Lộ trình học tập Thầy Thành!<br>Hãy chọn một mục thông báo bên trái để xem chi tiết.</p>
                 </div>
             </div>
         </div>
@@ -64,20 +64,20 @@
     <div id="adminModal" class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
             <div class="bg-blue-900 text-white p-6 flex justify-between items-center">
-                <h3 class="font-black text-lg uppercase flex items-center gap-2">
-                    <i class="fas fa-bullhorn"></i> Đăng thông báo lên bảng tin chung
+                <h3 id="modalTitleText" class="font-black text-lg uppercase flex items-center gap-2">
+                    <i class="fas fa-bullhorn"></i> Đăng thông báo mới
                 </h3>
                 <button onclick="closeAdminModal()" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button>
             </div>
             <form id="adminPostForm" onsubmit="handleAdminPost(event)" class="p-6 space-y-4">
                 <div>
                     <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Tiêu đề bài viết</label>
-                    <input type="text" id="postTitle" required placeholder="Ví dụ: [LỘ TRÌNH] Lộ trình luyện thi vào 10 chuyên Toán năm học mới"
+                    <input type="text" id="postTitle" required placeholder="Nhập tiêu đề lộ trình hoặc thông báo..."
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
                 </div>
                 <div>
-                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung thông báo</label>
-                    <textarea id="postContent" required rows="8" placeholder="Nhập nội dung chi tiết gửi học sinh..."
+                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung chi tiết</label>
+                    <textarea id="postContent" required rows="8" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold"></textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
@@ -91,31 +91,27 @@
     </div>
 
     <script>
-        // 1. Kết nối Supabase của Thầy Thành
         const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
         const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
 
         let currentUser = null;
         let allAnnouncements = [];
+        let editingId = null; // Quản lý ID bài đang sửa (null tức là đang thêm mới)
         let readList = JSON.parse(localStorage.getItem('read_announcements') || '[]');
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Đọc thông tin user (nếu có), không bắt buộc phải có thông tin mới cho xem
             const userStr = localStorage.getItem('user');
             if (userStr) {
                 currentUser = JSON.parse(userStr);
-                
-                // Nếu đúng là tài khoản Admin hoặc Giáo viên thì mới hiển thị nút đăng bài
                 if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
                     document.getElementById('adminPostBtn').classList.remove('hidden');
                 }
             }
-
             loadAnnouncements();
         });
 
-        // 2. Tải toàn bộ thông báo từ bảng announcements (Công khai hoàn toàn)
+        // Tải danh sách
         async function loadAnnouncements() {
             try {
                 const { data, error } = await supabaseClient
@@ -127,16 +123,16 @@
                 allAnnouncements = data || [];
                 renderNoticeList();
             } catch (err) {
-                console.error("Lỗi:", err);
-                document.getElementById('noticeList').innerHTML = `<div class="text-center text-red-500 font-semibold text-xs py-4">Không thể kết nối bảng tin!</div>`;
+                console.error(err);
+                document.getElementById('noticeList').innerHTML = `<div class="text-center text-red-500 font-semibold text-xs py-4">Lỗi kết nối máy chủ!</div>`;
             }
         }
 
-        // 3. Render danh sách bài viết ở cột trái
+        // Render danh sách bên trái
         function renderNoticeList() {
             const listEl = document.getElementById('noticeList');
             if (allAnnouncements.length === 0) {
-                listEl.innerHTML = `<div class="text-center text-gray-400 py-8 text-xs font-medium">Chưa có thông báo hoặc lộ trình nào được đăng.</div>`;
+                listEl.innerHTML = `<div class="text-center text-gray-400 py-8 text-xs font-medium">Chưa có bài viết nào được đăng.</div>`;
                 return;
             }
 
@@ -156,7 +152,7 @@
             }).join('');
         }
 
-        // 4. Xem chi tiết thông báo ở cột phải
+        // Xem nội dung chi tiết bên phải
         function viewDetail(id) {
             document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
             document.getElementById(`card-${id}`)?.classList.add('active-notice');
@@ -164,17 +160,33 @@
             const item = allAnnouncements.find(n => n.id == id);
             if (!item) return;
 
-            // Đánh dấu bài đã xem vào bộ nhớ trình duyệt (LocalStorage)
             if (!readList.includes(id)) {
                 readList.push(id);
                 localStorage.setItem('read_announcements', JSON.stringify(readList));
                 document.getElementById(`badge-${id}`)?.remove();
             }
 
+            // Kiểm tra xem người đang xem có phải Admin không để hiện bộ công cụ điều khiển
+            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
             const date = new Date(item.created_at).toLocaleString('vi-VN');
+            
             document.getElementById('noticeDetail').innerHTML = `
                 <div class="flex-1 overflow-y-auto space-y-4 pr-1">
-                    <h3 class="text-xl font-black text-blue-900 leading-tight">${item.title}</h3>
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <h3 class="text-xl font-black text-blue-900 leading-tight flex-1">${item.title}</h3>
+                        
+                        ${isAdmin ? `
+                            <div class="flex gap-2 flex-shrink-0">
+                                <button onclick="openAdminModal('${item.id}')" class="bg-amber-500 hover:bg-amber-600 text-blue-950 font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </button>
+                                <button onclick="deleteAnnouncement('${item.id}')" class="bg-red-600 hover:bg-red-700 text-white font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
+                                    <i class="fas fa-trash-alt"></i> Xóa
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
                     <div class="text-xs text-gray-400 font-bold flex items-center gap-2 border-b pb-3">
                         <span><i class="far fa-calendar-alt"></i> Ngày đăng: ${date}</span>
                         <span>•</span>
@@ -187,15 +199,31 @@
             `;
         }
 
-        // ==========================================
-        // QUẢN TRỊ VIÊN (THẦY THÀNH)
-        // ==========================================
-        function openAdminModal() { document.getElementById('adminModal').style.display = 'flex'; }
+        // Mở Modal (Tích hợp thông minh cả Thêm và Sửa)
+        function openAdminModal(id = null) {
+            if (id) {
+                editingId = id; // Chuyển sang chế độ sửa bài
+                const item = allAnnouncements.find(n => n.id == id);
+                document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-edit"></i> Chỉnh sửa bài viết';
+                document.getElementById('postTitle').value = item.title;
+                document.getElementById('postContent').value = item.content;
+                document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-save"></i> Cập nhật ngay';
+            } else {
+                editingId = null; // Chế độ thêm mới
+                document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-bullhorn"></i> Đăng thông báo mới';
+                document.getElementById('adminPostForm').reset();
+                document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
+            }
+            document.getElementById('adminModal').style.display = 'flex';
+        }
+
         function closeAdminModal() {
             document.getElementById('adminModal').style.display = 'none';
             document.getElementById('adminPostForm').reset();
+            editingId = null;
         }
 
+        // Xử lý gửi Form (Thêm / Sửa đồng bộ lên Supabase)
         async function handleAdminPost(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitPost');
@@ -203,25 +231,82 @@
             const content = document.getElementById('postContent').value.trim();
 
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang tải lên...';
+            btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
 
             try {
-                const { error } = await supabaseClient
-                    .from('announcements')
-                    .insert([{ title, content }]);
+                if (editingId) {
+                    // Thực hiện lệnh CẬP NHẬT bài viết cũ
+                    const { error } = await supabaseClient
+                        .from('announcements')
+                        .update({ title, content })
+                        .eq('id', editingId);
 
-                if (error) throw error;
+                    if (error) throw error;
+                    Swal.fire('Thành công', 'Đã cập nhật bài viết thành công!', 'success');
+                } else {
+                    // Thực hiện lệnh THÊM MỚI hoàn toàn
+                    const { error } = await supabaseClient
+                        .from('announcements')
+                        .insert([{ title, content }]);
 
-                Swal.fire('Thành công', 'Đã đăng bài viết mới lên bảng tin thành công!', 'success');
+                    if (error) throw error;
+                    Swal.fire('Thành công', 'Đã thêm bài viết mới lên bảng tin!', 'success');
+                }
+
                 closeAdminModal();
-                loadAnnouncements();
+                await loadAnnouncements();
+                
+                // Nếu vừa sửa xong, hiển thị lại luôn nội dung mới trên màn hình chi tiết
+                if (editingId) viewDetail(editingId);
 
             } catch (err) {
                 console.error(err);
-                Swal.fire('Lỗi', 'Không thể đẩy bài viết lên Supabase.', 'error');
+                Swal.fire('Lỗi', 'Thao tác không thành công, hãy kiểm tra lại.', 'error');
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
+            }
+        }
+
+        // Hàm xử lý XÓA bài viết vĩnh viễn khỏi hệ thống
+        async function deleteAnnouncement(id) {
+            const result = await Swal.fire({
+                title: 'Thầy chắc chắn muốn xóa?',
+                text: "Hành động này sẽ gỡ bỏ bài viết vĩnh viễn khỏi bảng tin của học sinh!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Đúng vậy, xóa đi!',
+                cancelButtonText: 'Hủy bỏ'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('announcements')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    Swal.fire('Đã xóa', 'Bài viết đã được gỡ bỏ khỏi hệ thống thành công.', 'success');
+                    
+                    // Reset lại giao diện chi tiết bên phải về mặc định trống
+                    document.getElementById('noticeDetail').innerHTML = `
+                        <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
+                                <i class="fas fa-envelope-open text-3xl"></i>
+                            </div>
+                            <p class="font-semibold text-sm text-center">Đã xóa thông báo thành công!</p>
+                        </div>
+                    `;
+                    
+                    loadAnnouncements(); // Nạp lại cột danh sách bên trái
+
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Lỗi hệ thống', 'Không thể hoàn tất tác vụ xóa dữ liệu.', 'error');
+                }
             }
         }
     </script>
