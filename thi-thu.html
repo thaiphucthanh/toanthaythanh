@@ -810,7 +810,7 @@ async function loadLessons() {
     try {
         const { data: lessons, error } = await sb
             .from('lessons')
-            .select('id, title, content, status, created_at, topic_id, is_free')
+            .select('id, title, content, status, created_at, topic_id, video_url')
             .eq('status', 'Active')
             .order('created_at', { ascending: false })
             .limit(6);
@@ -818,7 +818,7 @@ async function loadLessons() {
         if (error) throw error;
 
         if (!lessons?.length) {
-            grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200">
                 <i class="fas fa-book-open text-3xl text-gray-200 mb-2 block"></i>
                 <p class="text-gray-400 text-xs font-bold uppercase italic">Chưa có bài giảng</p>
             </div>`;
@@ -844,9 +844,6 @@ async function loadLessons() {
             viewedMap = vmRes;
         }
 
-        // Cập nhật stat
-        document.getElementById('stat-lessons').textContent = lessons.length + '+';
-
         grid.innerHTML = lessons.map(l => {
             const lid         = String(l.id);
             const courseId    = topicCourseMap[String(l.topic_id)];
@@ -858,7 +855,8 @@ async function loadLessons() {
             const showBadge   = isEnrolled;
             const isUnread    = showBadge && !isViewed;
             const arrowBg     = isCompleted ? '#22c55e' : (isUnread ? '#ef4444' : '#3b82f6');
-            const excerpt     = stripHtml(l.content || '').slice(0, 85) || 'Xem ngay cùng Thầy Thành';
+            const excerpt     = stripHtml(l.content || '').slice(0, 80) || 'Xem ngay cùng Thầy Thành';
+            const ytId        = getYtId(l.video_url);
 
             return `
             <div class="lesson-card ${isUnread ? 'unread' : ''} group"
@@ -867,26 +865,32 @@ async function loadLessons() {
                 ${showBadge ? `
                 <div style="position:absolute;top:10px;left:10px;z-index:10;pointer-events:none;">
                     ${isCompleted
-                        ? `<span style="background:#22c55e" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1"><i class="fas fa-check-circle text-[8px]"></i> Hoàn thành</span>`
+                        ? `<span style="background:#22c55e" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                               <i class="fas fa-check-circle text-[8px]"></i> Hoàn thành
+                           </span>`
                         : isViewed
-                            ? `<span style="background:#3b82f6" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1"><i class="fas fa-history text-[8px]"></i> Đã xem${watchTime ? ' · ' + watchTime : ''}</span>`
-                            : `<span style="background:#ef4444" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1"><span class="badge-unread-dot"></span> Chưa xem</span>`
+                            ? `<span style="background:#3b82f6" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                   <i class="fas fa-history text-[8px]"></i> Đã xem${watchTime ? ' · ' + watchTime : ''}
+                               </span>`
+                            : `<span style="background:#ef4444" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm flex items-center gap-1">
+                                   <span class="badge-unread-dot"></span> Chưa xem
+                               </span>`
                     }
                 </div>` : ''}
 
-                ${l.is_free ? `<div style="position:absolute;top:10px;right:10px;z-index:10;pointer-events:none;"><span style="background:#16a34a" class="text-white text-[9px] px-2.5 py-0.5 rounded-full font-black uppercase shadow-sm">FREE</span></div>` : ''}
-
-                <div class="lesson-thumb" style="pointer-events:none;">
+                <div class="lesson-thumb relative" style="pointer-events:none;">
+                    ${ytId ? `<img class="yt-thumb" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail">` : ''}
                     <div class="play-btn"><i class="fas fa-play" style="margin-left:3px"></i></div>
+                    ${isUnread ? '<div class="absolute inset-0 bg-red-500/5 group-hover:bg-transparent transition-all" style="z-index:3"></div>' : ''}
                 </div>
 
                 <div class="p-4 flex-1" style="pointer-events:none;">
-                    <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2 italic">${l.title || 'Bài giảng'}</div>
+                    <div class="font-black text-blue-900 uppercase text-sm tracking-tight leading-tight mb-1.5 line-clamp-2">${l.title || 'Bài giảng'}</div>
                     <div class="text-gray-400 text-xs line-clamp-2 mb-2">${excerpt}</div>
                     <div class="text-[9px] text-gray-300 font-bold">${getTimeAgo(l.created_at)}</div>
                 </div>
 
-                <div class="px-4 pb-4 flex items-center justify-between border-t border-gray-50 pt-3" style="pointer-events:none;">
+                <div class="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-2.5" style="pointer-events:none;">
                     <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase">Toán Thầy Thành</span>
                     <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background:${arrowBg}">
                         <i class="fas fa-arrow-right text-white text-[8px]"></i>
@@ -896,7 +900,7 @@ async function loadLessons() {
         }).join('');
     } catch(e) {
         console.error('[loadLessons]', e.message);
-        grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-2xl border-2 border-dashed border-red-100">
+        grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border-2 border-dashed border-red-100">
             <i class="fas fa-exclamation-circle text-2xl text-red-300 mb-2 block"></i>
             <p class="text-red-400 text-xs font-bold uppercase">Không tải được bài giảng. Kiểm tra kết nối Supabase.</p>
         </div>`;
