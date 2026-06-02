@@ -64,43 +64,7 @@
         });
 
         function initLiveRoom() {
-            const roomName = "ToanThayThanh_LopHocToan_LiveStream"; 
-            const domain = "https://meet.jit.si/toanthaythanh";
-            
-            const options = {
-                roomName: roomName,
-                width: "100%",
-                height: "100%",
-                parentNode: document.getElementById('meetContainer'),
-                userInfo: {
-                    displayName: currentUser.fullname
-                },
-                configOverwrite: {
-                    startWithAudioMuted: currentUser.role !== 'admin', 
-                    startWithVideoMuted: false,
-                    prejoinPageEnabled: false, 
-                    disableInviteFunctions: true 
-                },
-                interfaceConfigOverwrite: {
-                    BRAND_APP_NAME: 'Toán Thầy Thành Live',
-                    SHOW_JITSI_WATERMARK: false, 
-                    HIDE_DEEP_LINKING_LOGO: true,
-                    TOOLBAR_BUTTONS: [
-                        'microphone', 'camera', 'desktop', 'fullscreen',
-                        'factions', 'chat', 'raisehand', 'videoquality', 
-                        'tileview', 'participants-pane', 'shareaudio', 'hangup'
-                    ]
-                }
-            };
-
-            // Tiến hành nhúng phòng học vào website
-            const api = new JitsiMeetExternalAPI(domain, options);
-        }
-    </script>
-</body>
-</html>
-        function initLiveRoom() {
-            const roomName = "ToanThayThanh_LopHocChuyenSau_LiveStream"; 
+            const roomName = "ToanThayThanh"; 
             const domain = "meet.jit.si";
             
             const options = {
