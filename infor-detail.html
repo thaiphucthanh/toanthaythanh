@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bảng Tin & Lộ Trình - Toán Thầy Thành</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link class="rounded-full" rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -36,7 +36,7 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <div class="md:col-span-1 bg-white rounded-2xl shadow-md p-4 flex flex-col h-[calc(100vh-120px)] sticky top-20">
+        <div id="noticeListContainer" class="bg-white rounded-2xl shadow-md p-4 flex flex-col h-[calc(100vh-120px)] sticky top-20">
             <h2 class="text-blue-900 font-black text-lg border-b pb-3 mb-3 flex items-center gap-2">
                 <i class="fas fa-bullhorn text-amber-500"></i> Danh mục bài viết
             </h2>
@@ -48,7 +48,7 @@
             </div>
         </div>
 
-        <div class="md:col-span-2 bg-white rounded-2xl shadow-md p-6 flex flex-col h-[calc(100vh-120px)] sticky top-20">
+        <div id="noticeDetailContainer" class="hidden md:flex md:col-span-2 bg-white rounded-2xl shadow-md p-6 flex flex-col h-[calc(100vh-120px)] sticky top-20">
             <div id="noticeDetail" class="h-full flex flex-col justify-between">
                 <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
@@ -97,7 +97,7 @@
 
         let currentUser = null;
         let allAnnouncements = [];
-        let editingId = null; // Quản lý ID bài đang sửa (null tức là đang thêm mới)
+        let editingId = null; 
         let readList = JSON.parse(localStorage.getItem('read_announcements') || '[]');
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -111,7 +111,7 @@
             loadAnnouncements();
         });
 
-        // Tải danh sách
+        // Tải danh sách bài viết từ Supabase
         async function loadAnnouncements() {
             try {
                 const { data, error } = await supabaseClient
@@ -152,7 +152,7 @@
             }).join('');
         }
 
-        // Xem nội dung chi tiết bên phải
+        // Xem nội dung chi tiết (Đã tối ưu hóa chuyển tab trên Mobile)
         function viewDetail(id) {
             document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
             document.getElementById(`card-${id}`)?.classList.add('active-notice');
@@ -166,12 +166,17 @@
                 document.getElementById(`badge-${id}`)?.remove();
             }
 
-            // Kiểm tra xem người đang xem có phải Admin không để hiện bộ công cụ điều khiển
             const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
             const date = new Date(item.created_at).toLocaleString('vi-VN');
             
+            // Cập nhật giao diện nội dung bài viết
             document.getElementById('noticeDetail').innerHTML = `
                 <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                    
+                    <button onclick="backToList()" class="md:hidden mb-2 bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-black px-3 py-2 rounded-xl border border-blue-200 transition-all flex items-center gap-1.5">
+                        <i class="fas fa-chevron-left"></i> Quay lại danh sách
+                    </button>
+
                     <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <h3 class="text-xl font-black text-blue-900 leading-tight flex-1">${item.title}</h3>
                         
@@ -197,19 +202,31 @@
                     </div>
                 </div>
             `;
+
+            // MẸO TRÊN DI ĐỘNG: Ẩn cột danh sách đi, mở cột nội dung ra
+            if (window.innerWidth < 768) {
+                document.getElementById('noticeListContainer').classList.add('hidden');
+                document.getElementById('noticeDetailContainer').classList.remove('hidden');
+            }
         }
 
-        // Mở Modal (Tích hợp thông minh cả Thêm và Sửa)
+        // Hàm quay trở lại danh sách bài viết trên di động
+        function backToList() {
+            document.getElementById('noticeListContainer').classList.remove('hidden');
+            document.getElementById('noticeDetailContainer').classList.add('hidden');
+        }
+
+        // Mở Modal Đăng/Sửa bài
         function openAdminModal(id = null) {
             if (id) {
-                editingId = id; // Chuyển sang chế độ sửa bài
+                editingId = id; 
                 const item = allAnnouncements.find(n => n.id == id);
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-edit"></i> Chỉnh sửa bài viết';
                 document.getElementById('postTitle').value = item.title;
                 document.getElementById('postContent').value = item.content;
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-save"></i> Cập nhật ngay';
             } else {
-                editingId = null; // Chế độ thêm mới
+                editingId = null; 
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-bullhorn"></i> Đăng thông báo mới';
                 document.getElementById('adminPostForm').reset();
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
@@ -223,7 +240,7 @@
             editingId = null;
         }
 
-        // Xử lý gửi Form (Thêm / Sửa đồng bộ lên Supabase)
+        // Đồng bộ dữ liệu Form lên Supabase
         async function handleAdminPost(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitPost');
@@ -235,7 +252,6 @@
 
             try {
                 if (editingId) {
-                    // Thực hiện lệnh CẬP NHẬT bài viết cũ
                     const { error } = await supabaseClient
                         .from('announcements')
                         .update({ title, content })
@@ -244,7 +260,6 @@
                     if (error) throw error;
                     Swal.fire('Thành công', 'Đã cập nhật bài viết thành công!', 'success');
                 } else {
-                    // Thực hiện lệnh THÊM MỚI hoàn toàn
                     const { error } = await supabaseClient
                         .from('announcements')
                         .insert([{ title, content }]);
@@ -256,7 +271,6 @@
                 closeAdminModal();
                 await loadAnnouncements();
                 
-                // Nếu vừa sửa xong, hiển thị lại luôn nội dung mới trên màn hình chi tiết
                 if (editingId) viewDetail(editingId);
 
             } catch (err) {
@@ -267,7 +281,7 @@
             }
         }
 
-        // Hàm xử lý XÓA bài viết vĩnh viễn khỏi hệ thống
+        // Xóa bài viết vĩnh viễn khỏi hệ thống
         async function deleteAnnouncement(id) {
             const result = await Swal.fire({
                 title: 'Thầy chắc chắn muốn xóa?',
@@ -291,17 +305,21 @@
 
                     Swal.fire('Đã xóa', 'Bài viết đã được gỡ bỏ khỏi hệ thống thành công.', 'success');
                     
-                    // Reset lại giao diện chi tiết bên phải về mặc định trống
-                    document.getElementById('noticeDetail').innerHTML = `
-                        <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
-                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
-                                <i class="fas fa-envelope-open text-3xl"></i>
+                    // Nếu đang dùng điện thoại, xóa xong tự động trả về danh sách chính
+                    if (window.innerWidth < 768) {
+                        backToList();
+                    } else {
+                        document.getElementById('noticeDetail').innerHTML = `
+                            <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border-2 border-dashed">
+                                    <i class="fas fa-envelope-open text-3xl"></i>
+                                </div>
+                                <p class="font-semibold text-sm text-center">Đã xóa thông báo thành công!</p>
                             </div>
-                            <p class="font-semibold text-sm text-center">Đã xóa thông báo thành công!</p>
-                        </div>
-                    `;
+                        `;
+                    }
                     
-                    loadAnnouncements(); // Nạp lại cột danh sách bên trái
+                    loadAnnouncements(); 
 
                 } catch (err) {
                     console.error(err);
