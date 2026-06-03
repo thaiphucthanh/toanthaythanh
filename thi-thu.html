@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phòng Học Trực Tuyến - Toán Thầy Thành</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link class="rounded-full" rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        /* Ép các thẻ iframe do Jitsi tự sinh ra bắt buộc phải lấp đầy 100% khung chứa */
         #meetContainer iframe {
             width: 100% !important;
             height: 100% !important;
@@ -40,31 +40,40 @@
     </header>
 
     <main id="meetContainer" class="flex-1 w-full bg-slate-950 relative overflow-hidden">
-        </main>
+    </main>
 
     <script>
-        let currentUser = { fullname: "Học viên ẩn danh", role: "student" };
+        // ĐÃ SỬA: Mặc định để null, không tự cấp tài khoản ẩn danh nữa
+        let currentUser = null; 
+
+        // KIỂM TRA BẢO MẬT NGAY LẬP TỨC (Chạy trước khi giao diện kịp tải)
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            // Nếu không tìm thấy tài khoản, chặn render và chuyển hướng ngay
+            window.stop(); // Dừng tải các tài nguyên khác của trang
+            
+            // Hiện thông báo cảnh báo bảo mật
+            alert("Quyền truy cập bị từ chối! Vui lòng đăng nhập tài khoản học viên để vào phòng.");
+            window.location.href = "index.html"; // Thầy đổi thành "dangnhap.html" nếu có file đăng nhập riêng nhé
+        } else {
+            // Nếu có tài khoản, giải nén dữ liệu chuẩn bị vào lớp
+            currentUser = JSON.parse(userStr);
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // 1. Lấy thông tin tài khoản đang đăng nhập
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                currentUser = JSON.parse(userStr);
-            }
-
-            // Đổi tiêu đề lớp học cho thân thiện
+            // Thiết lập tiêu đề hiển thị tên chính xác của Thầy hoặc Học sinh
             if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
                 document.getElementById('classTitle').innerText = "Lớp Học Trực Tuyến (Bảng Điều Khiển Của Thầy Thành)";
             } else {
                 document.getElementById('classTitle').innerText = `Lớp Học Trực Tuyến - Học Sinh: ${currentUser.fullname}`;
             }
 
-            // 2. Khởi tạo phòng học trực tuyến
+            // Kích hoạt gọi Jitsi Room
             initLiveRoom();
         });
 
         function initLiveRoom() {
-            const roomName = "ToanThayThanh"; 
+            const roomName = "ToanThayThanh_LopHocChinhThuc_Live"; 
             const domain = "meet.jit.si";
             
             const options = {
@@ -73,13 +82,13 @@
                 height: "100%",
                 parentNode: document.getElementById('meetContainer'),
                 userInfo: {
-                    displayName: currentUser.fullname
+                    displayName: currentUser.fullname // Bắt buộc lấy đúng tên trong tài khoản đã đăng ký
                 },
                 configOverwrite: {
-                    startWithAudioMuted: currentUser.role !== 'admin', 
+                    startWithAudioMuted: currentUser.role !== 'admin' && currentUser.role !== 'teacher', 
                     startWithVideoMuted: false,
                     prejoinPageEnabled: false, 
-                    disableInviteFunctions: true 
+                    disableInviteFunctions: true // Ẩn hoàn toàn tính năng copy link mời người ngoài
                 },
                 interfaceConfigOverwrite: {
                     BRAND_APP_NAME: 'Toán Thầy Thành Live',
@@ -93,7 +102,6 @@
                 }
             };
 
-            // Tiến hành nhúng phòng học vào website
             const api = new JitsiMeetExternalAPI(domain, options);
         }
     </script>
