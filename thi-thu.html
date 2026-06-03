@@ -39,59 +39,92 @@
         </div>
     </header>
 
-    <main id="meetContainer" class="flex-1 w-full bg-slate-950 relative overflow-hidden">
+    <main id="meetContainer" class="flex-1 w-full bg-slate-950 relative overflow-hidden flex items-center justify-center p-4">
+        
+        <div id="roomSelector" class="w-full max-w-2xl text-center space-y-6 z-40">
+            <div>
+                <h2 class="text-xl md:text-2xl font-black text-slate-100 uppercase tracking-wider">Chào mừng em đến với lớp học trực tuyến</h2>
+                <p class="text-xs md:text-sm text-slate-400 mt-1">Vui lòng chọn môn học hôm nay để kết nối vào phòng Livestream chính xác:</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                <button onclick="chooseRoom('toanthaythanh', 'Toán')" 
+                        class="flex flex-col items-center justify-center bg-slate-900 hover:bg-blue-950/50 border-2 border-slate-800 hover:border-blue-500 rounded-2xl p-6 text-slate-200 transition-all group shadow-xl">
+                    <div class="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <span class="text-base font-black tracking-wide uppercase">VÀO PHÒNG HỌC TOÁN</span>
+                    <span class="text-[11px] text-slate-500 mt-1 font-semibold">Mã phòng: toanthaythanh</span>
+                </button>
+
+                <button onclick="chooseRoom('tinthaythanh', 'Tin Học')" 
+                        class="flex flex-col items-center justify-center bg-slate-900 hover:bg-emerald-950/50 border-2 border-slate-800 hover:border-emerald-500 rounded-2xl p-6 text-slate-200 transition-all group shadow-xl">
+                    <div class="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <span class="text-base font-black tracking-wide uppercase">VÀO PHÒNG TIN HỌC</span>
+                    <span class="text-[11px] text-slate-500 mt-1 font-semibold">Mã phòng: tinthaythanh</span>
+                </button>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        // ĐÃ SỬA: Mặc định để null, không tự cấp tài khoản ẩn danh nữa
         let currentUser = null; 
 
-        // KIỂM TRA BẢO MẬT NGAY LẬP TỨC (Chạy trước khi giao diện kịp tải)
+        // 1. KIỂM TRA BẢO MẬT KHÔNG ĐỔI (Chặn người dùng chưa đăng nhập)
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-            // Nếu không tìm thấy tài khoản, chặn render và chuyển hướng ngay
-            window.stop(); // Dừng tải các tài nguyên khác của trang
-            
-            // Hiện thông báo cảnh báo bảo mật
+            window.stop(); 
             alert("Quyền truy cập bị từ chối! Vui lòng đăng nhập tài khoản học viên để vào phòng.");
-            window.location.href = "index.html"; // Thầy đổi thành "dangnhap.html" nếu có file đăng nhập riêng nhé
+            window.location.href = "index.html"; 
         } else {
-            // Nếu có tài khoản, giải nén dữ liệu chuẩn bị vào lớp
             currentUser = JSON.parse(userStr);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Thiết lập tiêu đề hiển thị tên chính xác của Thầy hoặc Học sinh
-            if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
-                document.getElementById('classTitle').innerText = "Lớp Học Trực Tuyến (Bảng Điều Khiển Của Thầy Thành)";
-            } else {
-                document.getElementById('classTitle').innerText = `Lớp Học Trực Tuyến - Học Sinh: ${currentUser.fullname}`;
-            }
-
-            // Kích hoạt gọi Jitsi Room
-            initLiveRoom();
+            // Đặt tiêu đề ban đầu khi học sinh chưa chọn phòng
+            document.getElementById('classTitle').innerText = "Vui lòng chọn môn học";
         });
 
-        function initLiveRoom() {
-            const roomName = "ToanThayThanh_LopHocChinhThuc_Live"; 
+        // 2. LOGIC XỬ LÝ KHI NHẤN CHỌN MÔN HỌC
+        function chooseRoom(roomName, subjectLabel) {
+            // Bước A: Đổi lại thanh tiêu đề Header cho thân thiện và chuyên nghiệp hơn
+            if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
+                document.getElementById('classTitle').innerText = `Lớp học ${subjectLabel} (Bảng Điều Khiển Của Thầy Thành)`;
+            } else {
+                document.getElementById('classTitle').innerText = `Lớp học ${subjectLabel} - Học Sinh: ${currentUser.fullname}`;
+            }
+
+            // Bước B: Xóa giao diện 2 nút bấm và dọn dẹp thẻ main để chuẩn bị nhúng Iframe
+            const container = document.getElementById('meetContainer');
+            container.innerHTML = ''; 
+            
+            // Bước C: Gọi hàm kích hoạt Jitsi Room tương ứng
+            initLiveRoom(roomName);
+        }
+
+        // 3. KHỞI TẠO PHÒNG HỌC JITSI DỰA VÀO THAM SỐ TRUYỀN VÀO
+        function initLiveRoom(roomName) {
             const domain = "meet.jit.si";
             
             const options = {
-                roomName: roomName,
+                roomName: roomName, // Tự động nhận 'toanthaythanh' hoặc 'tinthaythanh' từ nút bấm
                 width: "100%",
                 height: "100%",
                 parentNode: document.getElementById('meetContainer'),
                 userInfo: {
-                    displayName: currentUser.fullname // Bắt buộc lấy đúng tên trong tài khoản đã đăng ký
+                    displayName: currentUser.fullname
                 },
                 configOverwrite: {
                     startWithAudioMuted: currentUser.role !== 'admin' && currentUser.role !== 'teacher', 
                     startWithVideoMuted: false,
                     prejoinPageEnabled: false, 
-                    disableInviteFunctions: true // Ẩn hoàn toàn tính năng copy link mời người ngoài
+                    disableInviteFunctions: true 
                 },
                 interfaceConfigOverwrite: {
-                    BRAND_APP_NAME: 'Toán Thầy Thành Live',
+                    BRAND_APP_NAME: 'Hệ Thống Live Thầy Thành',
                     SHOW_JITSI_WATERMARK: false, 
                     HIDE_DEEP_LINKING_LOGO: true,
                     TOOLBAR_BUTTONS: [
