@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký thành viên - Toán Thầy Thành</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link class="rounded-full" rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -82,10 +82,34 @@
     </div>
 
     <script>
-        // 1. Cấu hình kết nối Supabase (Đồng bộ chính xác từ file của thầy)
-        const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-        const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
+        // 1. Cấu hình kết nối Supabase của thầy
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        // ==========================================================
+        // ⚙️ ĐÃ ĐỔI: CẤU HÌNH NHẬN EMAIL THÔNG BÁO QUA APPS SCRIPT
+        // ==========================================================
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3DlCvN2m2yPt2K3a92kWxQbv6QeUOd6PIIAJt4r7eJPd0pnuhxViv35YnSA3Vy75C/exec";
+
+        function sendNotificationToTeacher(fullname, email, sdt) {
+            // Nếu chưa điền URL Apps Script thì bỏ qua, không chạy để tránh lỗi giao diện học sinh
+            if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("ĐIỀN_ĐƯỜNG_LINK")) return;
+
+            // Bắn dữ liệu đăng ký sang Google Apps Script ngầm để gửi Email
+            fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Chống lỗi chặn tên miền chéo (CORS Cross-Origin) từ trình duyệt
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullname: fullname,
+                    email: email,
+                    phone: sdt,
+                    subject: "Đăng ký tài khoản mới"
+                })
+            }).catch(err => console.error("Lỗi gửi email ngầm:", err));
+        }
+        // ==========================================================
 
         // 2. Xử lý sự kiện đăng ký
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -97,18 +121,16 @@
             const sdtValue = document.getElementById('sdt').value.trim();
             const passwordValue = document.getElementById('password').value;
 
-            // Kiểm tra độ dài mật khẩu bảo mật cơ bản
             if (passwordValue.length < 6) {
                 Swal.fire('Nhắc nhở', 'Mật khẩu cần dài từ 6 ký tự trở lên để bảo mật em nhé.', 'warning');
                 return;
             }
 
-            // Khóa nút tránh việc kích chuột gửi dữ liệu nhiều lần
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
 
             try {
-                // 3. Kiểm tra xem email hoặc sdt này đã có ai dùng chưa
+                // 3. Kiểm tra trùng lặp tài khoản
                 const { data: existingUser, error: checkError } = await supabaseClient
                     .from('accounts')
                     .select('email, sdt')
@@ -123,7 +145,7 @@
                     return;
                 }
 
-                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái inactive (Chờ duyệt)
+                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái inactive
                 const { error: insertError } = await supabaseClient
                     .from('accounts')
                     .insert([{
@@ -132,13 +154,16 @@
                         sdt: sdtValue,
                         password: passwordValue,
                         role: 'student',
-                        status: 'inactive', // <-- Gán luôn trạng thái chờ duyệt của thầy
+                        status: 'inactive', 
                         created_at: new Date().toISOString()
                     }]);
 
                 if (insertError) throw insertError;
 
-                // 5. Hiện thông báo hộp thoại cực kỳ xịn sò hướng dẫn học sinh các bước tiếp theo
+                // 🔥 ĐÃ KÍCH HOẠT: Gọi hàm gửi email về hòm thư của thầy ngay lập tức
+                sendNotificationToTeacher(fullnameValue, emailValue, sdtValue);
+
+                // 5. Hiện thông báo hộp thoại hướng dẫn học sinh
                 Swal.fire({
                     icon: 'success',
                     title: 'ĐĂNG KÝ THÀNH CÔNG!',
@@ -166,7 +191,7 @@
 
             } catch (err) {
                 console.error("Lỗi đăng ký:", err);
-                Swal.fire('Lỗi hệ thống', 'Không thể kết nối dữ liệu đến Supabase. Thầy hãy kiểm tra xem bảng accounts đã có cột status chưa nhé!', 'error');
+                Swal.fire('Lỗi hệ thống', 'Không thể kết nối dữ liệu đến Supabase. Thầy hãy kiểm tra lại cấu hình nhé!', 'error');
             } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
