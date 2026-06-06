@@ -43,10 +43,10 @@
         /* ── Nav ── */
         .thanh-menu-ngang { background: #1e3a8a; }
         .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-        .item-menu { font-weight: 800; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .item-menu { font-weight: 800; color: white; text-decoration: none; }
         .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 
         /* ── Mobile drawer ── */
         #mob-menu { display: none; position: fixed; inset: 0; z-index: 300; }
@@ -210,23 +210,7 @@
         .fade-up-delay-2 { animation: fadeUp 0.5s 0.2s ease forwards; opacity: 0; }
         .fade-up-delay-3 { animation: fadeUp 0.5s 0.3s ease forwards; opacity: 0; }
 
-        /* ── Nav icon style ── */
-        .item-menu .nav-icon {
-            width: 28px; height: 28px;
-            background: rgba(255,255,255,0.12);
-            border-radius: 8px;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 12px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        .item-menu:hover .nav-icon {
-            background: rgba(255,255,255,0.22);
-        }
-        .item-menu.active-nav .nav-icon {
-            background: #fbbf24;
-            color: #1e3a8a;
-        }
+
     </style>
 </head>
 <body>
@@ -312,41 +296,15 @@
     <!-- Desktop nav — có icon -->
     <nav class="thanh-menu-ngang hidden md:block shadow-inner">
         <div class="khung-trang">
-            <ul class="flex gap-1 list-none p-0 m-0 py-2 items-center">
-                <li>
-                    <a href="trangchu.html" class="item-menu text-sm active-nav px-3 py-2 rounded-xl transition-all hover:bg-white/10">
-                        <span class="nav-icon"><i class="fas fa-home"></i></span>
-                        Trang chủ
-                    </a>
-                </li>
-                <li>
-                    <a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-90 hover:opacity-100 px-3 py-2 rounded-xl transition-all hover:bg-white/10">
-                        <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
-                        Khóa học của tôi
-                    </a>
-                </li>
-                <li>
-                    <a href="tailieu-free.html" class="item-menu text-sm opacity-90 hover:opacity-100 px-3 py-2 rounded-xl transition-all hover:bg-white/10">
-                        <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
-                        Tài liệu miễn phí
-                    </a>
-                </li>
-                <li>
-                    <a href="hoc-online.html" class="item-menu text-sm opacity-90 hover:opacity-100 px-3 py-2 rounded-xl transition-all hover:bg-white/10">
-                        <span class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-                        Học Online
-                    </a>
-                </li>
-                <li>
-                    <a href="infor-detail.html" class="item-menu text-sm opacity-90 hover:opacity-100 px-3 py-2 rounded-xl transition-all hover:bg-white/10">
-                        <span class="nav-icon"><i class="fas fa-info-circle"></i></span>
-                        Thông tin
-                    </a>
-                </li>
+            <ul class="flex gap-7 list-none p-0 m-0 py-3 items-center">
+                <li><a href="trangchu.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1 inline-flex items-center gap-1.5"><i class="fas fa-home text-xs text-yellow-300"></i>Trang chủ</a></li>
+                <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-graduation-cap text-xs"></i>Khóa học của tôi</a></li>
+                <li><a href="tailieu-free.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-file-alt text-xs"></i>Tài liệu miễn phí</a></li>
+                <li><a href="hoc-online.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-teacher text-xs"></i>Học Online</a></li>
+                <li><a href="infor-detail.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-info-circle text-xs"></i>Thông tin</a></li>
                 <li id="menu-dk" class="ml-auto">
-                    <a href="register.html" class="item-menu text-sm bg-yellow-400 text-blue-900 px-4 py-2 rounded-xl font-black hover:bg-yellow-300 hover:-translate-y-[1px] transition-all shadow-sm gap-2">
-                        <i class="fas fa-bolt text-xs"></i>
-                        Đăng ký ngay
+                    <a href="register.html" class="item-menu text-sm bg-yellow-400 text-blue-900 px-4 py-2 rounded-xl font-black hover:bg-yellow-300 hover:-translate-y-[1px] transition-all shadow-sm inline-flex items-center gap-1.5">
+                        <i class="fas fa-bolt text-xs"></i>Đăng ký ngay
                     </a>
                 </li>
             </ul>
