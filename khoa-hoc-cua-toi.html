@@ -712,6 +712,45 @@
         const searchInput = document.getElementById('search-course');
         if (searchInput) searchInput.addEventListener('input', e => filterCourses(e.target.value));
     });
+    async function loadProgress(userId, courses, enrolls) {
+        if (!userId || !courses?.length) return;
+        const section = document.getElementById('progress-section');
+        const content = document.getElementById('progress-content');
+        section.classList.remove('hidden');
+        try {
+            const { data: viewsData } = await supabaseClient
+                .from('lesson_views').select('lesson_id, completed').eq('user_id', userId);
+            const viewedSet    = new Set((viewsData || []).map(v => String(v.lesson_id)));
+            const completedSet = new Set((viewsData || []).filter(v => v.completed).map(v => String(v.lesson_id)));
+
+            const { data: topics } = await supabaseClient
+                .from('topics').select('id, course_id').in('course_id', courses.map(c => c.id));
+            const topicCourseMap = {};
+            (topics || []).forEach(t => topicCourseMap[t.id] = t.course_id);
+
+            const { data: lessons } = await supabaseClient
+                .from('lessons').select('id, topic_id').eq('status', 'Active');
+
+            content.innerHTML = courses.map(course => {
+                const cls     = (lessons || []).filter(l => topicCourseMap[l.topic_id] === course.id);
+                const total   = cls.length;
+                const viewed  = cls.filter(l => viewedSet.has(String(l.id))).length;
+                const done    = cls.filter(l => completedSet.has(String(l.id))).length;
+                const pct     = total > 0 ? Math.round((viewed / total) * 100) : 0;
+                return `
+                <div class="mb-4 last:mb-0">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-black text-blue-900 truncate pr-2">${course.course_name}</span>
+                        <span class="text-xs font-black text-blue-500 whitespace-nowrap">${viewed}/${total} · ${pct}%</span>
+                    </div>
+                    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+                    ${done > 0 ? `<div class="text-[10px] text-green-600 font-bold mt-1"><i class="fas fa-check-circle mr-1"></i>${done} bài hoàn thành</div>` : ''}
+                </div>`;
+            }).join('');
+        } catch(e) {
+            content.innerHTML = `<p class="text-gray-400 text-sm text-center py-2 italic">Không tải được tiến độ.</p>`;
+        }
+    }
 
     // ── Init ──
     window.onload = () => {
