@@ -16,8 +16,31 @@
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
         .rotate-180 { transform: rotate(180deg); }
-        
-        /* Chống cắt banner */
+
+        /* Upload zone */
+        #upload-zone {
+            border: 2.5px dashed #c7d2fe;
+            border-radius: 20px;
+            background: #f8faff;
+            transition: all 0.25s;
+            cursor: pointer;
+            min-height: 160px;
+        }
+        #upload-zone:hover, #upload-zone.drag-over {
+            border-color: #1e3a8a;
+            background: #eef2ff;
+        }
+        #upload-zone.has-image {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        /* Progress bar */
+        #progress-bar {
+            transition: width 0.3s ease;
+        }
+
+        /* Preview banner */
         .preview-banner-container {
             width: 100%;
             background: #f8fafc;
@@ -27,14 +50,15 @@
         }
         #img-render {
             width: 100%;
-            height: auto; /* Giữ đúng tỉ lệ ảnh gốc */
+            height: auto;
             display: block;
-            object-fit: contain; 
+            object-fit: contain;
         }
     </style>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden">
 
+    <!-- SIDEBAR -->
     <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
         <div class="p-6 flex items-center gap-3 border-b border-blue-800">
             <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -46,11 +70,11 @@
             </a>
         </div>
 
-       <nav class="flex-1 mt-4 overflow-y-auto">
+        <nav class="flex-1 mt-4 overflow-y-auto">
             <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
-        <i class="fas fa-home w-5 text-blue-300"></i>
-        <span class="font-bold">Trang Welcome</span>
-    </a>
+                <i class="fas fa-home w-5 text-blue-300"></i>
+                <span class="font-bold">Trang Welcome</span>
+            </a>
 
             <div class="menu-parent">
                 <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
@@ -78,17 +102,16 @@
                     </div>
                     <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
                 </div>
-                
-                <div id="course-menu" class="submenu flex flex-col bg-black/10">
+                <div id="course-menu" class="submenu show flex flex-col bg-black/10">
                     <a href="course-list.html" class="w-full py-3 pl-12 text-sm text-blue-100 hover:text-yellow-400 transition-all flex items-center gap-2">
                         <i class="fas fa-list-ul opacity-70"></i> Danh sách khóa học
                     </a>
-                    
                     <a href="add-course.html" class="w-full py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/80 flex items-center gap-2 cursor-default">
                         <i class="fas fa-plus-circle"></i> Thêm khóa học mới
                     </a>
                 </div>
             </div>
+
             <div class="menu-parent">
                 <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
                     <div class="flex items-center gap-3">
@@ -119,11 +142,12 @@
         </div>
     </aside>
 
+    <!-- MAIN -->
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
             <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Thêm khóa học mới</h2>
             <div class="flex items-center gap-3">
-                <span id="admin-name" class="text-sm font-bold text-blue-900 hidden md:block text-right">
+                <span class="text-sm font-bold text-blue-900 hidden md:block text-right">
                     Chào Thầy Thành<br>
                     <span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>
                 </span>
@@ -135,6 +159,8 @@
             <div class="max-w-4xl mx-auto">
                 <div class="bg-white p-8 rounded-[30px] shadow-sm border border-gray-100">
                     <form id="courseForm" class="space-y-6">
+
+                        <!-- Tên khóa học -->
                         <div>
                             <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Tên khóa học (Course Name)</label>
                             <input type="text" id="course_name" required
@@ -142,26 +168,59 @@
                                 placeholder="Nhập tên khóa học...">
                         </div>
 
+                        <!-- Upload Banner -->
                         <div>
-                            <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Link Banner (Tỷ lệ Panorama)</label>
-                            <div class="flex gap-3">
-                                <input type="text" id="thumbnail_url" required
-                                    class="flex-1 px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-900 outline-none font-bold text-gray-700 transition-all"
-                                    placeholder="Dán link ảnh từ database/drive...">
-                                <button type="button" onclick="previewImage()" 
-                                    class="px-6 bg-blue-100 text-blue-900 rounded-2xl font-black text-[10px] uppercase hover:bg-blue-200 transition-all">
-                                    Check Ảnh
-                                </button>
+                            <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Ảnh Banner (Tỷ lệ Panorama)</label>
+
+                            <!-- Drop zone -->
+                            <div id="upload-zone"
+                                class="flex flex-col items-center justify-center gap-3 p-8 text-center"
+                                onclick="document.getElementById('file-input').click()"
+                                ondragover="handleDragOver(event)"
+                                ondragleave="handleDragLeave(event)"
+                                ondrop="handleDrop(event)">
+                                <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+
+                                <div id="upload-icon" class="text-blue-300 text-4xl">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div id="upload-text">
+                                    <p class="font-black text-blue-900 text-sm">Kéo thả ảnh vào đây hoặc click để chọn</p>
+                                    <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">PNG, JPG, WEBP — Khuyến nghị tỉ lệ 16:5 panorama</p>
+                                </div>
+                                <div id="upload-filename" class="hidden text-xs font-bold text-green-600 flex items-center gap-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="filename-text"></span>
+                                </div>
                             </div>
+
+                            <!-- Progress bar (ẩn mặc định) -->
+                            <div id="progress-wrap" class="hidden mt-3">
+                                <div class="flex justify-between text-[10px] font-bold text-blue-900 uppercase mb-1">
+                                    <span>Đang tải lên Supabase Storage...</span>
+                                    <span id="progress-pct">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="progress-bar" class="bg-blue-900 h-2.5 rounded-full w-0"></div>
+                                </div>
+                            </div>
+
+                            <!-- Thông báo trạng thái upload -->
+                            <div id="upload-status" class="hidden mt-2 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2"></div>
+
+                            <!-- Input hidden lưu URL sau khi upload -->
+                            <input type="hidden" id="thumbnail_url">
                         </div>
 
-                        <div id="preview-area" class="hidden animate-fade-in">
+                        <!-- Xem trước ảnh -->
+                        <div id="preview-area" class="hidden">
                             <p class="text-[9px] font-bold text-gray-400 mb-2 uppercase italic ml-2">Xem trước hiển thị (Không bị cắt):</p>
                             <div class="preview-banner-container shadow-inner">
                                 <img id="img-render" src="">
                             </div>
                         </div>
 
+                        <!-- Mô tả -->
                         <div>
                             <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Mô tả khóa học</label>
                             <textarea id="description" rows="3"
@@ -169,6 +228,7 @@
                                 placeholder="Nội dung tóm tắt khóa học..."></textarea>
                         </div>
 
+                        <!-- Trạng thái -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 italic ml-2">Trạng thái</label>
@@ -179,12 +239,14 @@
                             </div>
                         </div>
 
+                        <!-- Submit -->
                         <div class="pt-4">
                             <button type="submit" id="submitBtn"
                                 class="w-full py-5 bg-blue-900 text-white rounded-[20px] font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-3">
                                 <i class="fas fa-cloud-upload-alt"></i> Cập nhật khóa học lên hệ thống
                             </button>
                         </div>
+
                     </form>
                 </div>
             </div>
@@ -193,7 +255,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Cấu hình Submenu của Thầy Thành
+        // =====================================================
+        // CẤU HÌNH SUPABASE — điền key của thầy vào đây
+        // =====================================================
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+        const BUCKET  = "documents";  // tên bucket trong Storage
+
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        // =====================================================
+        // Sidebar toggle
+        // =====================================================
         function toggleSubmenu(id, element) {
             const menu = document.getElementById(id);
             const arrow = element.querySelector('.arrow-icon');
@@ -201,43 +274,150 @@
             if (arrow) arrow.classList.toggle('rotate-180');
         }
 
-        // Xem trước ảnh không cắt
-        function previewImage() {
-            const url = document.getElementById('thumbnail_url').value;
-            const img = document.getElementById('img-render');
-            const area = document.getElementById('preview-area');
-            if(url) {
-                img.src = url;
-                area.classList.remove('hidden');
+        // =====================================================
+        // Drag & Drop helpers
+        // =====================================================
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('upload-zone').classList.add('drag-over');
+        }
+        function handleDragLeave(e) {
+            document.getElementById('upload-zone').classList.remove('drag-over');
+        }
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('upload-zone').classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processFile(file);
+            }
+        }
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        }
+
+        // =====================================================
+        // Xử lý file: preview ngay + upload lên Storage
+        // =====================================================
+        function processFile(file) {
+            // Hiện tên file
+            document.getElementById('filename-text').textContent = file.name;
+            document.getElementById('upload-filename').classList.remove('hidden');
+            document.getElementById('upload-zone').classList.add('has-image');
+
+            // Preview local ngay lập tức (không cần chờ upload xong)
+            const localUrl = URL.createObjectURL(file);
+            document.getElementById('img-render').src = localUrl;
+            document.getElementById('preview-area').classList.remove('hidden');
+
+            // Upload lên Supabase Storage
+            uploadToStorage(file);
+        }
+
+        async function uploadToStorage(file) {
+            const progressWrap = document.getElementById('progress-wrap');
+            const progressBar  = document.getElementById('progress-bar');
+            const progressPct  = document.getElementById('progress-pct');
+            const statusBox    = document.getElementById('upload-status');
+
+            // Reset & hiện thanh progress
+            progressWrap.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPct.textContent = '0%';
+            statusBox.className = 'hidden mt-2 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2';
+            statusBox.innerHTML = '';
+
+            // Tên file unique: timestamp_tên gốc
+            const ext      = file.name.split('.').pop();
+            const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/\s+/g, '-');
+            const fileName = `${Date.now()}_${baseName}.${ext}`;
+            const filePath = `banners/${fileName}`;
+
+            try {
+                // Giả lập progress (Supabase JS v2 chưa hỗ trợ onUploadProgress)
+                let fakeProgress = 0;
+                const fakeTimer = setInterval(() => {
+                    fakeProgress = Math.min(fakeProgress + 10, 85);
+                    progressBar.style.width = fakeProgress + '%';
+                    progressPct.textContent = fakeProgress + '%';
+                }, 150);
+
+                const { data, error } = await supabaseClient
+                    .storage
+                    .from(BUCKET)
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false,
+                        contentType: file.type
+                    });
+
+                clearInterval(fakeTimer);
+
+                if (error) throw error;
+
+                // Lấy public URL
+                const { data: urlData } = supabaseClient
+                    .storage
+                    .from(BUCKET)
+                    .getPublicUrl(filePath);
+
+                const publicUrl = urlData.publicUrl;
+
+                // Lưu vào hidden input để submit form dùng
+                document.getElementById('thumbnail_url').value = publicUrl;
+
+                // Cập nhật preview bằng URL thật (thay thế blob URL)
+                document.getElementById('img-render').src = publicUrl;
+
+                // Hoàn thành progress
+                progressBar.style.width = '100%';
+                progressPct.textContent = '100%';
+
+                // Thông báo thành công
+                setTimeout(() => progressWrap.classList.add('hidden'), 1000);
+                statusBox.className = 'mt-2 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 bg-green-50 text-green-700 border border-green-200';
+                statusBox.innerHTML = `<i class="fas fa-check-circle"></i> Tải lên thành công! Ảnh đã lưu vào Storage.`;
+
+            } catch (err) {
+                progressWrap.classList.add('hidden');
+                statusBox.className = 'mt-2 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 bg-red-50 text-red-700 border border-red-200';
+                statusBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> Lỗi upload: ${err.message}`;
+                document.getElementById('thumbnail_url').value = '';
             }
         }
 
-        // Logic Supabase
-        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
+        // =====================================================
+        // Submit form lưu vào bảng courses
+        // =====================================================
         document.getElementById('courseForm').onsubmit = async (e) => {
             e.preventDefault();
+
+            const thumbnailUrl = document.getElementById('thumbnail_url').value;
+            if (!thumbnailUrl) {
+                alert('Vui lòng chọn và chờ ảnh tải lên xong trước khi lưu!');
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang tải dữ liệu...';
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang lưu dữ liệu...';
 
             const payload = {
-                course_name: document.getElementById('course_name').value,
-                thumbnail_url: document.getElementById('thumbnail_url').value,
-                description: document.getElementById('description').value,
-                status: document.getElementById('status').value,
-                created_at: new Date()
+                course_name:   document.getElementById('course_name').value,
+                thumbnail_url: thumbnailUrl,
+                description:   document.getElementById('description').value,
+                status:        document.getElementById('status').value,
+                created_at:    new Date()
             };
 
             try {
                 const { error } = await supabaseClient.from('courses').insert([payload]);
                 if (error) throw error;
-                alert("Thành công! Khóa học đã được lưu.");
+                alert('Thành công! Khóa học đã được lưu.');
                 window.location.reload();
             } catch (err) {
-                alert("Lỗi: " + err.message);
+                alert('Lỗi: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Cập nhật khóa học lên hệ thống';
