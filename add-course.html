@@ -328,11 +328,13 @@
             statusBox.className = 'hidden mt-2 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2';
             statusBox.innerHTML = '';
 
-            // Tên file unique: timestamp_tên gốc
-            const ext      = file.name.split('.').pop();
-            const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/\s+/g, '-');
-            const fileName = `${Date.now()}_${baseName}.${ext}`;
-            const filePath = `banners/${fileName}`;
+            // Tên file unique: loại bỏ dấu tiếng Việt + ký tự đặc biệt
+            const ext = file.name.split('.').pop().toLowerCase();
+            const rawName = file.name.replace(/\.[^/.]+$/, '');
+            const noAccent = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const safeName = noAccent.replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').toLowerCase();
+            const fileName = `${Date.now()}_${safeName}.${ext}`;
+            const filePath = fileName; // thẳng vào bucket, không subfolder
 
             try {
                 // Giả lập progress (Supabase JS v2 chưa hỗ trợ onUploadProgress)
