@@ -10,10 +10,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .active-notice { border-left-color: #1e3a8a; background-color: #f0fdf4; }
+        
+        /* Tùy chỉnh bo góc cho thanh công cụ của bộ soạn thảo */
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-color: #f3f4f6;
+            background-color: #f9fafb;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            border-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col">
@@ -85,10 +103,12 @@
                         </select>
                     </div>
                 </div>
+                
                 <div>
-                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung chi tiết</label>
-                    <textarea id="postContent" required rows="5" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
-                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold"></textarea>
+                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung chi tiết (Có thể bôi đen chỉnh chữ đậm, màu sắc...)</label>
+                    <div class="border-2 border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-600 transition-all">
+                        <div id="editor" class="h-60 bg-white text-sm"></div>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/80">
@@ -123,6 +143,7 @@
         let allAnnouncements = [];
         let editingId = null; 
         let readList = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+        let quillEditor = null; // Biến lưu trữ đối tượng bộ soạn thảo công cụ
 
         window.addEventListener('DOMContentLoaded', () => {
             const userStr = localStorage.getItem('user');
@@ -132,10 +153,26 @@
                     document.getElementById('adminPostBtn').classList.remove('hidden');
                 }
             }
+            
+            // Khởi tạo bộ soạn thảo Quill văn bản động giàu cấu trúc
+            quillEditor = new Quill('#editor', {
+                theme: 'snow',
+                placeholder: 'Nhập dặn dò hướng dẫn học sinh, bôi đen chữ để đổi màu hoặc chọn kiểu...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],        // Các kiểu định dạng cơ bản
+                        [{ 'color': [] }, { 'background': [] }],          // Đổi màu chữ và màu nền highlight
+                        [{ 'header': [1, 2, false] }],                     // Tiêu đề lớn nhỏ
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],     // Danh sách số và gạch đầu dòng
+                        ['clean']                                         // Nút xóa nhanh mọi định dạng
+                    ]
+                }
+            });
+
             loadAnnouncements();
         });
 
-        // Tải danh sách bài viết từ Supabase và phân quyền ẩn/hiện bài viết bảo mật
+        // Tải danh sách bài viết từ Supabase
         async function loadAnnouncements() {
             try {
                 const { data, error } = await supabaseClient
@@ -148,7 +185,6 @@
                 const rawData = data || [];
                 const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
                 
-                // Thuật toán lọc: Học sinh chỉ xem bài có is_public !== false. Thầy xem được hết.
                 if (!isAdmin) {
                     allAnnouncements = rawData.filter(item => item.is_public !== false);
                 } else {
@@ -162,7 +198,7 @@
             }
         }
 
-        // Render danh sách bên trái (Hiện tag Nháp cho Thầy biết bài nào đang ẩn)
+        // Render danh sách bên trái
         function renderNoticeList() {
             const listEl = document.getElementById('noticeList');
             if (allAnnouncements.length === 0) {
@@ -173,8 +209,6 @@
             listEl.innerHTML = allAnnouncements.map(item => {
                 const date = new Date(item.created_at).toLocaleDateString('vi-VN', {hour: '2-digit', minute:'2-digit'});
                 const isRead = readList.includes(item.id);
-                
-                // Nếu bài viết đang ở chế độ riêng tư, chèn thêm chiếc nhãn đỏ này vào tiêu đề
                 const privateBadge = (item.is_public === false) ? `<span class="bg-red-100 text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded mr-1.5 uppercase inline-flex items-center gap-0.5"><i class="fas fa-lock text-[9px]"></i> Nháp</span>` : '';
                 
                 return `
@@ -192,7 +226,7 @@
             }).join('');
         }
 
-        // Xem nội dung chi tiết bài viết
+        // Xem nội dung chi tiết bài viết (Hiển thị văn bản HTML đã được format)
         function viewDetail(id) {
             document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
             document.getElementById(`card-${id}`)?.classList.add('active-notice');
@@ -221,9 +255,9 @@
                 `;
             }
             
-            // Nhãn hiển thị trạng thái trong trang chi tiết bài viết của Thầy
             const detailStatusHtml = (item.is_public === false) ? `<span class="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase"><i class="fas fa-eye-slash"></i> Đang Ẩn (Riêng tư)</span>` : `<span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase"><i class="fas fa-globe"></i> Công Khai</span>`;
 
+            // Thay đổi class hiển thị từ 'whitespace-pre-line' thành 'ql-editor !p-0' để trình duyệt giữ nguyên định dạng màu sắc/in đậm từ Quill gửi về
             document.getElementById('noticeDetail').innerHTML = `
                 <div class="flex-1 overflow-y-auto space-y-4 pr-1 flex flex-col justify-between">
                     <div>
@@ -252,7 +286,7 @@
                             <span class="text-blue-600"><i class="fas fa-user-graduate"></i> Tác giả: Thầy Thành</span>
                             ${isAdmin ? `<span>•</span> ${detailStatusHtml}` : ''}
                         </div>
-                        <div class="text-gray-700 text-sm leading-relaxed font-medium whitespace-pre-line pt-1">
+                        <div class="text-gray-700 text-sm leading-relaxed font-medium pt-1 ql-editor !p-0">
                             ${item.content}
                         </div>
                     </div>
@@ -272,23 +306,28 @@
             document.getElementById('noticeDetailContainer').classList.add('hidden');
         }
 
-        // Mở Modal Đăng/Sửa bài (Đọc và nạp dữ liệu trạng thái is_public)
+        // Mở Modal Đăng/Sửa bài (Xử lý đồng bộ dữ liệu chữ lên khung soạn thảo Quill)
         function openAdminModal(id = null) {
             if (id) {
                 editingId = id; 
                 const item = allAnnouncements.find(n => n.id == id);
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-edit"></i> Chỉnh sửa bài viết';
                 document.getElementById('postTitle').value = item.title;
-                document.getElementById('postContent').value = item.content;
                 document.getElementById('postBtnText').value = item.btn_text || '';
                 document.getElementById('postBtnLink').value = item.btn_link || '';
                 document.getElementById('postStatus').value = (item.is_public !== false) ? "true" : "false";
+                
+                // Nạp mã màu HTML của bài cũ vào bộ soạn thảo
+                quillEditor.clipboard.dangerouslyPasteHTML(item.content);
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-save"></i> Cập nhật ngay';
             } else {
                 editingId = null; 
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-bullhorn"></i> Đăng thông báo mới';
                 document.getElementById('adminPostForm').reset();
-                document.getElementById('postStatus').value = "true"; // Mặc định tạo bài mới là công khai
+                document.getElementById('postStatus').value = "true";
+                
+                // Xóa trắng khung soạn thảo khi tạo bài viết mới hoàn toàn
+                quillEditor.setText('');
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
             }
             document.getElementById('adminModal').style.display = 'flex';
@@ -300,15 +339,23 @@
             editingId = null;
         }
 
-        // Gửi dữ liệu đồng bộ lên Supabase bao gồm cả biếnis_public
+        // Đồng bộ gửi văn bản có định dạng màu mè lên Supabase
         async function handleAdminPost(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitPost');
             const title = document.getElementById('postTitle').value.trim();
-            const content = document.getElementById('postContent').value.trim();
             const btn_text = document.getElementById('postBtnText').value.trim();
             const btn_link = document.getElementById('postBtnLink').value.trim();
             const is_public = document.getElementById('postStatus').value === "true";
+            
+            // Lấy toàn bộ mã định dạng HTML (đậm, nghiêng, màu sắc) từ Editor
+            const content = quillEditor.root.innerHTML;
+
+            // Kiểm tra rỗng nâng cao cho bộ soạn thảo Quill
+            if (quillEditor.getText().trim().length === 0) {
+                Swal.fire('Cảnh báo', 'Vui lòng nhập nội dung chi tiết bài viết!', 'warning');
+                return;
+            }
 
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
@@ -344,7 +391,7 @@
             }
         }
 
-        // Xóa bài viết vĩnh viễn khỏi hệ thống
+        // Xóa bài viết vĩnh viễn
         async function deleteAnnouncement(id) {
             const result = await Swal.fire({
                 title: 'Thầy chắc chắn muốn xóa?',
@@ -365,7 +412,6 @@
                         .eq('id', id);
 
                     if (error) throw error;
-
                     Swal.fire('Đã xóa', 'Bài viết đã được gỡ bỏ khỏi hệ thống thành công.', 'success');
                     
                     if (window.innerWidth < 768) {
@@ -380,9 +426,7 @@
                             </div>
                         `;
                     }
-                    
                     loadAnnouncements(); 
-
                 } catch (err) {
                     console.error(err);
                     Swal.fire('Lỗi hệ thống', 'Không thể hoàn tất tác vụ xóa dữ liệu.', 'error');
