@@ -71,14 +71,23 @@
                 <button onclick="closeAdminModal()" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button>
             </div>
             <form id="adminPostForm" onsubmit="handleAdminPost(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Tiêu đề bài viết</label>
-                    <input type="text" id="postTitle" required placeholder="Nhập tiêu đề lộ trình hoặc thông báo..."
-                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Tiêu đề bài viết</label>
+                        <input type="text" id="postTitle" required placeholder="Nhập tiêu đề lộ trình hoặc thông báo..."
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Chế độ hiển thị</label>
+                        <select id="postStatus" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3.5 px-3 outline-none focus:border-blue-600 focus:bg-white transition-all font-bold text-sm text-blue-900">
+                            <option value="true">🌐 Công khai</option>
+                            <option value="false">🔒 Riêng tư (Nháp)</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung chi tiết</label>
-                    <textarea id="postContent" required rows="6" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
+                    <textarea id="postContent" required rows="5" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold"></textarea>
                 </div>
                 
@@ -126,7 +135,7 @@
             loadAnnouncements();
         });
 
-        // Tải danh sách bài viết từ Supabase
+        // Tải danh sách bài viết từ Supabase và phân quyền ẩn/hiện bài viết bảo mật
         async function loadAnnouncements() {
             try {
                 const { data, error } = await supabaseClient
@@ -135,7 +144,17 @@
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
-                allAnnouncements = data || [];
+                
+                const rawData = data || [];
+                const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
+                
+                // Thuật toán lọc: Học sinh chỉ xem bài có is_public !== false. Thầy xem được hết.
+                if (!isAdmin) {
+                    allAnnouncements = rawData.filter(item => item.is_public !== false);
+                } else {
+                    allAnnouncements = rawData;
+                }
+                
                 renderNoticeList();
             } catch (err) {
                 console.error(err);
@@ -143,7 +162,7 @@
             }
         }
 
-        // Render danh sách bên trái
+        // Render danh sách bên trái (Hiện tag Nháp cho Thầy biết bài nào đang ẩn)
         function renderNoticeList() {
             const listEl = document.getElementById('noticeList');
             if (allAnnouncements.length === 0) {
@@ -154,12 +173,18 @@
             listEl.innerHTML = allAnnouncements.map(item => {
                 const date = new Date(item.created_at).toLocaleDateString('vi-VN', {hour: '2-digit', minute:'2-digit'});
                 const isRead = readList.includes(item.id);
+                
+                // Nếu bài viết đang ở chế độ riêng tư, chèn thêm chiếc nhãn đỏ này vào tiêu đề
+                const privateBadge = (item.is_public === false) ? `<span class="bg-red-100 text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded mr-1.5 uppercase inline-flex items-center gap-0.5"><i class="fas fa-lock text-[9px]"></i> Nháp</span>` : '';
+                
                 return `
                     <div onclick="viewDetail('${item.id}')" id="card-${item.id}" 
                          class="p-3 bg-gray-50 border-l-4 border-gray-200 rounded-r-xl cursor-pointer hover:bg-blue-50/50 transition-all relative">
                         <div class="flex justify-between items-start gap-2">
-                            <h4 class="font-bold text-gray-800 text-sm line-clamp-1 ${!isRead ? 'text-blue-900 font-black' : ''}">${item.title}</h4>
-                            ${!isRead ? '<span id="badge-'+item.id+'" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-1.5 animate-pulse"></span>' : ''}
+                            <h4 class="font-bold text-gray-800 text-sm line-clamp-1 ${!isRead ? 'text-blue-900 font-black' : ''}">
+                                ${privateBadge}${item.title}
+                            </h4>
+                            ${(!isRead && item.is_public !== false) ? '<span id="badge-'+item.id+'" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-1.5 animate-pulse"></span>' : ''}
                         </div>
                         <p class="text-[11px] text-gray-400 font-semibold mt-1"><i class="far fa-clock"></i> ${date}</p>
                     </div>
@@ -167,7 +192,7 @@
             }).join('');
         }
 
-        // Xem nội dung chi tiết bài viết (Hiển thị nút hành động nếu có liên kết)
+        // Xem nội dung chi tiết bài viết
         function viewDetail(id) {
             document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
             document.getElementById(`card-${id}`)?.classList.add('active-notice');
@@ -175,7 +200,7 @@
             const item = allAnnouncements.find(n => n.id == id);
             if (!item) return;
 
-            if (!readList.includes(id)) {
+            if (!readList.includes(id) && item.is_public !== false) {
                 readList.push(id);
                 localStorage.setItem('read_announcements', JSON.stringify(readList));
                 document.getElementById(`badge-${id}`)?.remove();
@@ -184,7 +209,6 @@
             const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
             const date = new Date(item.created_at).toLocaleString('vi-VN');
             
-            // Xử lý tạo cấu trúc Nút Tương Tác nếu có cấu hình link liên kết
             let actionButtonHtml = '';
             if (item.btn_link && item.btn_link.trim() !== '') {
                 const textButton = (item.btn_text && item.btn_text.trim() !== '') ? item.btn_text : 'Xem chi tiết ngay';
@@ -197,7 +221,9 @@
                 `;
             }
             
-            // Cập nhật giao diện nội dung bài viết bao gồm cả nút tương tác động
+            // Nhãn hiển thị trạng thái trong trang chi tiết bài viết của Thầy
+            const detailStatusHtml = (item.is_public === false) ? `<span class="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase"><i class="fas fa-eye-slash"></i> Đang Ẩn (Riêng tư)</span>` : `<span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase"><i class="fas fa-globe"></i> Công Khai</span>`;
+
             document.getElementById('noticeDetail').innerHTML = `
                 <div class="flex-1 overflow-y-auto space-y-4 pr-1 flex flex-col justify-between">
                     <div>
@@ -220,10 +246,11 @@
                             ` : ''}
                         </div>
 
-                        <div class="text-xs text-gray-400 font-bold flex items-center gap-2 border-b pb-3 mb-3">
+                        <div class="text-xs text-gray-400 font-bold flex flex-wrap items-center gap-2 border-b pb-3 mb-3">
                             <span><i class="far fa-calendar-alt"></i> Ngày đăng: ${date}</span>
                             <span>•</span>
                             <span class="text-blue-600"><i class="fas fa-user-graduate"></i> Tác giả: Thầy Thành</span>
+                            ${isAdmin ? `<span>•</span> ${detailStatusHtml}` : ''}
                         </div>
                         <div class="text-gray-700 text-sm leading-relaxed font-medium whitespace-pre-line pt-1">
                             ${item.content}
@@ -234,20 +261,18 @@
                 </div>
             `;
 
-            // MẸO TRÊN DI ĐỘNG: Ẩn cột danh sách đi, mở cột nội dung ra
             if (window.innerWidth < 768) {
                 document.getElementById('noticeListContainer').classList.add('hidden');
                 document.getElementById('noticeDetailContainer').classList.remove('hidden');
             }
         }
 
-        // Hàm quay trở lại danh sách bài viết trên di động
         function backToList() {
             document.getElementById('noticeListContainer').classList.remove('hidden');
             document.getElementById('noticeDetailContainer').classList.add('hidden');
         }
 
-        // Mở Modal Đăng/Sửa bài (Cập nhật xử lý giá trị nút bấm động)
+        // Mở Modal Đăng/Sửa bài (Đọc và nạp dữ liệu trạng thái is_public)
         function openAdminModal(id = null) {
             if (id) {
                 editingId = id; 
@@ -257,11 +282,13 @@
                 document.getElementById('postContent').value = item.content;
                 document.getElementById('postBtnText').value = item.btn_text || '';
                 document.getElementById('postBtnLink').value = item.btn_link || '';
+                document.getElementById('postStatus').value = (item.is_public !== false) ? "true" : "false";
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-save"></i> Cập nhật ngay';
             } else {
                 editingId = null; 
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-bullhorn"></i> Đăng thông báo mới';
                 document.getElementById('adminPostForm').reset();
+                document.getElementById('postStatus').value = "true"; // Mặc định tạo bài mới là công khai
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-paper-plane"></i> Đăng bài ngay';
             }
             document.getElementById('adminModal').style.display = 'flex';
@@ -273,7 +300,7 @@
             editingId = null;
         }
 
-        // Đồng bộ dữ liệu Form lên Supabase (Gửi kèm btn_text và btn_link)
+        // Gửi dữ liệu đồng bộ lên Supabase bao gồm cả biếnis_public
         async function handleAdminPost(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitPost');
@@ -281,6 +308,7 @@
             const content = document.getElementById('postContent').value.trim();
             const btn_text = document.getElementById('postBtnText').value.trim();
             const btn_link = document.getElementById('postBtnLink').value.trim();
+            const is_public = document.getElementById('postStatus').value === "true";
 
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
@@ -289,7 +317,7 @@
                 if (editingId) {
                     const { error } = await supabaseClient
                         .from('announcements')
-                        .update({ title, content, btn_text, btn_link })
+                        .update({ title, content, btn_text, btn_link, is_public })
                         .eq('id', editingId);
 
                     if (error) throw error;
@@ -297,10 +325,10 @@
                 } else {
                     const { error } = await supabaseClient
                         .from('announcements')
-                        .insert([{ title, content, btn_text, btn_link }]);
+                        .insert([{ title, content, btn_text, btn_link, is_public }]);
 
                     if (error) throw error;
-                    Swal.fire('Thành công', 'Đã thêm bài viết mới lên bảng tin!', 'success');
+                    Swal.fire('Thành công', 'Đã thêm bài viết mới thành công!', 'success');
                 }
 
                 closeAdminModal();
