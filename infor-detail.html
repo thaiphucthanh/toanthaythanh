@@ -78,9 +78,23 @@
                 </div>
                 <div>
                     <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm">Nội dung chi tiết</label>
-                    <textarea id="postContent" required rows="8" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
+                    <textarea id="postContent" required rows="6" placeholder="Nhập dặn dò, hướng dẫn học sinh..."
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold"></textarea>
                 </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/80">
+                    <div>
+                        <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm"><i class="fas fa-pen text-xs text-blue-500 mr-1"></i> Tên nút hiển thị (Tùy chọn)</label>
+                        <input type="text" id="postBtnText" placeholder="Ví dụ: Đăng ký học ngay, Xem khóa mới..."
+                            class="w-full bg-white border-2 border-gray-200 rounded-xl py-2.5 px-4 outline-none focus:border-blue-600 transition-all font-semibold text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-blue-900 font-bold mb-1 ml-1 text-sm"><i class="fas fa-link text-xs text-blue-500 mr-1"></i> Đường dẫn liên kết (Tùy chọn)</label>
+                        <input type="url" id="postBtnLink" placeholder="Ví dụ: https://link-form-dang-ky..."
+                            class="w-full bg-white border-2 border-gray-200 rounded-xl py-2.5 px-4 outline-none focus:border-blue-600 transition-all font-semibold text-sm">
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Hủy</button>
                     <button type="submit" id="btnSubmitPost" class="px-6 py-2.5 bg-blue-700 text-white rounded-xl font-black hover:bg-blue-800 transition-all flex items-center gap-2 shadow-md">
@@ -153,7 +167,7 @@
             }).join('');
         }
 
-        // Xem nội dung chi tiết (Đã tối ưu hóa chuyển tab trên Mobile)
+        // Xem nội dung chi tiết bài viết (Hiển thị nút hành động nếu có liên kết)
         function viewDetail(id) {
             document.querySelectorAll('#noticeList > div').forEach(el => el.classList.remove('active-notice'));
             document.getElementById(`card-${id}`)?.classList.add('active-notice');
@@ -170,37 +184,53 @@
             const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher');
             const date = new Date(item.created_at).toLocaleString('vi-VN');
             
-            // Cập nhật giao diện nội dung bài viết
+            // Xử lý tạo cấu trúc Nút Tương Tác nếu có cấu hình link liên kết
+            let actionButtonHtml = '';
+            if (item.btn_link && item.btn_link.trim() !== '') {
+                const textButton = (item.btn_text && item.btn_text.trim() !== '') ? item.btn_text : 'Xem chi tiết ngay';
+                actionButtonHtml = `
+                    <div class="mt-6 pt-4 border-t border-gray-100 flex justify-start">
+                        <a href="${item.btn_link}" target="_blank" class="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-blue-950 font-black px-6 py-3 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide">
+                            <i class="fas fa-external-link-alt"></i> ${textButton}
+                        </a>
+                    </div>
+                `;
+            }
+            
+            // Cập nhật giao diện nội dung bài viết bao gồm cả nút tương tác động
             document.getElementById('noticeDetail').innerHTML = `
-                <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                <div class="flex-1 overflow-y-auto space-y-4 pr-1 flex flex-col justify-between">
+                    <div>
+                        <button onclick="backToList()" class="md:hidden mb-2 bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-black px-3 py-2 rounded-xl border border-blue-200 transition-all flex items-center gap-1.5">
+                            <i class="fas fa-chevron-left"></i> Quay lại danh sách
+                        </button>
+
+                        <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                            <h3 class="text-xl font-black text-blue-900 leading-tight flex-1">${item.title}</h3>
+                            
+                            ${isAdmin ? `
+                                <div class="flex gap-2 flex-shrink-0">
+                                    <button onclick="openAdminModal('${item.id}')" class="bg-amber-500 hover:bg-amber-600 text-blue-950 font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </button>
+                                    <button onclick="deleteAnnouncement('${item.id}')" class="bg-red-600 hover:bg-red-700 text-white font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
+                                        <i class="fas fa-trash-alt"></i> Xóa
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="text-xs text-gray-400 font-bold flex items-center gap-2 border-b pb-3 mb-3">
+                            <span><i class="far fa-calendar-alt"></i> Ngày đăng: ${date}</span>
+                            <span>•</span>
+                            <span class="text-blue-600"><i class="fas fa-user-graduate"></i> Tác giả: Thầy Thành</span>
+                        </div>
+                        <div class="text-gray-700 text-sm leading-relaxed font-medium whitespace-pre-line pt-1">
+                            ${item.content}
+                        </div>
+                    </div>
                     
-                    <button onclick="backToList()" class="md:hidden mb-2 bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-black px-3 py-2 rounded-xl border border-blue-200 transition-all flex items-center gap-1.5">
-                        <i class="fas fa-chevron-left"></i> Quay lại danh sách
-                    </button>
-
-                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <h3 class="text-xl font-black text-blue-900 leading-tight flex-1">${item.title}</h3>
-                        
-                        ${isAdmin ? `
-                            <div class="flex gap-2 flex-shrink-0">
-                                <button onclick="openAdminModal('${item.id}')" class="bg-amber-500 hover:bg-amber-600 text-blue-950 font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
-                                    <i class="fas fa-edit"></i> Sửa
-                                </button>
-                                <button onclick="deleteAnnouncement('${item.id}')" class="bg-red-600 hover:bg-red-700 text-white font-black px-3 py-1.5 rounded-xl text-xs shadow transition-all flex items-center gap-1">
-                                    <i class="fas fa-trash-alt"></i> Xóa
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <div class="text-xs text-gray-400 font-bold flex items-center gap-2 border-b pb-3">
-                        <span><i class="far fa-calendar-alt"></i> Ngày đăng: ${date}</span>
-                        <span>•</span>
-                        <span class="text-blue-600"><i class="fas fa-user-graduate"></i> Tác giả: Thầy Thành</span>
-                    </div>
-                    <div class="text-gray-700 text-sm leading-relaxed font-medium whitespace-pre-line pt-2">
-                        ${item.content}
-                    </div>
+                    ${actionButtonHtml}
                 </div>
             `;
 
@@ -217,7 +247,7 @@
             document.getElementById('noticeDetailContainer').classList.add('hidden');
         }
 
-        // Mở Modal Đăng/Sửa bài
+        // Mở Modal Đăng/Sửa bài (Cập nhật xử lý giá trị nút bấm động)
         function openAdminModal(id = null) {
             if (id) {
                 editingId = id; 
@@ -225,6 +255,8 @@
                 document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-edit"></i> Chỉnh sửa bài viết';
                 document.getElementById('postTitle').value = item.title;
                 document.getElementById('postContent').value = item.content;
+                document.getElementById('postBtnText').value = item.btn_text || '';
+                document.getElementById('postBtnLink').value = item.btn_link || '';
                 document.getElementById('btnSubmitPost').innerHTML = '<i class="fas fa-save"></i> Cập nhật ngay';
             } else {
                 editingId = null; 
@@ -241,12 +273,14 @@
             editingId = null;
         }
 
-        // Đồng bộ dữ liệu Form lên Supabase
+        // Đồng bộ dữ liệu Form lên Supabase (Gửi kèm btn_text và btn_link)
         async function handleAdminPost(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitPost');
             const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
+            const btn_text = document.getElementById('postBtnText').value.trim();
+            const btn_link = document.getElementById('postBtnLink').value.trim();
 
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
@@ -255,7 +289,7 @@
                 if (editingId) {
                     const { error } = await supabaseClient
                         .from('announcements')
-                        .update({ title, content })
+                        .update({ title, content, btn_text, btn_link })
                         .eq('id', editingId);
 
                     if (error) throw error;
@@ -263,7 +297,7 @@
                 } else {
                     const { error } = await supabaseClient
                         .from('announcements')
-                        .insert([{ title, content }]);
+                        .insert([{ title, content, btn_text, btn_link }]);
 
                     if (error) throw error;
                     Swal.fire('Thành công', 'Đã thêm bài viết mới lên bảng tin!', 'success');
@@ -306,7 +340,6 @@
 
                     Swal.fire('Đã xóa', 'Bài viết đã được gỡ bỏ khỏi hệ thống thành công.', 'success');
                     
-                    // Nếu đang dùng điện thoại, xóa xong tự động trả về danh sách chính
                     if (window.innerWidth < 768) {
                         backToList();
                     } else {
