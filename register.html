@@ -53,6 +53,15 @@
                 </div>
 
                 <div>
+                    <label class="block text-blue-900 font-bold mb-2 ml-1">Đường dẫn Facebook (Link cá nhân)</label>
+                    <div class="relative">
+                        <i class="fab fa-facebook absolute left-4 top-4 text-blue-600 text-lg"></i>
+                        <input type="url" id="link_fb" placeholder="Ví dụ: https://www.facebook.com/ten.cua.em" required
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-blue-600 focus:bg-white transition-all font-semibold">
+                    </div>
+                </div>
+
+                <div>
                     <label class="text-blue-900 font-bold mb-2 ml-1 block">Mật khẩu</label>
                     <div class="relative">
                         <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
@@ -88,23 +97,23 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         // ==========================================================
-        // ⚙️ ĐÃ ĐỔI: CẤU HÌNH NHẬN EMAIL THÔNG BÁO QUA APPS SCRIPT
+        // ⚙️ CẤU HÌNH NHẬN EMAIL THÔNG BÁO QUA APPS SCRIPT (ĐÃ THÊM LINK FB)
         // ==========================================================
         const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3DlCvN2m2yPt2K3a92kWxQbv6QeUOd6PIIAJt4r7eJPd0pnuhxViv35YnSA3Vy75C/exec";
 
-        function sendNotificationToTeacher(fullname, email, sdt) {
-            // Nếu chưa điền URL Apps Script thì bỏ qua, không chạy để tránh lỗi giao diện học sinh
+        function sendNotificationToTeacher(fullname, email, sdt, link_fb) {
             if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("ĐIỀN_ĐƯỜNG_LINK")) return;
 
             // Bắn dữ liệu đăng ký sang Google Apps Script ngầm để gửi Email
             fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Chống lỗi chặn tên miền chéo (CORS Cross-Origin) từ trình duyệt
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fullname: fullname,
                     email: email,
                     phone: sdt,
+                    link_fb: link_fb, // Đã đẩy thêm biến này sang Apps Script để thầy tiện bấm vào duyệt bài
                     subject: "Đăng ký tài khoản mới"
                 })
             }).catch(err => console.error("Lỗi gửi email ngầm:", err));
@@ -119,6 +128,7 @@
             const fullnameValue = document.getElementById('fullname').value.trim();
             const emailValue = document.getElementById('email').value.trim().toLowerCase();
             const sdtValue = document.getElementById('sdt').value.trim();
+            const linkFbValue = document.getElementById('link_fb').value.trim(); // Lấy dữ liệu link FB
             const passwordValue = document.getElementById('password').value;
 
             if (passwordValue.length < 6) {
@@ -145,13 +155,14 @@
                     return;
                 }
 
-                // 4. Tiến hành đẩy thông tin vào bảng accounts với trạng thái inactive
+                // 4. Tiến hành đẩy thông tin vào bảng accounts đồng bộ trường link_fb
                 const { error: insertError } = await supabaseClient
                     .from('accounts')
                     .insert([{
                         fullname: fullnameValue,
                         email: emailValue,
                         sdt: sdtValue,
+                        link_fb: linkFbValue, // Đồng bộ lưu dữ liệu lên Supabase cột link_fb
                         password: passwordValue,
                         role: 'student',
                         status: 'inactive', 
@@ -160,8 +171,8 @@
 
                 if (insertError) throw insertError;
 
-                // 🔥 ĐÃ KÍCH HOẠT: Gọi hàm gửi email về hòm thư của thầy ngay lập tức
-                sendNotificationToTeacher(fullnameValue, emailValue, sdtValue);
+                // 🔥 Gọi hàm gửi email về hòm thư của thầy bao gồm link FB học sinh
+                sendNotificationToTeacher(fullnameValue, emailValue, sdtValue, linkFbValue);
 
                 // 5. Hiện thông báo hộp thoại hướng dẫn học sinh
                 Swal.fire({
@@ -192,7 +203,7 @@
             } catch (err) {
                 console.error("Lỗi đăng ký:", err);
                 Swal.fire('Lỗi hệ thống', 'Không thể kết nối dữ liệu đến Supabase. Thầy hãy kiểm tra lại cấu hình nhé!', 'error');
-            } finally {
+            } finaly {
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
             }
