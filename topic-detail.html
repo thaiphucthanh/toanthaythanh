@@ -32,7 +32,7 @@
         .toggle-switch input:checked + .toggle-track { background: #1e3a8a; }
         .toggle-switch .toggle-track.free-mode { background: #e2e8f0; }
         .toggle-switch input:checked + .toggle-track.free-mode { background: #d97706; } /* Màu cam cho chế độ Free */
-        
+
         .toggle-thumb {
             position: absolute; left: 3px; top: 3px;
             width: 20px; height: 20px; border-radius: 50%;
@@ -46,6 +46,8 @@
         .badge-Inactive { background: #f1f5f9; color: #64748b; }
         .badge-Free { background: #fef3c7; color: #92400e; }
         .badge-Premium { background: #e0f2fe; color: #0369a1; }
+        .badge-hw-yes { background: #fef3c7; color: #92400e; }
+        .badge-hw-no { background: #f1f5f9; color: #94a3b8; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -136,11 +138,11 @@
         </header>
 
         <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
-            <div class="max-w-5xl mx-auto">
+            <div class="max-w-6xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
                     <div>
                         <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
-                        <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị và cấu hình quyền xem tự do cho học sinh</p>
+                        <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do và BTVN cho học sinh</p>
                     </div>
                     <button onclick="addNewLesson()"
                         class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
@@ -171,6 +173,7 @@
                                 <th class="p-5 pl-8">Tiêu đề bài học</th>
                                 <th class="p-5">Insight</th>
                                 <th class="p-5 text-center">Video</th>
+                                <th class="p-5 text-center">BTVN</th>
                                 <th class="p-5 text-center">Xem thử (Free)</th>
                                 <th class="p-5 text-center">Trạng thái</th>
                                 <th class="p-5 text-center">Thao tác</th>
@@ -195,6 +198,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const topicId = urlParams.get('topic_id');
         let currentLessons = [];
+        // Map lesson_id (string) -> { homework_type, total_choice, has_config }
+        let homeworkMap = {};
 
         async function init() {
             if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
@@ -212,27 +217,63 @@
             }
         }
 
+        // =====================
+        // FETCH LESSONS + HOMEWORK CONFIG MAP
+        // =====================
         async function fetchLessons() {
             const tbody = document.getElementById('lesson-table-body');
             const loader = document.getElementById('loading');
+            loader.classList.remove('hidden');
 
             const { data: lessons, error } = await supabaseClient
                 .from('lessons').select('*').eq('topic_id', topicId).order('id', { ascending: true });
 
-            loader.classList.add('hidden');
-            if (error) { alert(error.message); return; }
+            if (error) { loader.classList.add('hidden'); alert(error.message); return; }
 
             currentLessons = lessons || [];
             updateStats(currentLessons);
 
+            // Lấy luôn trạng thái cấu hình BTVN của tất cả bài học trong chuyên đề này
+            homeworkMap = {};
+            if (currentLessons.length > 0) {
+                const lessonIds = currentLessons.map(l => l.id);
+                const { data: configs, error: hwError } = await supabaseClient
+                    .from('lesson_homework_config')
+                    .select('lesson_id, homework_type, homework_payload, video_solution')
+                    .in('lesson_id', lessonIds);
+
+                if (!hwError && configs) {
+                    configs.forEach(c => {
+                        homeworkMap[String(c.lesson_id)] = {
+                            homework_type: c.homework_type,
+                            total_choice: Array.isArray(c.homework_payload) ? c.homework_payload.length : 0,
+                            has_video: !!c.video_solution,
+                            has_config: true
+                        };
+                    });
+                }
+                // Nếu hwError xảy ra (vd. do RLS chặn vì tài khoản không phải teacher/admin),
+                // homeworkMap sẽ rỗng và giao diện sẽ hiển thị "Chưa có BTVN" cho tất cả — không chặn trang load.
+            }
+
+            loader.classList.add('hidden');
+            renderLessonTable();
+        }
+
+        function renderLessonTable() {
+            const tbody = document.getElementById('lesson-table-body');
+
             if (currentLessons.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = currentLessons.map((l, index) => {
                 const isActive = l.status === 'Active';
-                const isFree = l.is_free === true; // Sử dụng trường is_free từ database
+                const isFree = l.is_free === true;
+                const hw = homeworkMap[String(l.id)];
+                const hasHomework = !!hw;
+
                 return `
                 <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}">
                     <td class="p-5 pl-8">
@@ -253,6 +294,15 @@
                         ${l.video_url
                             ? `<i class="fab fa-youtube text-red-500 text-lg"></i>`
                             : `<i class="fas fa-video-slash text-gray-300"></i>`}
+                    </td>
+                    <td class="p-5">
+                        <div class="flex flex-col items-center gap-1">
+                            <button onclick="configHomework('${l.id}')"
+                                class="text-[9px] font-black uppercase px-2 py-1 rounded-full ${hasHomework ? 'badge-hw-yes' : 'badge-hw-no'} hover:opacity-80 transition-all flex items-center gap-1">
+                                <i class="fas fa-clipboard-list"></i>
+                                ${hasHomework ? (hw.total_choice > 0 ? hw.total_choice + ' câu' : 'Đã cấu hình') : 'Chưa có BTVN'}
+                            </button>
+                        </div>
                     </td>
                     <td class="p-5">
                         <div class="flex flex-col items-center gap-1">
@@ -293,6 +343,108 @@
         }
 
         // =====================
+        // CẤU HÌNH BTVN (homework)
+        // =====================
+        async function configHomework(lessonId) {
+            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const { data: config, error: loadError } = await supabaseClient
+                .from('lesson_homework_config')
+                .select('*')
+                .eq('lesson_id', lessonId)
+                .maybeSingle();
+
+            if (loadError) {
+                Swal.fire('Lỗi!', 'Không thể tải cấu hình BTVN: ' + loadError.message, 'error');
+                return;
+            }
+
+            const existingPayload = (config && Array.isArray(config.homework_payload)) ? config.homework_payload : [];
+            const answersString = existingPayload.map(q => q.dap_an_dung).join(',');
+            const currentType = config?.homework_type || 'mixed';
+
+            const { value: formValues } = await Swal.fire({
+                title: '<span class="text-blue-900 font-black uppercase">Cấu hình BTVN</span>',
+                width: 560,
+                html: `
+                    <div class="text-left space-y-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Loại bài tập</label>
+                            <select id="swal-hw-type" class="w-full p-3 rounded-xl border border-gray-200 outline-none font-bold text-sm">
+                                <option value="quiz" ${currentType === 'quiz' ? 'selected' : ''}>Chỉ trắc nghiệm</option>
+                                <option value="essay" ${currentType === 'essay' ? 'selected' : ''}>Chỉ tự luận</option>
+                                <option value="mixed" ${currentType === 'mixed' ? 'selected' : ''}>Cả trắc nghiệm + tự luận</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">
+                                Đáp án đúng trắc nghiệm (theo thứ tự câu 1, 2, 3..., cách nhau dấu phẩy)
+                            </label>
+                            <textarea id="swal-hw-answers" class="w-full p-3 rounded-xl border border-gray-200 outline-none h-20" placeholder="A,B,C,A,D,B,A,C,D,D">${answersString}</textarea>
+                            <p class="text-[10px] text-gray-400 italic mt-1">Số lượng đáp án nhập vào = số câu trắc nghiệm hệ thống sẽ tự sinh. Để trống nếu bài chỉ có tự luận.</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link Video chữa BTVN</label>
+                            <input id="swal-hw-video" class="w-full p-3 rounded-xl border border-gray-200 outline-none" placeholder="https://www.youtube.com/watch?v=..." value="${config?.video_solution || ''}">
+                        </div>
+                        ${existingPayload.length > 0 ? `<p class="text-[11px] text-amber-600 italic"><i class="fas fa-info-circle mr-1"></i>Bài này đang có ${existingPayload.length} câu trắc nghiệm đã cấu hình.</p>` : ''}
+                    </div>`,
+                showCancelButton: true,
+                confirmButtonText: existingPayload.length > 0 || config ? 'Cập nhật cấu hình' : 'Lưu cấu hình',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#1e3a8a',
+                preConfirm: () => {
+                    const type = document.getElementById('swal-hw-type').value;
+                    const answersRaw = document.getElementById('swal-hw-answers').value.trim();
+                    const video = document.getElementById('swal-hw-video').value.trim();
+
+                    let payload = [];
+                    if (answersRaw) {
+                        const answers = answersRaw.split(',').map(a => a.trim().toUpperCase()).filter(a => a.length > 0);
+                        const invalid = answers.filter(a => !['A', 'B', 'C', 'D'].includes(a));
+                        if (invalid.length > 0) {
+                            Swal.showValidationMessage('Đáp án chỉ được chứa A, B, C, hoặc D, cách nhau bởi dấu phẩy! Giá trị sai: ' + invalid.join(', '));
+                            return false;
+                        }
+                        payload = answers.map((dap_an_dung, idx) => ({ so_cau: idx + 1, dap_an_dung }));
+                    }
+
+                    if ((type === 'quiz' || type === 'mixed') && payload.length === 0) {
+                        Swal.showValidationMessage('Loại bài này cần nhập ít nhất 1 đáp án trắc nghiệm!');
+                        return false;
+                    }
+
+                    if (type === 'essay' && payload.length > 0) {
+                        // Nếu Thầy chọn "Chỉ tự luận" nhưng vẫn còn nhập đáp án thì xác nhận lại có thể bỏ qua bước này,
+                        // ở đây mình mặc định vẫn cho lưu (không chặn) vì có thể Thầy đổi ý loại bài.
+                    }
+
+                    return { type, payload, video };
+                }
+            });
+
+            if (!formValues) return;
+
+            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const { error } = await supabaseClient
+                .from('lesson_homework_config')
+                .upsert({
+                    lesson_id: lessonId,
+                    homework_type: formValues.type,
+                    homework_payload: formValues.payload,
+                    video_solution: formValues.video || null
+                }, { onConflict: 'lesson_id' });
+
+            if (error) {
+                Swal.fire('Lỗi!', 'Không thể lưu cấu hình BTVN: ' + error.message, 'error');
+            } else {
+                Swal.fire({ icon: 'success', title: 'Đã lưu cấu hình BTVN!', timer: 1200, showConfirmButton: false });
+                await fetchLessons();
+            }
+        }
+
+        // =====================
         // TOGGLE TRẠNG THÁI FREE
         // =====================
         async function toggleLessonFree(lessonId, isChecked) {
@@ -305,7 +457,7 @@
             }
             const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
             if (lesson) lesson.is_free = isChecked;
-            fetchLessons(); // Render lại giao diện cho đồng bộ màu sắc
+            renderLessonTable();
         }
 
         // =====================
@@ -323,6 +475,7 @@
             const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
             if (lesson) lesson.status = newStatus;
             updateStats(currentLessons);
+            renderLessonTable();
         }
 
         // =====================
@@ -552,7 +705,7 @@
         async function deleteLesson(id) {
             const res = await Swal.fire({
                 title: 'Xóa bài học này?',
-                text: 'Hành động này không thể hoàn tác!',
+                text: 'Hành động này không thể hoàn tác! Toàn bộ cấu hình BTVN và bài làm của học sinh liên quan cũng sẽ bị xóa.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -565,6 +718,8 @@
             try {
                 await supabaseClient.from('notifications').delete().eq('lesson_id', id);
                 await supabaseClient.from('lesson_views').delete().eq('lesson_id', id);
+                await supabaseClient.from('homework_submissions').delete().eq('lesson_id', id);
+                await supabaseClient.from('lesson_homework_config').delete().eq('lesson_id', id);
                 const { error: lessonError } = await supabaseClient.from('lessons').delete().eq('id', id);
 
                 if (lessonError) throw lessonError;
