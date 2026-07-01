@@ -278,9 +278,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Điền thông tin Supabase của thầy vào đây
-const SUPABASE_URL = "";
-const SUPABASE_KEY = "";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
 const urlParams = new URLSearchParams(window.location.search);
 const topicId = urlParams.get('topic_id');
