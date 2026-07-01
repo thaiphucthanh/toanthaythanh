@@ -72,56 +72,88 @@
     </div>
 
     <script>
-        // 1. Cấu hình kết nối Supabase
         const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-        
-        // Khởi tạo Client (Sử dụng thư viện 'supabase' đã nhúng ở head)
-        const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
+const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
 
-        // 2. Xử lý sự kiện khi học sinh bấm "Vào học ngay"
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-            // Lấy giá trị từ các ô input
-            const identifierValue = document.getElementById('identifier').value;
-            const passwordValue = document.getElementById('password').value;
+    const identifierValue = document.getElementById('identifier').value.trim();
+    const passwordValue = document.getElementById('password').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerText = 'Đang đăng nhập...';
 
-            try {
-                // 3. Truy vấn bảng accounts
-                // Kiểm tra identifier khớp với email HOẶC sdt trong bảng
-                const { data, error } = await supabaseClient
-                    .from('accounts')
-                    .select('*')
-                    .or(`email.eq."${identifierValue}",sdt.eq."${identifierValue}"`)
-                    .eq('password', passwordValue)
-                    .single();
+    try {
+        // Hỗ trợ đăng nhập bằng SĐT hoặc Email
+        let emailToLogin = identifierValue;
+        if (!identifierValue.includes('@')) {
+            const { data: found } = await supabaseClient
+                .from('accounts')
+                .select('email')
+                .eq('sdt', identifierValue)
+                .single();
 
-                if (error || !data) {
-                    alert("Thông tin đăng nhập không chính xác, mời em kiểm tra lại nhé!");
-                    console.error("Chi tiết lỗi:", error);
-                } else {
-                    // 4. Nếu đúng: Lưu thông tin vào localStorage để các trang khác nhận diện
-                    const userToSave = {
-                                            id: data.id,           // ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT (Mã UUID)
-                                            fullname: data.fullname,
-                                            role: data.role,
-                                            sdt: data.sdt
-                                        };
-                                        
-                                        // Lưu vào LocalStorage
-                                        localStorage.setItem('user', JSON.stringify(userToSave));
-                    
-                    alert(`Chào mừng ${data.fullname} đã quay trở lại học tập!`);
-                    
-                    // Chuyển hướng về trang chủ nội bộ
-                    window.location.href = 'trangchu.html'; 
-                }
-            } catch (err) {
-                alert("Lỗi kết nối đến máy chủ. Em vui lòng kiểm tra lại mạng nhé!");
-                console.error("Lỗi hệ thống:", err);
+            if (!found?.email) {
+                alert('Không tìm thấy tài khoản với số điện thoại này!');
+                btn.disabled = false;
+                btn.innerText = 'Vào học ngay';
+                return;
             }
+            emailToLogin = found.email;
+        }
+
+        // Đăng nhập qua Supabase Auth
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: emailToLogin,
+            password: passwordValue
         });
+
+        if (authError || !authData.user) {
+            alert('Thông tin đăng nhập không chính xác, mời em kiểm tra lại nhé!');
+            btn.disabled = false;
+            btn.innerText = 'Vào học ngay';
+            return;
+        }
+
+        // Lấy profile từ bảng accounts như cũ
+        const { data: profile } = await supabaseClient
+            .from('accounts')
+            .select('id, fullname, role, sdt, status')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (!profile || profile.status === 'inactive') {
+            await supabaseClient.auth.signOut();
+            alert('Tài khoản của em đã bị khoá. Vui lòng liên hệ Thầy!');
+            btn.disabled = false;
+            btn.innerText = 'Vào học ngay';
+            return;
+        }
+
+        // Lưu localStorage như cũ — các trang khác không cần sửa
+        localStorage.setItem('user', JSON.stringify({
+            id: profile.id,
+            fullname: profile.fullname,
+            role: profile.role,
+            sdt: profile.sdt
+        }));
+
+        // Chuyển hướng theo role
+        if (profile.role === 'admin' || profile.role === 'teacher') {
+            window.location.href = 'admin.html';
+        } else {
+            window.location.href = 'trangchu.html';
+        }
+
+    } catch (err) {
+        alert('Lỗi kết nối đến máy chủ. Em vui lòng kiểm tra lại mạng nhé!');
+        console.error(err);
+        btn.disabled = false;
+        btn.innerText = 'Vào học ngay';
+    }
+});
     </script>
 </body>
 </html>
