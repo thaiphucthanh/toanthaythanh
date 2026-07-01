@@ -277,7 +277,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Điền thông tin Supabase của thầy vào đây
+// Điền thông tin Supabase cá nhân của thầy vào đây
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
@@ -289,7 +289,7 @@ let homeworkMap = {};
 
 // State của panel BTVN
 let hwLessonId = null;
-let hwQuestions = []; // Mảng chứa cả object choice và essay
+let hwQuestions = []; 
 
 // =====================
 // INIT
@@ -310,7 +310,7 @@ async function loadTopicHeader() {
 }
 
 // =====================
-// FETCH LESSONS
+// FETCH LESSONS & HOMEWORK STATS
 // =====================
 async function fetchLessons() {
     document.getElementById('loading').classList.remove('hidden');
@@ -324,17 +324,25 @@ async function fetchLessons() {
 
     if (currentLessons.length > 0) {
         const lessonIds = currentLessons.map(l => l.id);
+        
+        // Lấy cấu hình tổng quan bài tập
         const { data: configs } = await supabaseClient
             .from('lesson_homework_config')
-            .select('lesson_id, homework_type, homework_payload, video_solution')
+            .select('lesson_id, homework_type, video_solution')
+            .in('lesson_id', lessonIds);
+
+        // Đếm tổng số câu hỏi thuộc về từng bài học để hiển thị lên Badge ngoài bảng
+        const { data: qCounts } = await supabaseClient
+            .from('homework_questions')
+            .select('lesson_id')
             .in('lesson_id', lessonIds);
 
         if (configs) {
             configs.forEach(c => {
-                const payload = Array.isArray(c.homework_payload) ? c.homework_payload : [];
+                const totalQ = qCounts ? qCounts.filter(q => q.lesson_id === c.lesson_id).length : 0;
                 homeworkMap[String(c.lesson_id)] = {
                     homework_type: c.homework_type,
-                    total_questions: payload.length,
+                    total_questions: totalQ,
                     has_video: !!c.video_solution,
                     has_config: true
                 };
@@ -400,7 +408,7 @@ function renderLessonTable() {
                         <div class="toggle-thumb"></div>
                     </label>
                     <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isFree ? 'badge-Free' : 'badge-Premium'}">
-                        ${isFree ? 'Miễn phí' : 'Có khóa học'}
+                        ${isFree ? 'Miễn phí' : 'Trong khóa'}
                     </span>
                 </div>
             </td>
@@ -431,7 +439,7 @@ function renderLessonTable() {
 }
 
 // =====================
-// HOMEWORK PANEL
+// HOMEWORK PANEL INTERACTION
 // =====================
 async function openHwPanel(lessonId) {
     hwLessonId = lessonId;
@@ -447,7 +455,7 @@ async function openHwPanel(lessonId) {
     document.getElementById('hw-panel').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Fetch config
+    // 1. Tải cấu hình tổng quan (loại, video)
     const { data: config } = await supabaseClient
         .from('lesson_homework_config')
         .select('*')
@@ -457,11 +465,45 @@ async function openHwPanel(lessonId) {
     if (config) {
         document.getElementById('hw-type').value = config.homework_type || 'mixed';
         document.getElementById('hw-video').value = config.video_solution || '';
-        hwQuestions = Array.isArray(config.homework_payload) ? config.homework_payload : [];
         if (config.created_at) {
             const d = new Date(config.updated_at || config.created_at);
-            document.getElementById('hw-save-info').innerText = 'Đã lưu lúc ' + d.toLocaleString('vi-VN');
+            document.getElementById('hw-save-info').innerText = 'Đã cập nhật: ' + d.toLocaleString('vi-VN');
         }
+    }
+
+    // 2. Sử dụng Resource Embedding kéo toàn bộ Questions và Choices của bài học
+    const { data: dbQuestions } = await supabaseClient
+        .from('homework_questions')
+        .select('*, homework_choices(*)')
+        .eq('lesson_id', lessonId)
+        .order('order_index', { ascending: true });
+
+    if (dbQuestions && dbQuestions.length > 0) {
+        hwQuestions = dbQuestions.map(q => {
+            if (q.question_type === 'essay') {
+                return {
+                    so_cau: q.order_index,
+                    type: 'essay',
+                    noi_dung: q.question
+                };
+            } else {
+                let lua_chon = { A: '', B: '', C: '', D: '' };
+                let dap_an_dung = '';
+                if (q.homework_choices) {
+                    q.homework_choices.forEach(c => {
+                        lua_chon[c.option_label] = c.option_text;
+                        if (c.is_correct) dap_an_dung = c.option_label;
+                    });
+                }
+                return {
+                    so_cau: q.order_index,
+                    type: 'choice',
+                    noi_dung: q.question,
+                    lua_chon,
+                    dap_an_dung
+                };
+            }
+        });
     }
 
     onHwTypeChange();
@@ -476,7 +518,6 @@ function closeHwPanel() {
     hwQuestions = [];
 }
 
-// Điều khiển hiển thị các nút Thêm dựa theo Loại bài tập
 function onHwTypeChange() {
     const type = document.getElementById('hw-type').value;
     const btnChoice = document.getElementById('btn-add-choice');
@@ -495,11 +536,10 @@ function onHwTypeChange() {
 }
 
 // =====================
-// QUẢN LÝ CÂU HỎI TRONG PANEL
+// RENDER & MANAGE QUESTIONS STATE
 // =====================
 function addQuestion(qType) {
     const so_cau = hwQuestions.length + 1;
-    
     if (qType === 'choice') {
         hwQuestions.push({
             so_cau,
@@ -508,18 +548,14 @@ function addQuestion(qType) {
             lua_chon: { A: '', B: '', C: '', D: '' },
             dap_an_dung: ''
         });
-    } else if (qType === 'essay') {
+    } else {
         hwQuestions.push({
             so_cau,
             type: 'essay',
-            noi_dung: '',
-            goi_y: ''
+            noi_dung: ''
         });
     }
-
     renderQuestions();
-    
-    // Auto-scroll
     setTimeout(() => {
         const list = document.getElementById('hw-questions-list');
         list.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -528,7 +564,6 @@ function addQuestion(qType) {
 
 function removeQuestion(index) {
     hwQuestions.splice(index, 1);
-    // Đánh lại số thứ tự
     hwQuestions.forEach((q, i) => q.so_cau = i + 1);
     renderQuestions();
 }
@@ -546,27 +581,23 @@ function renderQuestions() {
     }
 
     empty.classList.add('hidden');
-    
-    // Thống kê nháp số lượng
-    const cCount = hwQuestions.filter(q => q.type !== 'essay').length;
+    const cCount = hwQuestions.filter(q => q.type === 'choice').length;
     const eCount = hwQuestions.filter(q => q.type === 'essay').length;
-    countEl.innerText = `Tổng: ${hwQuestions.length} câu (${cCount} TN, ${eCount} TL)`;
+    countEl.innerText = `Tổng số: ${hwQuestions.length} câu (${cCount} Trắc nghiệm, ${eCount} Tự luận)`;
 
     list.innerHTML = hwQuestions.map((q, idx) => {
-        // Tương thích ngược: Nếu chưa có type, mặc định coi là choice
         const isEssay = q.type === 'essay';
-
         return `
-        <div class="q-card ${isEssay ? 'q-card-essay' : ''}" id="q-card-${idx}">
+        <div class="q-card ${isEssay ? 'q-card-essay' : ''}">
             <div class="q-card-header">
                 <span class="q-num ${isEssay ? 'q-num-essay' : ''}">Câu ${q.so_cau} ${isEssay ? '(Tự luận)' : '(Trắc nghiệm)'}</span>
-                <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors" title="Xóa câu này">
-                    <i class="fas fa-trash-alt mr-1"></i><span class="text-xs font-bold">Xóa</span>
+                <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors font-bold">
+                    <i class="fas fa-trash-alt mr-1"></i> Xóa
                 </button>
             </div>
 
             <textarea
-                placeholder="Nhập nội dung câu hỏi... (hoặc để trống nếu đề nằm trong file PDF)"
+                placeholder="Nhập yêu cầu đề bài..."
                 onchange="hwQuestions[${idx}].noi_dung = this.value"
                 class="w-full p-2.5 rounded-xl border ${isEssay ? 'border-amber-200 focus:ring-amber-400' : 'border-gray-200 focus:ring-blue-500'} outline-none text-sm resize-none focus:ring-2 mb-3 bg-white"
                 rows="2">${q.noi_dung || ''}</textarea>
@@ -578,15 +609,15 @@ function renderQuestions() {
                             <span class="text-[11px] font-black text-blue-900 bg-blue-50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0">${opt}</span>
                             <input
                                 type="text"
-                                placeholder="Đáp án ${opt}..."
-                                value="${(q.lua_chon && q.lua_chon[opt]) ? q.lua_chon[opt] : ''}"
+                                placeholder="Phương án ${opt}..."
+                                value="${q.lua_chon[opt] || ''}"
                                 onchange="hwQuestions[${idx}].lua_chon['${opt}'] = this.value"
                                 class="flex-1 text-xs outline-none bg-transparent font-medium">
                         </div>
                     `).join('')}
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-black text-gray-400 uppercase flex-shrink-0">Đáp án đúng:</span>
+                    <span class="text-[10px] font-black text-gray-400 uppercase">Đáp án đúng:</span>
                     <div class="ans-option flex gap-2">
                         ${['A','B','C','D'].map(opt => `
                             <input type="radio" name="correct-${idx}" id="r-${idx}-${opt}" value="${opt}"
@@ -596,64 +627,110 @@ function renderQuestions() {
                         `).join('')}
                     </div>
                 </div>
-            ` : `
-                <div>
-                    <textarea
-                        placeholder="Gợi ý / Đáp án tham khảo (Tuỳ chọn)..."
-                        onchange="hwQuestions[${idx}].goi_y = this.value"
-                        class="w-full p-2.5 rounded-xl border border-amber-100 outline-none text-xs resize-none focus:ring-1 focus:ring-amber-300 bg-amber-50/50"
-                        rows="2">${q.goi_y || ''}</textarea>
-                </div>
-            `}
-        </div>
-    `}).join('');
+            ` : ''}
+        </div>`;
+    }).join('');
 }
 
 // =====================
-// LƯU CẤU HÌNH BTVN
+// SAVE HOMEWORK STRUCTURED DATA (FIXED)
 // =====================
 async function saveHomeworkConfig() {
     const type = document.getElementById('hw-type').value;
     const video = document.getElementById('hw-video').value.trim();
 
-    // Validation
     if (hwQuestions.length === 0) {
-        Swal.fire('Thiếu câu hỏi!', 'Vui lòng thêm ít nhất 1 câu hỏi.', 'warning');
+        Swal.fire('Thiếu dữ liệu!', 'Vui lòng khởi tạo ít nhất 1 câu hỏi.', 'warning');
         return;
     }
 
-    // Chỉ bắt buộc kiểm tra đáp án đúng đối với các câu trắc nghiệm
-    const noAnswerChoices = hwQuestions.filter(q => q.type !== 'essay' && !q.dap_an_dung);
-    
-    if (noAnswerChoices.length > 0) {
-        const nums = noAnswerChoices.map(q => `Câu ${q.so_cau}`).join(', ');
-        Swal.fire('Thiếu đáp án!', `${nums} (trắc nghiệm) chưa được chọn đáp án đúng.`, 'warning');
+    // Kiểm tra tính đầy đủ của đáp án trắc nghiệm trước khi ghi DB
+    const noAnsChoices = hwQuestions.filter(q => q.type === 'choice' && !q.dap_an_dung);
+    if (noAnsChoices.length > 0) {
+        const listErr = noAnsChoices.map(q => `Câu ${q.so_cau}`).join(', ');
+        Swal.fire('Chưa chọn đáp án!', `${listErr} chưa thiết lập đáp án đúng mẫu.`, 'warning');
         return;
     }
 
-    Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'Đang đồng bộ cơ sở dữ liệu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    const { error } = await supabaseClient
-        .from('lesson_homework_config')
-        .upsert({
+    try {
+        // Bước 1: Lưu/Cập nhật thông tin cấu hình cốt lõi của bài học
+        const { error: configErr } = await supabaseClient
+            .from('lesson_homework_config')
+            .upsert({
+                lesson_id: hwLessonId,
+                homework_type: type,
+                video_solution: video || null
+            }, { onConflict: 'lesson_id' });
+
+        if (configErr) throw configErr;
+
+        // Bước 2: Tìm và dọn sạch các câu hỏi + đáp án cũ của bài học này để tránh xung đột dữ liệu cũ
+        const { data: oldQs } = await supabaseClient
+            .from('homework_questions')
+            .select('id')
+            .eq('lesson_id', hwLessonId);
+        
+        if (oldQs && oldQs.length > 0) {
+            const oldIds = oldQs.map(q => q.id);
+            // Xóa đáp án trước (Do có liên kết FK khóa ngoại)
+            await supabaseClient.from('homework_choices').delete().in('question_id', oldIds);
+        }
+        // Xóa câu hỏi
+        await supabaseClient.from('homework_questions').delete().eq('lesson_id', hwLessonId);
+
+        // Bước 3: Đẩy danh sách câu hỏi mới lên bảng `homework_questions`
+        const questionsPayload = hwQuestions.map(q => ({
             lesson_id: hwLessonId,
-            homework_type: type,
-            homework_payload: hwQuestions, 
-            video_solution: video || null
-        }, { onConflict: 'lesson_id' });
+            order_index: q.so_cau,
+            question_type: q.type,
+            question: q.noi_dung || '',
+            score: 1
+        }));
 
-    if (error) {
-        Swal.fire('Lỗi!', 'Không thể lưu: ' + error.message, 'error');
-        return;
+        if (questionsPayload.length > 0) {
+            const { data: insertedQs, error: insQErr } = await supabaseClient
+                .from('homework_questions')
+                .insert(questionsPayload)
+                .select(); // Trả về bản ghi kèm UUID mới sinh
+
+            if (insQErr) throw insQErr;
+
+            // Bước 4: Đẩy chi tiết 4 đáp án A-B-C-D cho các câu trắc nghiệm lên bảng `homework_choices`
+            const choicesPayload = [];
+            insertedQs.forEach(insertedQ => {
+                const origQ = hwQuestions.find(q => q.so_cau === insertedQ.order_index);
+                if (origQ && origQ.type === 'choice') {
+                    ['A', 'B', 'C', 'D'].forEach(label => {
+                        choicesPayload.push({
+                            question_id: insertedQ.id,
+                            option_label: label,
+                            option_text: origQ.lua_chon[label] || '',
+                            is_correct: origQ.dap_an_dung === label
+                        });
+                    });
+                }
+            });
+
+            if (choicesPayload.length > 0) {
+                const { error: insCErr } = await supabaseClient.from('homework_choices').insert(choicesPayload);
+                if (insCErr) throw insCErr;
+            }
+        }
+
+        Swal.fire({ icon: 'success', title: 'Lưu cấu hình thành công!', timer: 1200, showConfirmButton: false });
+        closeHwPanel();
+        await fetchLessons();
+
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Lỗi đồng bộ!', err.message, 'error');
     }
-
-    Swal.fire({ icon: 'success', title: 'Đã lưu cấu hình BTVN!', timer: 1200, showConfirmButton: false });
-    closeHwPanel();
-    await fetchLessons();
 }
 
 // =====================
-// TOGGLE FREE / STATUS (Giữ nguyên)
+// TOGGLE FUNCTIONS (FREE / STATUS)
 // =====================
 async function toggleLessonFree(lessonId, isChecked) {
     const { error } = await supabaseClient.from('lessons').update({ is_free: isChecked }).eq('id', lessonId);
@@ -676,7 +753,7 @@ async function toggleLessonStatus(lessonId, isChecked) {
 async function toggleAll(status) {
     const result = await Swal.fire({
         title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
-        text: `Thầy có chắc muốn ${status === 'Active' ? 'mở' : 'khóa'} tất cả bài học không?`,
+        text: `Thầy có chắc muốn ${status === 'Active' ? 'mở' : 'khóa'} toàn bộ bài học không?`,
         icon: 'question', showCancelButton: true,
         confirmButtonText: 'Xác nhận', cancelButtonText: 'Hủy',
         confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a',
@@ -688,9 +765,6 @@ async function toggleAll(status) {
     fetchLessons();
 }
 
-// =====================
-// THỐNG KÊ (Giữ nguyên)
-// =====================
 function updateStats(lessons) {
     document.getElementById('stat-total').innerText = lessons.length;
     document.getElementById('stat-Active').innerText = lessons.filter(l => l.status === 'Active').length;
@@ -699,17 +773,16 @@ function updateStats(lessons) {
 }
 
 // =====================
-// THÊM & CHỈNH SỬA & XÓA (Giữ nguyên toàn bộ logic của thầy)
+// ADD & EDIT & DELETE LESSONS
 // =====================
 async function addNewLesson() {
-    // ... (Giữ nguyên mã cũ) ...
     const { value: formValues } = await Swal.fire({
         title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
         html: `
             <div class="text-left space-y-3">
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
-                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập hình học">
+                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập căn bậc hai">
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
@@ -717,7 +790,7 @@ async function addNewLesson() {
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
-                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Các em hay nhầm lẫn..."></textarea>
+                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Học sinh hay nhầm điều kiện xác định..."></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -737,13 +810,13 @@ async function addNewLesson() {
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tài liệu PDF</label>
-                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf">
+                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
                 </div>
             </div>`,
         showCancelButton: true, confirmButtonText: 'Lưu bài học', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
         preConfirm: () => {
             const title = document.getElementById('swal-title').value.trim();
-            if (!title) { Swal.showValidationMessage('Chưa nhập tên bài học!'); return false; }
+            if (!title) { Swal.showValidationMessage('Vui lòng điền tên bài học!'); return false; }
             return {
                 title, video: document.getElementById('swal-video').value,
                 insight: document.getElementById('swal-insight').value,
@@ -814,9 +887,8 @@ async function editLesson(id) {
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cập nhật tài liệu PDF (để trống = giữ nguyên)</label>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cập nhật tài liệu PDF</label>
                     <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
-                    ${lesson.documents?.length > 0 ? `<p class="text-[10px] text-green-600 mt-1 italic"><i class="fas fa-check mr-1"></i>Hiện có: ${lesson.documents[0].name}</p>` : ''}
                 </div>
             </div>`,
         showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
