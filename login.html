@@ -18,7 +18,7 @@
             <a href="index.html" class="inline-block mb-4">
                 <img src="logo.png" alt="Logo" class="w-20 h-20 rounded-full border-4 border-white mx-auto shadow-lg bg-white">
             </a>
-            <h1 class="text-white text-2xl font-black uppercase tracking-tight">Chào mừng bạn trở lại!</h1>
+            <h1 id="welcomeTitle" class="text-white text-2xl font-black uppercase tracking-tight">Chào mừng bạn trở lại!</h1>
             <p class="text-blue-200 text-sm font-bold mt-2">Đăng nhập để tiếp tục chinh phục toán học</p>
         </div>
 
@@ -76,6 +76,22 @@
         const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
         
+        // ==========================================================
+        // ĐOẠN ĐƯỢC THÊM VÀO ĐỂ TỰ ĐỘNG CHÀO TÊN HỌC SINH
+        // ==========================================================
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            try {
+                const userObj = JSON.parse(savedUser);
+                if (userObj && userObj.fullname) {
+                    document.getElementById('welcomeTitle').innerText = `Chào mừng ${userObj.fullname} đã trở lại học!`;
+                }
+            } catch (err) {
+                console.error("Lỗi đọc dữ liệu người dùng cũ:", err);
+            }
+        }
+        // ==========================================================
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
         
@@ -86,16 +102,14 @@
             btn.innerText = 'Đang đăng nhập...';
         
             try {
-                // Hỗ trợ đăng nhập bằng SĐT hoặc Email
                 let emailToLogin = identifierValue;
                 
                 if (!identifierValue.includes('@')) {
-                    // Thêm error vào để kiểm soát nếu có lỗi RLS hoặc không tìm thấy dòng dữ liệu
                     const { data: found, error: findError } = await supabaseClient
                         .from('accounts')
                         .select('email')
                         .eq('sdt', identifierValue)
-                        .maybeSingle(); // Dùng maybeSingle() sẽ không quăng lỗi kích ứng nếu không tìm thấy
+                        .maybeSingle();
         
                     if (findError || !found?.email) {
                         alert('Không tìm thấy tài khoản với số điện thoại này hoặc hệ thống bị chặn!');
@@ -106,7 +120,6 @@
                     emailToLogin = found.email;
                 }
         
-                // Đăng nhập qua Supabase Auth
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                     email: emailToLogin,
                     password: passwordValue
@@ -119,7 +132,6 @@
                     return;
                 }
         
-                // Lấy profile từ bảng accounts dựa vào ID vừa map chuẩn ở bước trước
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('accounts')
                     .select('id, fullname, role, sdt, status')
@@ -127,14 +139,13 @@
                     .maybeSingle();
         
                 if (profileError || !profile || profile.status === 'inactive') {
-                    await supabaseClient.auth.signOut(); // Ép đăng xuất ngay nếu tài khoản bị khóa
+                    await supabaseClient.auth.signOut(); 
                     alert('Tài khoản của em đã bị khoá hoặc không hợp lệ. Vui lòng liên hệ Thầy!');
                     btn.disabled = false;
                     btn.innerText = 'Vào học ngay';
                     return;
                 }
         
-                // Lưu localStorage phục vụ các tính năng hiển thị tên học sinh
                 localStorage.setItem('user', JSON.stringify({
                     id: profile.id,
                     fullname: profile.fullname,
@@ -142,7 +153,6 @@
                     sdt: profile.sdt
                 }));
         
-                // Điều hướng thông minh theo quyền (Role)
                 if (profile.role === 'admin' || profile.role === 'teacher') {
                     window.location.href = 'admin.html';
                 } else {
