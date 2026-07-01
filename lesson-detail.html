@@ -22,7 +22,11 @@
     .submenu.open { display: block; }
     .chevron { transition: transform 0.25s; }
     .thanh-menu-ngang { background: #1e3a8a; }
+    .khung-trang { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
     .item-menu { font-weight: 800; color: white; text-decoration: none; }
+    .cum-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .ten-lon { font-size: 18px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+    .ten-nho { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
     .dropdown-user { position: absolute; top: 120%; right: 0; width: 220px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; padding: 10px 0; z-index: 1000; border: 1px solid #f0f0f0; }
     .dropdown-user.active { display: flex; }
     .item-dropdown { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; align-items: center; text-decoration: none; transition: all 0.2s; }
@@ -111,7 +115,7 @@
         </div>
 
         <div id="lesson-body" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div class="lg:col-span-2 space-y-4">
+          <div class="lg:col-span-2">
             <div class="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100">
               <div id="lesson-topic-name" class="text-blue-500 font-black uppercase text-[10px] tracking-[0.2em] mb-2 italic"></div>
               <h1 id="lesson-title" class="text-xl md:text-2xl font-black text-blue-900 mb-4 tracking-tight leading-tight uppercase">
@@ -119,16 +123,7 @@
               </h1>
               <div id="lesson-content" class="text-gray-600 leading-relaxed text-sm space-y-3"></div>
             </div>
-
-            <div id="homework-box" class="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-yellow-200 hidden">
-              <h3 class="font-black text-sm text-blue-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <i class="fas fa-edit text-yellow-500"></i> 📝 Nhiệm vụ về nhà (BTVN)
-              </h3>
-              <div id="homework-status-container" class="mb-4"></div>
-              <form id="homework-form" class="space-y-4"></form>
-            </div>
           </div>
-
           <div class="lg:col-span-1">
             <div class="bg-white p-5 rounded-2xl md:rounded-3xl shadow-sm border border-blue-100 lg:sticky lg:top-4">
               <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
@@ -137,6 +132,14 @@
               <div id="document-container">
                 <div class="text-center py-3"><i class="fas fa-spinner animate-spin text-blue-200"></i></div>
               </div>
+
+              <div id="homework-section" class="mt-5 pt-4 border-t border-gray-100 hidden">
+                <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
+                  <i class="fas fa-tasks text-green-600"></i> Bài tập về nhà
+                </h3>
+                <div id="homework-container"></div>
+              </div>
+
               <div id="lesson-insight" class="mt-4 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold border-l-4 border-blue-900 leading-relaxed hidden"></div>
             </div>
           </div>
@@ -156,14 +159,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-  const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+  const SB_URL = "";
+  const SB_KEY = "";
   const sb = supabase.createClient(SB_URL, SB_KEY);
 
   const params        = new URLSearchParams(window.location.search);
   let currentLessonId = params.get('id');
   const courseIdParam = params.get('course_id');
 
+  // ══════════════════════════════════════════════
+  // WATCH TRACKER
+  // ══════════════════════════════════════════════
   let ytPlayer           = null;
   let watchSeconds       = 0;
   let watchInterval      = null;
@@ -171,10 +177,6 @@
   let trackerLessonId    = null;
   let hasStartedWatching = false;
   let sessionPrevSecs    = 0;
-
-  // Biến lưu thông tin BTVN toàn cục của bài đang chọn
-  let globalHwConfig     = null;
-  let globalHwSubmission = null;
 
   function loadYTApi() {
     if (window.YT && window.YT.Player) return;
@@ -215,6 +217,12 @@
       _doCreatePlayer(ytId);
     } else {
       window._pendingYtId = ytId;
+      window.onYouTubeIframeAPIReady = function () {
+        if (window._pendingYtId) {
+          _doCreatePlayer(window._pendingYtId);
+          window._pendingYtId = null;
+        }
+      };
     }
   }
 
@@ -295,7 +303,7 @@
       const alreadyDone = existing?.completed || false;
       const newTotal    = prevSecs + secsToAdd;
 
-      await sb.from('lesson_views').upsert({
+      const { error } = await sb.from('lesson_views').upsert({
         user_id:        uid,
         lesson_id:      trackerLessonId,
         viewed_at:      existing?.viewed_at || new Date().toISOString(),
@@ -303,6 +311,8 @@
         completed:      alreadyDone || completed,
         device:         window.innerWidth < 768 ? 'mobile' : 'desktop'
       }, { onConflict: 'user_id,lesson_id' });
+
+      if (error) { console.error('saveWatchData:', error.message); return; }
 
       sessionPrevSecs = newTotal;
       watchSeconds    = 0;
@@ -331,6 +341,44 @@
     } catch (err) { console.error('markFirstView:', err); }
   }
 
+  window.addEventListener('beforeunload', () => {
+    stopWatchTimer();
+    if (watchSeconds > 0) {
+      try {
+        const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
+        const user    = JSON.parse(localStorage.getItem('user') || 'null');
+        if (user && trackerLessonId) {
+          pending[trackerLessonId] = (pending[trackerLessonId] || 0) + watchSeconds;
+          localStorage.setItem('pending_watch', JSON.stringify(pending));
+        }
+      } catch(e) {}
+    }
+  });
+
+  async function syncPendingWatch() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user) return;
+      const pending = JSON.parse(localStorage.getItem('pending_watch') || '{}');
+      if (!Object.keys(pending).length) return;
+      const uid = user.id || user.uid;
+      for (const [lid, secs] of Object.entries(pending)) {
+        if (secs <= 0) continue;
+        const { data: ex } = await sb.from('lesson_views')
+          .select('watch_duration, viewed_at')
+          .eq('user_id', uid).eq('lesson_id', lid).maybeSingle();
+        await sb.from('lesson_views').upsert({
+          user_id:        uid,
+          lesson_id:      lid,
+          viewed_at:      ex?.viewed_at || new Date().toISOString(),
+          watch_duration: (ex?.watch_duration || 0) + secs
+        }, { onConflict: 'user_id,lesson_id' });
+      }
+      localStorage.removeItem('pending_watch');
+    } catch(e) { console.error('syncPending:', e); }
+  }
+
+  // ── Badge ────────────────────────────────────────────────
   function fmtTime(s) {
     if (!s || s <= 0) return '0 giây';
     const m = Math.floor(s / 60), sec = s % 60;
@@ -381,6 +429,9 @@
     } catch(e) {}
   }
 
+  // ══════════════════════════════════════════════
+  // LOGIN
+  // ══════════════════════════════════════════════
   function checkLogin() {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) { window.location.href = 'login.html'; return null; }
@@ -413,9 +464,13 @@
   }
   window.addEventListener('click', () => document.getElementById('dropdownUser')?.classList.remove('active'));
 
+  // ══════════════════════════════════════════════
+  // KIỂM TRA ĐĂNG KÝ KHÓA HỌC
+  // ══════════════════════════════════════════════
   async function checkEnrollment(courseId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) return false;
+    // Admin luôn được qua
     if (user.role === 'admin') return true;
     const uid = user.id || user.uid;
     try {
@@ -425,9 +480,9 @@
         .eq('user_id', uid)
         .eq('course_id', courseId)
         .maybeSingle();
-      if (error) return false;
+      if (error) { console.error('checkEnrollment:', error.message); return false; }
       return !!data && (data.status === 'active' || data.status === null || data.status === undefined);
-    } catch(e) { return false; }
+    } catch(e) { console.error('checkEnrollment ex:', e); return false; }
   }
 
   function showNoEnrollment() {
@@ -436,8 +491,12 @@
     document.getElementById('no-enrollment-box').classList.remove('hidden');
     renderVideo(null);
     renderDocs(null);
+    renderHomework(null);
   }
 
+  // ══════════════════════════════════════════════
+  // TÀI LIỆU
+  // ══════════════════════════════════════════════
   function renderDocs(docs) {
     const el = document.getElementById('document-container');
     let list = null;
@@ -458,6 +517,43 @@
       </div>`).join('');
   }
 
+  // ══════════════════════════════════════════════
+  // BÀI TẬP VỀ NHÀ (MỚI BỔ SUNG)
+  // ══════════════════════════════════════════════
+  function renderHomework(hw) {
+    const section = document.getElementById('homework-section');
+    const container = document.getElementById('homework-container');
+    
+    if (!hw) {
+      section.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    
+    section.classList.remove('hidden');
+    // Kiểm tra đa dạng các trường có thể định nghĩa trong bảng để tránh lỗi dữ liệu
+    const title = hw.title || hw.name || 'Nhiệm vụ bài tập về nhà';
+    const url = hw.url || hw.homework_url || hw.link || '#';
+    const desc = hw.description || hw.content || '';
+
+    container.innerHTML = `
+      <div class="p-3 bg-green-50 border border-green-200 rounded-xl hover:border-green-400 transition-all">
+        <div class="text-[10px] font-bold text-green-900 mb-1.5 flex items-center gap-1 truncate">
+          <i class="fas fa-edit text-green-600 text-xs flex-shrink-0"></i> ${title}
+        </div>
+        ${desc ? `<p class="text-gray-600 text-[10px] mb-2 font-medium leading-relaxed">${desc}</p>` : ''}
+        ${url !== '#' ? `
+          <a href="${url}" target="_blank" rel="noopener" class="block w-full py-2 bg-green-600 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-green-700 transition-colors shadow-sm">
+            <i class="fas fa-pencil-alt mr-1"></i> Làm bài tập ngay
+          </a>
+        ` : `<div class="text-center text-[10px] text-gray-400 italic">Chưa gắn liên kết làm bài</div>`}
+      </div>
+    `;
+  }
+
+  // ══════════════════════════════════════════════
+  // SIDEBAR
+  // ══════════════════════════════════════════════
   function toggleTopic(btn) {
     const sub = btn.nextElementSibling, icon = btn.querySelector('.chevron');
     const opening = !sub.classList.contains('open');
@@ -466,29 +562,19 @@
     if (opening) { sub.classList.add('open'); icon?.classList.add('rotate-180'); }
   }
 
-  // ══════════════════════════════════════════════
-  // RENDER SIDEBAR (ĐÃ THÊM LOGIC HIỂN THỊ BÀI CHỮA BTVN)
-  // ══════════════════════════════════════════════
-  function renderSidebar(topics, lessons, currentTopicId, viewedIds, submissions, hwConfigs) {
+  function renderSidebar(topics, lessons, currentTopicId, viewedIds) {
     const sidebar = document.getElementById('sidebar-content');
     if (!topics?.length) { sidebar.innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Không có chuyên đề</div>`; return; }
-    
     sidebar.innerHTML = topics.map(topic => {
       const tLessons = lessons.filter(l => l.topic_id === topic.id);
       const isCurrent = topic.id === currentTopicId;
-      
       const items = tLessons.length
         ? tLessons.map(l => {
             const active  = String(l.id) === String(currentLessonId);
             const locked  = l.status === 'Inactive';
             const viewed  = viewedIds.includes(String(l.id));
             const dotColor = locked ? '#d1d5db' : (viewed ? '#22c55e' : '#ef4444');
-            
-            // Tìm cấu hình và lịch sử nộp bài của bài này
-            const hasHwConfig = hwConfigs.find(c => c.lesson_id === l.id);
-            const userSubmission = submissions.find(s => s.lesson_id === l.id);
-            
-            let lessonHtml = `<div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
+            return `<div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
                         ${active ? 'active' : 'text-gray-600'} ${locked && !active ? 'locked' : ''}"
                  onclick="${locked ? "Swal.fire({icon:'warning',title:'Bài học chưa mở',text:'Thầy chưa mở bài học này. Vui lòng chờ!',confirmButtonColor:'#1e3a8a'})" : `goLesson('${l.id}')`}">
               <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
@@ -496,21 +582,8 @@
               <span class="truncate flex-1">${l.title}</span>
               ${locked ? '<i class="fas fa-lock text-[8px] text-gray-300 flex-shrink-0"></i>' : ''}
             </div>`;
-
-            // NẾU ĐÃ NỘP BÀI VÀ CÓ VIDEO CHỮA -> HIỂN THỊ THÊM MỤC BÀI GIẢNG CHỮA BTVN NGAY DƯỚI
-            if (userSubmission && hasHwConfig && hasHwConfig.video_solution) {
-              lessonHtml += `
-                <div class="lesson-item px-3 py-1.5 pl-12 text-[10px] text-purple-700 bg-purple-50 rounded-lg mx-1 my-0.5 flex items-center gap-1.5 font-bold hover:bg-purple-100"
-                     onclick="viewHwSolution('${l.id}', '${hasHwConfig.video_solution.replace(/'/g, "\\'")}', '${l.title.replace(/'/g, "\\'")}')">
-                  <i class="fas fa-video text-purple-500"></i>
-                  <span class="truncate flex-1">↳ 🎥 Video Chữa BTVN</span>
-                </div>
-              `;
-            }
-            return lessonHtml;
           }).join('')
         : `<div class="px-9 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`;
-        
       return `<div class="mb-1">
         <button class="topic-btn w-full text-left px-3 py-2.5 text-[10px] font-black uppercase rounded-xl flex justify-between items-center gap-2 transition-colors ${isCurrent ? 'text-blue-900 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}" onclick="toggleTopic(this)">
           <span class="flex-1 text-left leading-snug">${topic.topic_name}</span>
@@ -519,16 +592,6 @@
         <div class="submenu ${isCurrent ? 'open' : ''}">${items}</div>
       </div>`;
     }).join('');
-  }
-
-  // Hàm chuyển đổi nội dung khi nhấn xem Video chữa bài
-  function viewHwSolution(lessonId, videoUrl, lessonTitle) {
-    stopWatchTimer();
-    document.getElementById('lesson-title').innerText = `[Video Chữa] Bài tập về nhà: ${lessonTitle}`;
-    document.getElementById('lesson-content').innerHTML = `<p class="text-purple-600 font-bold bg-purple-50 p-3 rounded-xl border border-purple-200">Em đang xem video chữa chi tiết bài tập về nhà của bài học này.</p>`;
-    renderVideo(videoUrl);
-    // Cuộn lên đầu trang phát video mượt mà
-    document.getElementById('main-wrap').scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function goLesson(id) {
@@ -543,42 +606,31 @@
 
   async function loadSidebar(courseId, currentTopicId) {
     try {
-      const { data: topics } = await sb.from('topics').select('id, topic_name, order_index').eq('course_id', courseId).order('order_index', { ascending: true });
+      const { data: topics, error: e1 } = await sb.from('topics')
+        .select('id, topic_name, order_index').eq('course_id', courseId).order('order_index', { ascending: true });
+      if (e1) throw e1;
       if (!topics?.length) { document.getElementById('sidebar-content').innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`; return; }
-      
-      const { data: lessons } = await sb.from('lessons').select('id, title, topic_id, status').in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
-      
+      const { data: lessons, error: e2 } = await sb.from('lessons')
+        .select('id, title, topic_id, status').in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
+      if (e2) throw e2;
+
       let viewedIds = [];
-      let submissions = [];
-      let hwConfigs = [];
-      
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (user) {
-        const uid = user.id || user.uid;
-        // Lấy lịch sử xem bài
-        const { data: views } = await sb.from('lesson_views').select('lesson_id').eq('user_id', uid);
+        const { data: views } = await sb.from('lesson_views').select('lesson_id').eq('user_id', user.id || user.uid);
         viewedIds = (views || []).map(v => String(v.lesson_id));
-        
-        // Lấy danh sách bài tập học sinh đã nộp
-        const { data: subs } = await sb.from('homework_submissions').select('lesson_id, status').eq('student_id', uid);
-        submissions = subs || [];
-        
-        // Lấy danh sách cấu hình bài tập liên quan để biết bài nào có video chữa
-        if (lessons?.length) {
-          const { data: cfgs } = await sb.from('lesson_homework_config').select('lesson_id, video_solution').in('lesson_id', lessons.map(l => l.id));
-          hwConfigs = cfgs || [];
-        }
       }
-      renderSidebar(topics, lessons || [], currentTopicId, viewedIds, submissions, hwConfigs);
+      renderSidebar(topics, lessons || [], currentTopicId, viewedIds);
     } catch (err) {
-      console.error(err);
+      document.getElementById('sidebar-content').innerHTML = `<div class="p-3 text-red-400 text-[10px] font-bold">Lỗi: ${err.message}</div>`;
     }
   }
 
   // ══════════════════════════════════════════════
-  // TẢI BÀI HỌC VÀ CẤU HÌNH BÀI TẬP VỀ NHÀ
+  // LOAD LESSON
   // ══════════════════════════════════════════════
   async function loadLesson(id) {
+    // Reset UI
     document.getElementById('lesson-title').innerHTML = '<i class="fas fa-spinner animate-spin text-blue-200"></i>';
     document.getElementById('lesson-content').innerHTML = '';
     document.getElementById('lesson-topic-name').textContent = '';
@@ -587,12 +639,17 @@
     document.getElementById('locked-box').classList.add('hidden');
     document.getElementById('no-enrollment-box').classList.add('hidden');
     document.getElementById('lesson-body').classList.remove('hidden');
-    document.getElementById('homework-box').classList.add('hidden');
     
+    // Reset phần bài tập về nhà khi chuyển bài mới
+    renderHomework(null);
+
     const badge = document.getElementById('watch-badge');
     badge.className = ''; badge.style.display = 'none';
+    document.getElementById('watch-badge-icon').innerHTML   = '';
+    document.getElementById('watch-badge-text').textContent = '';
+    document.getElementById('watch-badge-timer').textContent= '';
 
-    const lessonId = parseInt(id);
+    const lessonId = id; 
     trackerLessonId    = lessonId;
     watchSeconds       = 0;
     sessionPrevSecs    = 0;
@@ -605,7 +662,9 @@
 
       let topic = null;
       if (lesson.topic_id) {
-        const { data: t } = await sb.from('topics').select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
+        const { data: t, error: e2 } = await sb.from('topics')
+          .select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
+        if (e2) throw new Error('Không lấy được chuyên đề: ' + e2.message);
         topic = t;
       }
 
@@ -631,6 +690,7 @@
         return;
       }
 
+      // Hiển thị nội dung chính bài học
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
       document.getElementById('lesson-content').innerHTML = lesson.content || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
       if (lesson.insight) {
@@ -643,8 +703,20 @@
       renderDocs(lesson.documents);
       await showWatchBadge(lessonId);
 
-      // XỬ LÝ TẢI BÀI TẬP VỀ NHÀ (BTVN)
-      await loadHomework(lessonId);
+      // ── TRUY VẤN BÀI TẬP VỀ NHÀ TỪ lesson_homework_config ──
+      try {
+        const { data: hwData, error: eHw } = await sb
+          .from('lesson_homework_config')
+          .select('*')
+          .eq('lesson_id', lessonId)
+          .maybeSingle();
+        
+        if (!eHw && hwData) {
+          renderHomework(hwData);
+        }
+      } catch (errHw) {
+        console.error('Lỗi khi lấy cấu hình bài tập:', errHw);
+      }
 
       if (topic) {
         document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
@@ -652,213 +724,6 @@
       }
 
     } catch (err) { console.error('loadLesson:', err); showError(err.message); }
-  }
-
-  // ══════════════════════════════════════════════
-  // LOGIC XỬ LÝ BÀI TẬP VỀ NHÀ VÀ NỘP BÀI
-  // ══════════════════════════════════════════════
-  async function loadHomework(lessonId) {
-    const hwBox = document.getElementById('homework-box');
-    const statusContainer = document.getElementById('homework-status-container');
-    const form = document.getElementById('homework-form');
-    
-    hwBox.classList.add('hidden');
-    form.innerHTML = '';
-    statusContainer.innerHTML = '';
-
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
-    const uid = user.id || user.uid;
-
-    try {
-      // 1. Lấy cấu hình bài tập của bài giảng này
-      const { data: config } = await sb.from('lesson_homework_config').select('*').eq('lesson_id', lessonId).maybeSingle();
-      globalHwConfig = config;
-      if (!config) return; // Không có bài tập cài đặt cho bài này thì ẩn khung
-
-      hwBox.classList.remove('hidden');
-
-      // 2. Kiểm tra xem học sinh đã nộp bài chưa
-      const { data: sub } = await sb.from('homework_submissions').select('*').eq('lesson_id', lessonId).eq('student_id', uid).maybeSingle();
-      globalHwSubmission = sub;
-
-      let payload = [];
-      try {
-        payload = (typeof config.homework_payload === 'string') ? JSON.parse(config.homework_payload) : config.homework_payload;
-      } catch(e) { payload = []; }
-
-      if (sub) {
-        // TRẠNG THÁI: ĐÃ NỘP BÀI
-        let scoreText = '';
-        if (sub.status === 'graded') {
-          scoreText = `
-            <div class="mt-2 p-3 bg-green-50 rounded-xl text-green-900 border border-green-200">
-              <strong>Điểm trắc nghiệm:</strong> ${sub.choice_score ?? 'N/A'} điểm | <strong>Điểm tự luận:</strong> ${sub.essay_score ?? 'N/A'} điểm <br>
-              <strong>Thầy nhận xét:</strong> ${sub.teacher_comment || 'Thầy khen em làm bài rất tốt!'}
-            </div>`;
-        } else {
-          scoreText = `<div class="mt-2 text-xs font-bold text-yellow-600"><i class="fas fa-clock"></i> Bài nộp đang chờ Thầy chấm điểm tự luận. Video chữa bài đã được mở khóa ở cột danh sách bài học!</div>`;
-        }
-
-        statusContainer.innerHTML = `
-          <div class="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-            <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase"><i class="fas fa-check-circle"></i> Đã nộp bài thành công</span>
-            <div class="text-xs text-gray-500 mt-2">Nộp ngày: ${new Date(sub.created_at).toLocaleString('vi-VN')}</div>
-            ${scoreText}
-          </div>`;
-          
-        // Hiển thị lại các câu hỏi ở trạng thái đọc (Disabled)
-        if (config.homework_type === 'quiz' || config.homework_type === 'mixed') {
-          form.innerHTML = renderQuizQuestions(payload, sub.student_answers, true);
-        }
-      } else {
-        // TRẠNG THÁI: CHƯA NỘP BÀI -> HIỂN THỊ ĐỀ BÀI LÀM
-        statusContainer.innerHTML = `<div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hình thức: Bài tập ${config.homework_type === 'quiz' ? 'Trắc nghiệm' : (config.homework_type === 'essay' ? 'Tự luận' : 'Hỗn hợp')}</div>`;
-        
-        // 1. Nếu là dạng trắc nghiệm hoặc hỗn hợp thì render câu hỏi câu trả lời
-        if (config.homework_type === 'quiz' || config.homework_type === 'mixed') {
-          form.innerHTML += renderQuizQuestions(payload, null, false);
-        }
-        
-        // 2. Nếu có phần tự luận thì hiển thị ô điền link ảnh chụp bài làm
-        if (config.homework_type === 'essay' || config.homework_type === 'mixed') {
-          form.innerHTML += `
-            <div class="p-4 bg-gray-50 border rounded-2xl space-y-2 mt-4">
-              <label class="block text-xs font-black text-blue-900 uppercase"><i class="fas fa-camera"></i> Link ảnh bài tập tự luận làm ra vở</label>
-              <p class="text-[11px] text-gray-400 leading-tight">Em chụp ảnh bài làm trong vở, tải lên Facebook/Drive rồi dán liên kết ảnh vào đây. Nếu có nhiều ảnh hãy cách nhau bằng dấu phẩy (,).</p>
-              <input type="text" id="essay_links_input" placeholder="Dán link hình ảnh bài làm tại đây..." 
-                     class="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-xs outline-none focus:border-blue-900 transition-all">
-            </div>`;
-        }
-
-        // Nút nộp bài hành động
-        form.innerHTML += `
-          <button type="button" onclick="submitMyHomework()" 
-                  class="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-black py-3.5 rounded-2xl shadow-md uppercase text-xs transition-all transform hover:-translate-y-0.5 tracking-wider">
-            <i class="fas fa-paper-plane mr-2"></i> Gửi bài nộp cho Thầy Thành
-          </button>`;
-      }
-    } catch(e) { console.error("Lỗi Homework:", e); }
-  }
-
-  // Hàm phụ trợ kết xuất danh sách câu hỏi trắc nghiệm
-  function renderQuizQuestions(questions, savedAnswers = null, isDisabled = false) {
-    if (!Array.isArray(questions) || !questions.length) return '<p class="text-gray-400 italic text-xs">Chưa nhập câu hỏi trắc nghiệm.</p>';
-    
-    let savedMap = {};
-    if (savedAnswers) {
-      try {
-        const arr = (typeof savedAnswers === 'string') ? JSON.parse(savedAnswers) : savedAnswers;
-        arr.forEach(item => { savedMap[item.question_id] = item.answer; });
-      } catch(e){}
-    }
-
-    return questions.map((q, idx) => {
-      const qId = q.id || `q_${idx}`;
-      const choices = q.options || ['A', 'B', 'C', 'D'];
-      const selectedAns = savedMap[qId] || '';
-
-      const choicesHtml = choices.map((c, cIdx) => {
-        const isChecked = selectedAns === c ? 'checked' : '';
-        const disAttr = isDisabled ? 'disabled' : '';
-        return `
-          <label class="flex items-center gap-2 p-2.5 bg-white border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors text-xs text-gray-700">
-            <input type="radio" name="${qId}" value="${c}" ${isChecked} ${disAttr} class="w-4 h-4 text-blue-900">
-            <span><strong>${String.fromCharCode(65 + cIdx)}.</strong> ${c}</span>
-          </label>
-        `;
-      }).join('');
-
-      return `
-        <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
-          <div class="text-xs font-bold text-blue-900 flex gap-1">
-            <span class="flex-shrink-0">Câu ${idx + 1}:</span>
-            <div>${q.content || 'Tính giá trị biểu thức toán học...'}</div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-            ${choicesHtml}
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // THỰC THI GỬI BÀI LÊN SUPABASE
-  async function submitMyHomework() {
-    if (!globalHwConfig) return;
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
-    const uid = user.id || user.uid;
-
-    let studentAnswers = [];
-    let essayImages = [];
-
-    // Thu thập kết quả đáp án trắc nghiệm
-    let payload = [];
-    try { payload = (typeof globalHwConfig.homework_payload === 'string') ? JSON.parse(globalHwConfig.homework_payload) : globalHwConfig.homework_payload; } catch(e){}
-    
-    if (Array.isArray(payload) && payload.length > 0) {
-      for (let i = 0; i < payload.length; i++) {
-        const qId = payload[i].id || `q_${i}`;
-        const radios = document.getElementsByName(qId);
-        let selectedValue = "";
-        for (const r of radios) {
-          if (r.checked) { selectedValue = r.value; break; }
-        }
-        if (!selectedValue && (globalHwConfig.homework_type === 'quiz')) {
-          Swal.fire({ icon: 'warning', title: 'Thiếu bài làm', text: `Em chưa chọn đáp án cho Câu số ${i + 1}!`, confirmButtonColor: '#1e3a8a'});
-          return;
-        }
-        studentAnswers.push({ question_id: qId, answer: selectedValue });
-      }
-    }
-
-    // Thu thập link tự luận
-    const essayEl = document.getElementById('essay_links_input');
-    if (essayEl) {
-      const val = essayEl.value.trim();
-      if (val) {
-        essayImages = val.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      }
-      if (essayImages.length === 0 && globalHwConfig.homework_type === 'essay') {
-        Swal.fire({ icon: 'warning', title: 'Thiếu ảnh bài làm', text: 'Vui lòng dán link ảnh bài làm tự luận của em vào ô trống!', confirmButtonColor: '#1e3a8a'});
-        return;
-      }
-    }
-
-    // Xác nhận gửi bài qua SweetAlert2
-    const confirm = await Swal.fire({
-      title: 'Nộp bài tập?',
-      text: 'Hệ thống sẽ ghi nhận kết quả và mở khóa bài giảng chữa đề ngay lập tức!',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Đồng ý nộp',
-      cancelButtonText: 'Kiểm tra lại',
-      confirmButtonColor: '#1e3a8a'
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-      // Tiến hành chèn (Insert) dữ liệu vào bảng homework_submissions
-      const { error } = await sb.from('homework_submissions').insert({
-        lesson_id: trackerLessonId,
-        student_id: uid,
-        student_answers: studentAnswers,
-        essay_images: essayImages,
-        status: 'pending'
-      });
-
-      if (error) throw error;
-
-      await Swal.fire({ icon: 'success', title: 'Tuyệt vời!', text: 'Em đã nộp bài thành công! Hãy xem video chữa bài vừa được mở khóa ở cột Danh sách nhé.', confirmButtonColor: '#1e3a8a'});
-      
-      // Tải lại bài giảng và thanh công cụ sidebar để hiển thị tức thì video chữa bài
-      await loadLesson(trackerLessonId);
-      
-    } catch(err) {
-      Swal.fire({ icon: 'error', title: 'Lỗi nộp bài', text: err.message });
-    }
   }
 
   async function loadFromCourse(courseId) {
@@ -888,11 +753,16 @@
     document.getElementById('error-msg').textContent = msg;
     document.getElementById('document-container').innerHTML = '';
     renderVideo(null);
+    renderHomework(null);
   }
 
+  // ══════════════════════════════════════════════
+  // KHỞI ĐỘNG
+  // ══════════════════════════════════════════════
   window.addEventListener('DOMContentLoaded', async () => {
     checkLogin();
     loadYTApi();
+    syncPendingWatch();
     if (currentLessonId) {
       await loadLesson(currentLessonId);
     } else if (courseIdParam) {
