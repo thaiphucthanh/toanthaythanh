@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Học bài giảng - Toán Thầy Thành</title>
-  <link rel="icon" type="image/png" href="logo.png">
+  <link class="flex-shrink-0" rel="icon" type="image/png" href="logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -134,8 +134,8 @@
               </div>
 
               <div id="homework-section" class="mt-5 pt-4 border-t border-gray-100 hidden">
-                <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
-                  <i class="fas fa-tasks text-green-600"></i> Bài tập về nhà
+                <h3 class="font-black text-xs mb-3 text-emerald-900 uppercase italic tracking-widest flex items-center gap-2">
+                  <i class="fas fa-pen-nib text-emerald-600"></i> Bài tập về nhà
                 </h3>
                 <div id="homework-container"></div>
               </div>
@@ -159,8 +159,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SB_URL = "";
-  const SB_KEY = "";
+  const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+  const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
   const sb = supabase.createClient(SB_URL, SB_KEY);
 
   const params        = new URLSearchParams(window.location.search);
@@ -470,7 +470,6 @@
   async function checkEnrollment(courseId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) return false;
-    // Admin luôn được qua
     if (user.role === 'admin') return true;
     const uid = user.id || user.uid;
     try {
@@ -491,7 +490,7 @@
     document.getElementById('no-enrollment-box').classList.remove('hidden');
     renderVideo(null);
     renderDocs(null);
-    renderHomework(null);
+    renderHomework(null, null);
   }
 
   // ══════════════════════════════════════════════
@@ -518,9 +517,9 @@
   }
 
   // ══════════════════════════════════════════════
-  // BÀI TẬP VỀ NHÀ (MỚI BỔ SUNG)
+  // BÀI TẬP VỀ NHÀ TỰ LUẬN (ĐÃ CẬP NHẬT)
   // ══════════════════════════════════════════════
-  function renderHomework(hw) {
+  function renderHomework(hw, sub) {
     const section = document.getElementById('homework-section');
     const container = document.getElementById('homework-container');
     
@@ -531,24 +530,127 @@
     }
     
     section.classList.remove('hidden');
-    // Kiểm tra đa dạng các trường có thể định nghĩa trong bảng để tránh lỗi dữ liệu
-    const title = hw.title || hw.name || 'Nhiệm vụ bài tập về nhà';
-    const url = hw.url || hw.homework_url || hw.link || '#';
-    const desc = hw.description || hw.content || '';
+    
+    // Đọc chính xác cấu hình nội dung từ bảng lesson_homework_config
+    const title = hw.title || hw.name || 'Bài tập tự luận về nhà';
+    const content = hw.content || hw.description || 'Hãy giải bài tập ra vở rồi tải ảnh chụp lên hệ thống nhé!';
+    const fileKemDe = hw.file_url || hw.homework_url || hw.link || null;
+
+    let subHtml = '';
+    if (sub) {
+      const statusText = sub.status === 'graded' ? `Đã chấm: ${sub.score}đ` : 'Chờ Thầy chấm';
+      const statusColor = sub.status === 'graded' ? 'text-green-600 bg-green-100' : 'text-amber-600 bg-amber-100';
+      
+      subHtml = `
+        <div class="mt-3 p-2.5 bg-white border rounded-xl space-y-2">
+          <div class="flex justify-between items-center text-[10px]">
+            <span class="font-bold text-gray-500">Bài làm đã nộp:</span>
+            <span class="px-2 py-0.5 rounded-full font-black uppercase text-[8px] ${statusColor}">${statusText}</span>
+          </div>
+          <a href="${sub.submission_url}" target="_blank" class="block relative group rounded-lg overflow-hidden border">
+            <img src="${sub.submission_url}" class="w-full h-24 object-cover group-hover:scale-105 transition-transform" />
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <span class="text-white text-[9px] font-black uppercase"><i class="fas fa-search-plus mr-1"></i>Xem ảnh lớn</span>
+            </div>
+          </a>
+          ${sub.teacher_comment ? `<div class="p-2 bg-gray-50 rounded-lg text-[10px] text-gray-600 border-l-2 border-blue-500"><b class="text-blue-900">Thầy nhận xét:</b> ${sub.teacher_comment}</div>` : ''}
+          <button onclick="triggerHwUpload()" class="w-full py-1.5 border border-dashed border-blue-900 text-blue-900 text-center rounded-lg text-[9px] font-black uppercase hover:bg-blue-50 transition-colors">
+            <i class="fas fa-redo mr-1"></i> Đổi ảnh bài làm khác
+          </button>
+        </div>
+      `;
+    } else {
+      subHtml = `
+        <div class="mt-3 p-3 bg-white border border-dashed rounded-xl text-center space-y-2">
+          <i class="fas fa-cloud-upload-alt text-gray-300 text-xl"></i>
+          <div class="text-[10px] font-bold text-gray-400">Em chưa nộp ảnh bài giải vào đây</div>
+          <button onclick="triggerHwUpload()" class="block w-full py-2 bg-emerald-600 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-emerald-700 transition-colors shadow-sm">
+            <i class="fas fa-camera mr-1"></i> Chụp ảnh / Tải bài lên
+          </button>
+        </div>
+      `;
+    }
 
     container.innerHTML = `
-      <div class="p-3 bg-green-50 border border-green-200 rounded-xl hover:border-green-400 transition-all">
-        <div class="text-[10px] font-bold text-green-900 mb-1.5 flex items-center gap-1 truncate">
-          <i class="fas fa-edit text-green-600 text-xs flex-shrink-0"></i> ${title}
+      <div class="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+        <div class="text-[11px] font-black text-emerald-900 mb-1 flex items-center gap-1">
+          <i class="fas fa-edit text-emerald-600 text-xs flex-shrink-0"></i> ${title}
         </div>
-        ${desc ? `<p class="text-gray-600 text-[10px] mb-2 font-medium leading-relaxed">${desc}</p>` : ''}
-        ${url !== '#' ? `
-          <a href="${url}" target="_blank" rel="noopener" class="block w-full py-2 bg-green-600 text-white text-center rounded-lg text-[9px] font-black uppercase hover:bg-green-700 transition-colors shadow-sm">
-            <i class="fas fa-pencil-alt mr-1"></i> Làm bài tập ngay
+        <div class="text-gray-600 text-[10px] font-medium leading-relaxed bg-white p-2.5 rounded-lg border border-emerald-50/80 mb-2 whitespace-pre-line">
+          ${content}
+        </div>
+        ${fileKemDe ? `
+          <a href="${fileKemDe}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-[9px] font-extrabold text-blue-900 hover:underline mb-2">
+            <i class="fas fa-paperclip"></i> Xem file đính kèm đề bài
           </a>
-        ` : `<div class="text-center text-[10px] text-gray-400 italic">Chưa gắn liên kết làm bài</div>`}
+        ` : ''}
+        
+        ${subHtml}
+        
+        <input type="file" id="homework-file-chooser" accept="image/*" class="hidden" onchange="handleHomeworkFileChange(this)">
       </div>
     `;
+  }
+
+  function triggerHwUpload() {
+    document.getElementById('homework-file-chooser').click();
+  }
+
+  async function handleHomeworkFileChange(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) { Swal.fire('Thông báo', 'Vui lòng đăng nhập để nộp bài tập về nhà.', 'warning'); return; }
+    const uid = user.id || user.uid;
+
+    Swal.fire({
+      title: 'Đang tải bài làm lên...',
+      text: 'Hệ thống đang xử lý ảnh, vui lòng không tắt trình duyệt',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+      // 1. Tải ảnh lên Supabase Storage (Bucket đặt tên là: homework)
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uid}_${trackerLessonId}_${Date.now()}.${fileExt}`;
+      const filePath = `submissions/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await sb.storage
+        .from('homework')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Lấy đường dẫn URL công khai của bức ảnh
+      const { data: urlData } = sb.storage.from('homework').getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+
+      // 3. Thực hiện lưu hoặc cập nhật thông tin nộp bài vào bảng homework_submissions
+      const { error: dbError } = await sb.from('homework_submissions').upsert({
+        user_id: uid,
+        lesson_id: trackerLessonId,
+        submission_url: publicUrl,
+        status: 'pending',
+        submitted_at: new Date().toISOString()
+      }, { onConflict: 'user_id,lesson_id' });
+
+      if (dbError) throw dbError;
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Nộp bài thành công!',
+        text: 'Ảnh bài giải của em đã được gửi tới Thầy Thành.',
+        confirmButtonColor: '#1e3a8a'
+      });
+
+      // Tải lại bài giảng hiện tại để đồng bộ giao diện nộp bài mới nhất
+      loadLesson(trackerLessonId);
+
+    } catch (err) {
+      console.error('Lỗi nộp bài tập:', err);
+      Swal.fire('Lỗi tải lên', err.message || 'Không thể upload ảnh bài giải lên hệ thống.', 'error');
+    }
   }
 
   // ══════════════════════════════════════════════
@@ -640,8 +742,8 @@
     document.getElementById('no-enrollment-box').classList.add('hidden');
     document.getElementById('lesson-body').classList.remove('hidden');
     
-    // Reset phần bài tập về nhà khi chuyển bài mới
-    renderHomework(null);
+    // Clear phần bài tập về nhà khi tải bài giảng mới
+    renderHomework(null, null);
 
     const badge = document.getElementById('watch-badge');
     badge.className = ''; badge.style.display = 'none';
@@ -690,7 +792,6 @@
         return;
       }
 
-      // Hiển thị nội dung chính bài học
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
       document.getElementById('lesson-content').innerHTML = lesson.content || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
       if (lesson.insight) {
@@ -703,7 +804,7 @@
       renderDocs(lesson.documents);
       await showWatchBadge(lessonId);
 
-      // ── TRUY VẤN BÀI TẬP VỀ NHÀ TỪ lesson_homework_config ──
+      // ── TRUY VẤN BÀI TẬP VỀ NHÀ & TRẠNG THÁI NỘP BÀI CỦA HỌC SINH ──
       try {
         const { data: hwData, error: eHw } = await sb
           .from('lesson_homework_config')
@@ -712,10 +813,22 @@
           .maybeSingle();
         
         if (!eHw && hwData) {
-          renderHomework(hwData);
+          const user = JSON.parse(localStorage.getItem('user') || 'null');
+          let subData = null;
+          if (user) {
+            const uid = user.id || user.uid;
+            const { data: submission } = await sb
+              .from('homework_submissions')
+              .select('*')
+              .eq('lesson_id', lessonId)
+              .eq('user_id', uid)
+              .maybeSingle();
+            subData = submission;
+          }
+          renderHomework(hwData, subData);
         }
       } catch (errHw) {
-        console.error('Lỗi khi lấy cấu hình bài tập:', errHw);
+        console.error('Lỗi hệ thống khi lấy bài tập:', errHw);
       }
 
       if (topic) {
@@ -753,7 +866,7 @@
     document.getElementById('error-msg').textContent = msg;
     document.getElementById('document-container').innerHTML = '';
     renderVideo(null);
-    renderHomework(null);
+    renderHomework(null, null);
   }
 
   // ══════════════════════════════════════════════
