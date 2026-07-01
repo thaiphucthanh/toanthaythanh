@@ -72,12 +72,13 @@
     </div>
 
     <script>
+        // CẤU HÌNH KẾT NỐI SUPABASE
         const SUBPUrl = 'https://rznyagxrshwwocsvrabe.supabase.co';
         const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
         
         // ==========================================================
-        // ĐOẠN ĐƯỢC THÊM VÀO ĐỂ TỰ ĐỘNG CHÀO TÊN HỌC SINH
+        // 1. TỰ ĐỘNG CHẠY KHI MỞ TRANG: KIỂM TRA BỘ NHỚ ĐỂ HIỂN THỊ TÊN CHÀO MỪNG
         // ==========================================================
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
@@ -87,11 +88,13 @@
                     document.getElementById('welcomeTitle').innerText = `Chào mừng ${userObj.fullname} đã trở lại học!`;
                 }
             } catch (err) {
-                console.error("Lỗi đọc dữ liệu người dùng cũ:", err);
+                console.error("Lỗi đọc dữ liệu bộ nhớ cũ:", err);
             }
         }
-        // ==========================================================
 
+        // ==========================================================
+        // 2. XỬ LÝ SỰ KIỆN KHI BẤM NÚT ĐĂNG NHẬP
+        // ==========================================================
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
         
@@ -104,6 +107,7 @@
             try {
                 let emailToLogin = identifierValue;
                 
+                // Kiểm tra xem người dùng gõ Số điện thoại hay Email
                 if (!identifierValue.includes('@')) {
                     const { data: found, error: findError } = await supabaseClient
                         .from('accounts')
@@ -111,15 +115,18 @@
                         .eq('sdt', identifierValue)
                         .maybeSingle();
         
-                    if (findError || !found?.email) {
-                        alert('Không tìm thấy tài khoản với số điện thoại này hoặc hệ thống bị chặn!');
-                        btn.disabled = false;
-                        btn.innerText = 'Vào học ngay';
-                        return;
+                    if (findError) {
+                        alert('Lỗi hệ thống khi kiểm tra Số điện thoại: ' + findError.message);
+                        btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
+                    }
+                    if (!found?.email) {
+                        alert('Không tìm thấy tài khoản nào tương ứng với số điện thoại này!');
+                        btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                     }
                     emailToLogin = found.email;
                 }
         
+                // Gửi lệnh đăng nhập đến hệ thống Supabase Auth
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                     email: emailToLogin,
                     password: passwordValue
@@ -127,25 +134,35 @@
         
                 if (authError || !authData.user) {
                     alert('Thông tin đăng nhập không chính xác...');
-                    btn.disabled = false;
-                    btn.innerText = 'Vào học ngay';
-                    return;
+                    btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                 }
         
+                // Đăng nhập Auth thành công, lấy thông tin Profile chi tiết từ bảng public.accounts
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('accounts')
                     .select('id, fullname, role, sdt, status')
                     .eq('id', authData.user.id)
                     .maybeSingle();
         
-                if (profileError || !profile || profile.status === 'inactive') {
-                    await supabaseClient.auth.signOut(); 
-                    alert('Tài khoản của em đã bị khoá hoặc không hợp lệ. Vui lòng liên hệ Thầy!');
-                    btn.disabled = false;
-                    btn.innerText = 'Vào học ngay';
-                    return;
+                if (profileError) {
+                    alert('Lỗi kết nối bảng accounts: ' + profileError.message);
+                    await supabaseClient.auth.signOut();
+                    btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                 }
         
+                if (!profile) {
+                    alert('Tài khoản hợp lệ nhưng không tìm thấy dữ liệu hồ sơ cá nhân!');
+                    await supabaseClient.auth.signOut();
+                    btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
+                }
+        
+                if (profile.status === 'inactive') {
+                    alert('Tài khoản của em hiện đang bị khoá. Vui lòng liên hệ Thầy!');
+                    await supabaseClient.auth.signOut();
+                    btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
+                }
+        
+                // LƯU THÔNG TIN HỌC SINH VÀO TRÌNH DUYỆT ĐỂ PHỤC VỤ CÁC TÍNH NĂNG CHÀO TÊN
                 localStorage.setItem('user', JSON.stringify({
                     id: profile.id,
                     fullname: profile.fullname,
@@ -153,6 +170,7 @@
                     sdt: profile.sdt
                 }));
         
+                // ĐIỀU HƯỚNG THEO QUYỀN TRUY CẬP (ROLE)
                 if (profile.role === 'admin' || profile.role === 'teacher') {
                     window.location.href = 'admin.html';
                 } else {
@@ -160,10 +178,8 @@
                 }
         
             } catch (err) {
-                alert('Lỗi kết nối đến máy chủ. Em vui lòng kiểm tra lại mạng nhé!');
-                console.error(err);
-                btn.disabled = false;
-                btn.innerText = 'Vào học ngay';
+                alert('Lỗi máy chủ cục bộ: ' + err.message);
+                btn.disabled = false; btn.innerText = 'Vào học ngay';
             }
         });
     </script>
