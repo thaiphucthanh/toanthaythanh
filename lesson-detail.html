@@ -530,161 +530,283 @@
   // ══════════════════════════════════════════════
   // GIAO DIỆN TRẢ LỜI BÀI TẬP VỀ NHÀ (BTVN)
   // ══════════════════════════════════════════════
-  async function loadHomework(lessonId) {
-    const section = document.getElementById('homework-section');
-    const body    = document.getElementById('homework-body');
-    section.classList.add('hidden');
-    body.innerHTML = '';
-    currentHomeworkConfig   = null;
-    currentHomeworkExisting = null;
+ // Biến toàn cục để lưu trữ danh sách câu hỏi hiện tại của bài học
+let currentHomeworkQuestions = [];
+let currentHomeworkConfig = null;
 
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
-    const uid = user.id || user.uid;
+/**
+ * Hàm Tải cấu hình bài tập và câu hỏi từ Database
+ */
+async function loadHomework(lessonId) {
+    const homeworkCard = document.getElementById('homework-card');
+    const homeworkContainer = document.getElementById('document-container'); // Hoặc ID vùng chứa bài tập của Thầy
+    
+    try {
+        // 1. Lấy cấu hình bài tập xem bài này thuộc loại nào (quiz, essay, mixed)
+        const { data: config, error: configError } = await supabaseClient
+            .from('lesson_homework_config')
+            .select('*')
+            .eq('lesson_id', lessonId)
+            .maybeSingle();
+
+        if (configError) throw configError;
+
+        if (!config) {
+            if (homeworkCard) homeworkCard.classList.add('hidden');
+            return;
+        }
+
+        currentHomeworkConfig = config;
+        if (homeworkCard) homeworkCard.classList.remove('hidden');
+
+        // 2. Truy vấn lồng: Lấy câu hỏi và các lựa chọn đáp án đi kèm
+        const { data: questions, error: qError } = await supabaseClient
+            .from('homework_questions')
+            .select(`
+                id,
+                question,
+                question_type,
+                image_url,
+                score,
+                order_index,
+                homework_choices (
+                    id,
+                    option_label,
+                    option_text,
+                    is_correct
+                )
+            `)
+            .eq('lesson_id', lessonId)
+            .order('order_index', { ascending: true });
+
+        if (qError) throw qError;
+        currentHomeworkQuestions = questions || [];
+
+        // 3. Kiểm tra xem học sinh này đã nộp bài cho bài học này chưa
+        const session = await supabaseClient.auth.getSession();
+        const studentId = session?.data?.session?.user?.id;
+        
+        let existingSubmission = null;
+        if (studentId) {
+            const { data: submission } = await supabaseClient
+                .from('homework_submissions')
+                .select('*')
+                .eq('lesson_id', lessonId)
+                .eq('student_id', studentId)
+                .maybeSingle();
+            existingSubmission = submission;
+        }
+
+        // 4. Tiến hành render giao diện dựa trên trạng thái và loại bài tập
+        renderHomeworkUI(existingSubmission);
+
+    } catch (error) {
+        console.error("Lỗi tải bài tập:", error);
+        Swal.fire('Lỗi', 'Không thể tải dữ liệu bài tập: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Hàm hiển thị giao diện bài tập ra màn hình
+ */
+function renderHomeworkUI(submission) {
+    const container = document.getElementById('homework-area'); // Thầy đổi thành ID vùng chứa bài tập trên HTML của Thầy nhé
+    if (!container) return;
+
+    // Trường hợp 1: Học sinh ĐÃ NỘP bài rồi -> Hiển thị kết quả, lời phê
+    if (submission) {
+        let html = `
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+                <h3 class="text-blue-800 font-bold mb-2"><i class="fas fa-check-circle mr-2"></i>Em đã hoàn thành bài tập này!</h3>
+                <p class="text-sm text-gray-600">Thời gian nộp: ${new Date(submission.created_at).toLocaleString('vi-VN')}</p>
+                <div class="mt-3 grid grid-cols-2 gap-4">
+                    ${submission.choice_score !== null ? `<div class="bg-white p-3 rounded shadow-sm"><strong>Điểm trắc nghiệm:</strong> <span class="text-green-600 font-bold">${submission.choice_score}đ</span></div>` : ''}
+                    <div class="bg-white p-3 rounded shadow-sm"><strong>Trạng thái chấm:</strong> <span class="font-bold ${submission.status === 'graded' ? 'text-blue-600' : 'text-amber-500'}">${submission.status === 'graded' ? 'Đã chấm xong' : 'Chờ giáo viên chấm'}</span></div>
+                </div>
+                ${submission.essay_score !== null ? `<p class="mt-2"><strong>Điểm tự luận:</strong> <span class="text-blue-600 font-bold">${submission.essay_score}đ</span></p>` : ''}
+                ${submission.teacher_comment ? `<div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-sm text-gray-700"><strong>Thầy nhận xét:</strong> ${submission.teacher_comment}</div>` : ''}
+            </div>
+        `;
+        
+        if (currentHomeworkConfig?.video_solution) {
+            html += `
+                <div class="mt-4 p-4 bg-gray-100 rounded-xl">
+                    <h4 class="font-bold text-gray-800 mb-2"><i class="fab fa-youtube text-red-500 mr-2"></i>Video hướng dẫn giải chi tiết:</h4>
+                    <a href="${currentHomeworkConfig.video_solution}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">Bấm vào đây để xem video chữa bài</a>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+        return;
+    }
+
+    // Trường hợp 2: Học sinh CHƯA NỘP -> Hiển thị đề bài để làm
+    let html = `<form id="homework-form" onsubmit="submitHomework(event)" class="space-y-6">`;
+
+    currentHomeworkQuestions.forEach((q, index) => {
+        html += `
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 question-box" data-qid="${q.id}" data-type="${q.question_type}">
+                <p class="font-semibold text-gray-800 mb-3">Câu ${index + 1}: ${q.question} <span class="text-xs text-gray-400">(${q.score} điểm)</span></p>
+                ${q.image_url ? `<img src="${q.image_url}" class="max-w-full h-auto rounded mb-3 max-h-60 object-contain" alt="Đề bài">` : ''}
+        `;
+
+        if (q.question_type === 'choice') {
+            // Render các đáp án trắc nghiệm hình tròn tích chọn (Radio)
+            html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">`;
+            q.homework_choices.forEach(choice => {
+                html += `
+                    <label class="flex items-center p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="question_${q.id}" value="${choice.id}" data-correct="${choice.is_correct}" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3 required">
+                        <span class="font-bold text-gray-700 mr-2">${choice.option_label}.</span>
+                        <span class="text-gray-600">${choice.option_text}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+        } else if (q.question_type === 'essay') {
+            html += `
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs mb-2">
+                    <i class="fas fa-info-circle mr-1"></i> Câu hỏi tự luận. Em hãy làm ra giấy rồi chụp ảnh tải lên ở phần đính kèm bên dưới.
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+    });
+
+    // Nếu cấu hình có phần tự luận hoặc hỗn hợp thì hiển thị vùng tải ảnh lên
+    if (currentHomeworkConfig.homework_type === 'essay' || currentHomeworkConfig.homework_type === 'mixed') {
+        html += `
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <label class="block font-bold text-gray-800 mb-2"><i class="fas fa-paperclip text-blue-600 mr-2"></i>Đính kèm hình ảnh bài làm tự luận:</label>
+                <input type="file" id="essay-files" multiple accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                <p class="text-xs text-gray-400 mt-2">Thầy hỗ trợ tải nhiều ảnh cùng lúc (chọn các ảnh chụp trang vở bài làm của em).</p>
+            </div>
+        `;
+    }
+
+    html += `
+        <div class="pt-4 text-center">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition transform hover:-translate-y-0.5">
+                <i class="fas fa-paper-plane mr-2"></i> Nộp bài tập ngay
+            </button>
+        </div>
+    </form>`;
+
+    container.innerHTML = html;
+}
+
+/**
+ * Hàm xử lý khi học sinh bấm "Nộp bài"
+ */
+async function submitHomework(event) {
+    event.preventDefault();
+    
+    // Kiểm tra Đăng nhập để lấy ID học sinh thỏa mãn RLS
+    const session = await supabaseClient.auth.getSession();
+    const studentId = session?.data?.session?.user?.id;
+    
+    if (!studentId) {
+        Swal.fire('Nhắc nhở', 'Vui lòng đăng nhập tài khoản để thực hiện nộp bài tập!', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Đang xử lý nộp bài...',
+        text: 'Vui lòng đợi trong giây lát.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
     try {
-      const { data: config } = await sb.from('lesson_homework_config')
-        .select('*').eq('lesson_id', lessonId).maybeSingle();
-      if (!config || !config.homework_type) return; 
+        let choiceScore = 0;
+        let hasChoice = false;
+        let studentAnswers = [];
+        let essayUploadedUrls = [];
 
-      const { data: existing } = await sb.from('homework_submissions')
-        .select('*').eq('lesson_id', lessonId).eq('student_id', uid).maybeSingle();
+        // 1. Duyệt qua từng câu hỏi để thu thập câu trả lời và chấm điểm trắc nghiệm tự động
+        currentHomeworkQuestions.forEach(q => {
+            if (q.question_type === 'choice') {
+                hasChoice = true;
+                const selectedRadio = document.querySelector(`input[name="question_${q.id}"]:checked`);
+                
+                if (selectedRadio) {
+                    const choiceId = selectedRadio.value;
+                    const isCorrect = selectedRadio.getAttribute('data-correct') === 'true';
+                    
+                    if (isCorrect) {
+                        choiceScore += parseFloat(q.score || 0);
+                    }
 
-      currentHomeworkConfig   = config;
-      currentHomeworkExisting = existing || null;
+                    studentAnswers.push({
+                        question_id: q.id,
+                        selected_choice_id: choiceId,
+                        answer_text: null
+                    });
+                } else {
+                    studentAnswers.push({
+                        question_id: q.id,
+                        selected_choice_id: null,
+                        answer_text: null
+                    });
+                }
+            } else if (q.question_type === 'essay') {
+                studentAnswers.push({
+                    question_id: q.id,
+                    selected_choice_id: null,
+                    answer_text: "Nộp kèm ảnh đính kèm"
+                });
+            }
+        });
 
-      const payload     = Array.isArray(config.homework_payload) ? config.homework_payload : [];
-      const quizItems    = payload.filter(i => Array.isArray(i.options));
-      const isEssayMode  = config.homework_type === 'essay' || config.homework_type === 'mixed';
+        // 2. Xử lý tải ảnh tự luận lên bucket 'homework' vừa tạo
+        const fileInput = document.getElementById('essay-files');
+        if (fileInput && fileInput.files.length > 0) {
+            for (let file of fileInput.files) {
+                const fileExt = file.name.split('.').pop();
+                // Tạo tên file độc nhất tránh trùng lặp: student_id/timestamp_random.ext
+                const fileName = `${studentId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                
+                const { data: uploadData, error: uploadError } = await supabaseClient
+                    .storage
+                    .from('homework')
+                    .upload(fileName, file);
 
-      let html = '';
+                if (uploadError) throw uploadError;
 
-      if (existing) {
-        html += `<div class="p-4 mb-4 rounded-xl border ${existing.status === 'graded' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}">
-          <div class="font-black text-[11px] uppercase mb-1 ${existing.status === 'graded' ? 'text-green-700' : 'text-yellow-700'}">
-            <i class="fas ${existing.status === 'graded' ? 'fa-check-circle' : 'fa-clock'} mr-1"></i>
-            ${existing.status === 'graded' ? 'Đã được chấm' : 'Đã nộp - đang chờ chấm'}
-          </div>
-          ${existing.choice_score != null ? `<div class="text-xs text-gray-600">Điểm trắc nghiệm: <b>${existing.choice_score}</b>/10</div>` : ''}
-          ${existing.essay_score  != null ? `<div class="text-xs text-gray-600">Điểm tự luận: <b>${existing.essay_score}</b>/10</div>` : ''}
-          ${existing.teacher_comment ? `<div class="text-xs text-gray-600 mt-1 italic">Nhận xét của thầy: ${existing.teacher_comment}</div>` : ''}
-        </div>`;
-      }
+                // Lấy URL công khai (Do Thầy đã bật Public bucket)
+                const { data: urlData } = supabaseClient
+                    .storage
+                    .from('homework')
+                    .getPublicUrl(fileName);
 
-      // Điền đáp án trắc nghiệm dạng Phiếu trả lời tinh gọn (Không hiện lại text đề bài)
-      if (quizItems.length) {
-        html += `<div class="text-xs font-bold text-blue-900 mb-2 uppercase tracking-wide"><i class="fas fa-list-ol mr-1"></i> Phiếu trả lời trắc nghiệm:</div>`;
-        html += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">`;
-        html += quizItems.map((q, idx) => {
-          const savedAns = existing?.student_answers?.find(a => a.id === q.id)?.answer;
-          const labels   = ['A', 'B', 'C', 'D'];
-          return `<div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-100 transition-all">
-            <span class="text-xs font-black text-blue-900 bg-blue-50 px-2 py-0.5 rounded-md">Câu ${idx + 1}</span>
-            <div class="flex gap-4">
-              ${labels.map((lbl, i) => `
-                <label class="flex items-center gap-1 text-xs font-bold text-gray-700 cursor-pointer hover:text-blue-900">
-                  <input type="radio" name="hw_${q.id}" value="${i}" ${savedAns === i ? 'checked' : ''} class="w-4 h-4 text-blue-900 focus:ring-blue-900 accent-blue-900">
-                  <span>${lbl}</span>
-                </label>
-              `).join('')}
-            </div>
-          </div>`;
-        }).join('') + `</div>`;
-      }
-
-      // Điền câu trả lời tự luận (Tải ảnh)
-      if (isEssayMode) {
-        html += `<div class="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <label class="text-xs font-bold text-blue-900 block mb-2 uppercase tracking-wide"><i class="fas fa-upload mr-1"></i> Tải ảnh bài làm tự luận:</label>
-          <input type="file" id="hw-essay-files" accept="image/*" multiple class="text-xs block w-full text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-900 file:text-white file:text-[10px] file:font-black file:uppercase cursor-pointer">
-          ${existing?.essay_images?.length ? `
-            <div class="text-[10px] text-gray-400 font-bold uppercase mt-3">Ảnh bài làm đã nộp trước đó:</div>
-            <div class="flex gap-2 mt-1 flex-wrap">
-              ${existing.essay_images.map(u => `<a href="${u}" target="_blank" class="block border rounded-lg overflow-hidden hover:opacity-80 transition-opacity shadow-sm"><img src="${u}" class="w-14 h-14 object-cover"></a>`).join('')}
-            </div>` : ''}
-        </div>`;
-      }
-
-      if (quizItems.length || isEssayMode) {
-        html += `<button onclick="submitHomework(${lessonId})"
-          class="w-full py-3 bg-orange-500 text-white font-black text-xs uppercase rounded-xl hover:bg-orange-600 transition-colors shadow-md">
-          <i class="fas fa-paper-plane mr-2"></i>${existing ? 'Nộp lại bài làm' : 'Xác nhận nộp bài'}
-        </button>`;
-        body.innerHTML = html;
-        section.classList.remove('hidden');
-      }
-    } catch (err) { console.error('loadHomework:', err); }
-  }
-
-  async function submitHomework(lessonId) {
-    const config   = currentHomeworkConfig;
-    const existing = currentHomeworkExisting;
-    if (!config) return;
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return;
-    const uid = user.id || user.uid;
-
-    const payload      = Array.isArray(config.homework_payload) ? config.homework_payload : [];
-    const quizItems     = payload.filter(i => Array.isArray(i.options));
-    const isEssayMode  = config.homework_type === 'essay' || config.homework_type === 'mixed';
-
-    let studentAnswers = [];
-    let choiceScore    = existing?.choice_score ?? null;
-    let essayImages    = existing?.essay_images || [];
-
-    if (quizItems.length) {
-      let correct = 0;
-      quizItems.forEach(q => {
-        const sel = document.querySelector(`input[name="hw_${q.id}"]:checked`);
-        const ans = sel ? parseInt(sel.value, 10) : null;
-        studentAnswers.push({ id: q.id, answer: ans });
-        if (ans !== null && ans === q.correct_answer) correct++;
-      });
-      choiceScore = +(correct / quizItems.length * 10).toFixed(2);
-    }
-
-    if (isEssayMode) {
-      const fileInput = document.getElementById('hw-essay-files');
-      if (fileInput && fileInput.files && fileInput.files.length) {
-        Swal.fire({ title: 'Đang tải ảnh bài làm lên...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        const uploaded = [];
-        for (const file of fileInput.files) {
-          const path = `${uid}/${lessonId}/${Date.now()}_${file.name}`;
-          const { error: upErr } = await sb.storage.from(HOMEWORK_BUCKET).upload(path, file);
-          if (upErr) { console.error('upload:', upErr.message); continue; }
-          const { data: pub } = sb.storage.from(HOMEWORK_BUCKET).getPublicUrl(path);
-          if (pub?.publicUrl) uploaded.push(pub.publicUrl);
+                essayUploadedUrls.push(urlData.publicUrl);
+            }
         }
-        essayImages = essayImages.concat(uploaded);
-        Swal.close();
-      }
+
+        // 3. Ghi dữ liệu vào bảng homework_submissions dữ liệu đồng bộ RLS cột student_id
+        const { error: insertError } = await supabaseClient
+            .from('homework_submissions')
+            .insert({
+                lesson_id: currentLessonId, // Biến lưu ID bài học hiện tại trên trang của Thầy
+                student_id: studentId,      // Thỏa mãn chính xác điều kiện auth.uid() = student_id
+                student_answers: studentAnswers,
+                choice_score: hasChoice ? choiceScore : null,
+                essay_images: essayUploadedUrls, // Mảng các đường link ảnh tự luận
+                status: 'pending'
+            });
+
+        if (insertError) throw insertError;
+
+        // Thành công: Thông báo và tải lại giao diện hiển thị kết quả luôn
+        Swal.fire('Thành công!', 'Bài tập của em đã được gửi tới hệ thống.', 'success');
+        loadHomework(currentLessonId);
+
+    } catch (error) {
+        console.error("Lỗi nộp bài:", error);
+        Swal.fire('Lỗi nộp bài', error.message, 'error');
     }
-
-    const upsertData = {
-      lesson_id:       lessonId,
-      student_id:      uid,
-      student_answers: studentAnswers,
-      essay_images:    essayImages,
-      status:          'pending',
-      created_at:      existing?.created_at || new Date().toISOString()
-    };
-    if (choiceScore !== null) upsertData.choice_score = choiceScore;
-
-    const { error } = await sb.from('homework_submissions')
-      .upsert(upsertData, { onConflict: 'lesson_id,student_id' });
-
-    if (error) {
-      Swal.fire({ icon: 'error', title: 'Nộp bài thất bại', text: error.message, confirmButtonColor: '#1e3a8a' });
-      return;
-    }
-
-    Swal.fire({ icon: 'success', title: 'Đã nộp bài thành công!', text: 'Bài làm đã được ghi nhận trên hệ thống.', confirmButtonColor: '#1e3a8a' });
-
-    await loadHomework(lessonId);
-    if (currentCourseIdGlobal && currentTopicIdGlobal) {
-      await loadSidebar(currentCourseIdGlobal, currentTopicIdGlobal);
-    }
-  }
+}
 
   // ══════════════════════════════════════════════
   // SIDEBAR
