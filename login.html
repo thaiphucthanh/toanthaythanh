@@ -109,9 +109,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             email: emailToLogin,
             password: passwordValue
         });
-
+        
+        // THÊM 2 DÒNG NÀY VÀO
+        console.log('Email đang dùng để login:', emailToLogin);
+        console.log('Auth error:', authError);
+        console.log('Auth data:', authData);
+        
         if (authError || !authData.user) {
-            alert('Thông tin đăng nhập không chính xác, mời em kiểm tra lại nhé!');
+            alert('Thông tin đăng nhập không chính xác...');
             btn.disabled = false;
             btn.innerText = 'Vào học ngay';
             return;
