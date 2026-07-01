@@ -85,6 +85,11 @@
     <div class="p-4 md:p-6 flex-1">
       <div class="max-w-5xl mx-auto space-y-4">
 
+        <div id="solution-mode-banner" class="hidden p-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl flex justify-between items-center px-5 shadow-sm">
+          <div class="text-xs font-bold uppercase tracking-wider"><i class="fas fa-chalkboard-teacher mr-2 animate-bounce"></i>Bạn đang xem bài giảng chữa bài tập về nhà</div>
+          <button onclick="exitSolutionMode()" class="bg-white text-green-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors">Quay lại bài giảng gốc</button>
+        </div>
+
         <div class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white">
           <div id="yt-player" class="absolute inset-0 w-full h-full"></div>
           <div id="no-video" class="absolute inset-0 flex items-center justify-center flex-col gap-2 text-gray-500 bg-gray-900">
@@ -124,21 +129,19 @@
               <div id="lesson-content" class="text-gray-600 leading-relaxed text-sm space-y-3"></div>
             </div>
 
-            <div id="quiz-box" class="hidden bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 space-y-5">
-              <h3 class="font-black text-xs text-blue-900 uppercase italic tracking-widest flex items-center gap-2 border-b pb-3">
-                <i class="fas fa-edit text-orange-500 text-sm"></i> Bài tập rèn luyện
+            <div id="homework-box" class="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-amber-200 bg-gradient-to-br from-white to-amber-50/20 hidden">
+              <h3 class="font-black text-sm text-amber-900 uppercase italic tracking-widest flex items-center gap-2 mb-3">
+                <i class="fas fa-tasks text-amber-500"></i> Bài tập về nhà
               </h3>
-              <div id="quiz-container" class="space-y-4">
-                </div>
-              <div class="flex justify-end items-center gap-3 pt-2">
-                <button id="btn-submit-quiz" onclick="submitQuiz()" class="px-6 py-3 bg-blue-900 text-white font-black text-xs uppercase rounded-xl hover:bg-blue-800 transition-colors shadow-md inline-flex items-center gap-2">
-                  <i class="fas fa-paper-plane"></i> Nộp bài tập
-                </button>
+              <div id="homework-text-content" class="text-gray-600 text-sm mb-4 leading-relaxed"></div>
+              <div id="homework-submission-zone" class="p-4 bg-amber-50 rounded-xl border border-amber-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                 <div id="homework-status-message" class="text-xs font-bold text-amber-800"></div>
+                 <div id="homework-action-btn"></div>
               </div>
             </div>
           </div>
 
-          <div class="lg:col-span-1">
+          <div class="lg:col-span-1 space-y-4">
             <div class="bg-white p-5 rounded-2xl md:rounded-3xl shadow-sm border border-blue-100 lg:sticky lg:top-4">
               <h3 class="font-black text-xs mb-4 text-blue-900 uppercase italic tracking-widest flex items-center gap-2">
                 <i class="fas fa-file-pdf text-red-500"></i> Kho tài liệu
@@ -146,6 +149,14 @@
               <div id="document-container">
                 <div class="text-center py-3"><i class="fas fa-spinner animate-spin text-blue-200"></i></div>
               </div>
+
+              <div id="homework-docs-container" class="mt-4 pt-4 border-t border-dashed border-gray-200 hidden">
+                <h4 class="font-black text-[10px] mb-2 text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fas fa-paperclip text-amber-600"></i> File đính kèm BTVN
+                </h4>
+                <div id="homework-docs-list"></div>
+              </div>
+
               <div id="lesson-insight" class="mt-4 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-800 font-bold border-l-4 border-blue-900 leading-relaxed hidden"></div>
             </div>
           </div>
@@ -165,13 +176,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
-  const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
+  const SB_URL = "";
+  const SB_KEY = "";
   const sb = supabase.createClient(SB_URL, SB_KEY);
 
   const params        = new URLSearchParams(window.location.search);
   let currentLessonId = params.get('id');
   const courseIdParam = params.get('course_id');
+
+  // Biến toàn cục phục vụ tính năng lưu thông tin bài giảng gốc khi bật chế độ chữa bài
+  let loadedLessonData = null; 
 
   // ══════════════════════════════════════════════
   // WATCH TRACKER
@@ -277,6 +291,7 @@
     }
   }
 
+  // Giữ nguyên toàn bộ logic đồng bộ và theo dõi view cũ của Thầy
   function startWatchTimer() {
     if (watchInterval) return;
     watchInterval = setInterval(() => {
@@ -384,7 +399,6 @@
     } catch(e) { console.error('syncPending:', e); }
   }
 
-  // ── Badge ────────────────────────────────────────────────
   function fmtTime(s) {
     if (!s || s <= 0) return '0 giây';
     const m = Math.floor(s / 60), sec = s % 60;
@@ -470,13 +484,9 @@
   }
   window.addEventListener('click', () => document.getElementById('dropdownUser')?.classList.remove('active'));
 
-  // ══════════════════════════════════════════════
-  // KIỂM TRA ĐĂNG KÝ KHÓA HỌC
-  // ══════════════════════════════════════════════
   async function checkEnrollment(courseId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) return false;
-    // Admin luôn được qua
     if (user.role === 'admin') return true;
     const uid = user.id || user.uid;
     try {
@@ -499,9 +509,6 @@
     renderDocs(null);
   }
 
-  // ══════════════════════════════════════════════
-  // TÀI LIỆU
-  // ══════════════════════════════════════════════
   function renderDocs(docs) {
     const el = document.getElementById('document-container');
     let list = null;
@@ -523,7 +530,7 @@
   }
 
   // ══════════════════════════════════════════════
-  // SIDEBAR
+  // LOGIC HIỂN THỊ SIDEBAR DỰA TRÊN TRẠNG THÁI NỘP BÀI
   // ══════════════════════════════════════════════
   function toggleTopic(btn) {
     const sub = btn.nextElementSibling, icon = btn.querySelector('.chevron');
@@ -533,28 +540,50 @@
     if (opening) { sub.classList.add('open'); icon?.classList.add('rotate-180'); }
   }
 
-  function renderSidebar(topics, lessons, currentTopicId, viewedIds) {
+  function renderSidebar(topics, lessons, currentTopicId, viewedIds, submittedLessonIds) {
     const sidebar = document.getElementById('sidebar-content');
     if (!topics?.length) { sidebar.innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Không có chuyên đề</div>`; return; }
+    
     sidebar.innerHTML = topics.map(topic => {
       const tLessons = lessons.filter(l => l.topic_id === topic.id);
       const isCurrent = topic.id === currentTopicId;
+      
       const items = tLessons.length
         ? tLessons.map(l => {
             const active  = String(l.id) === String(currentLessonId);
             const locked  = l.status === 'Inactive';
             const viewed  = viewedIds.includes(String(l.id));
+            const isSubmitted = submittedLessonIds.includes(Number(l.id)) || submittedLessonIds.includes(String(l.id));
+            
             const dotColor = locked ? '#d1d5db' : (viewed ? '#22c55e' : '#ef4444');
-            return `<div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
-                        ${active ? 'active' : 'text-gray-600'} ${locked && !active ? 'locked' : ''}"
-                 onclick="${locked ? "Swal.fire({icon:'warning',title:'Bài học chưa mở',text:'Thầy chưa mở bài học này. Vui lòng chờ!',confirmButtonColor:'#1e3a8a'})" : `goLesson('${l.id}')`}">
-              <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
-              <i class="fas ${locked ? 'fa-lock text-gray-300' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} text-[9px] flex-shrink-0"></i>
-              <span class="truncate flex-1">${l.title}</span>
-              ${locked ? '<i class="fas fa-lock text-[8px] text-gray-300 flex-shrink-0"></i>' : ''}
+            
+            // Logic tạo thêm một mục "Chữa BTVN" thụt lề ngay dưới bài giảng nếu học sinh đã nộp bài thành công
+            let solutionItemHtml = '';
+            if (isSubmitted && l.solution_video_url) {
+               solutionItemHtml = `
+                 <div class="pl-8 pr-3 py-1.5 text-[10px] text-emerald-700 font-bold hover:bg-emerald-50 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all mt-0.5 border-l-2 border-emerald-400" 
+                      onclick="enterSolutionMode('${l.id}', event)">
+                   <i class="fas fa-chalkboard-teacher text-[9px] text-emerald-500"></i>
+                   <span>➜ Bài giảng chữa BTVN</span>
+                 </div>
+               `;
+            }
+
+            return `
+            <div class="mb-1">
+              <div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
+                          ${active ? 'active' : 'text-gray-600'} ${locked && !active ? 'locked' : ''}"
+                   onclick="${locked ? "Swal.fire({icon:'warning',title:'Bài học chưa mở',text:'Thầy chưa mở bài học này. Vui lòng chờ!',confirmButtonColor:'#1e3a8a'})" : `goLesson('${l.id}')`}">
+                <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
+                <i class="fas ${locked ? 'fa-lock text-gray-300' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} text-[9px] flex-shrink-0"></i>
+                <span class="truncate flex-1">${l.title}</span>
+                ${locked ? '<i class="fas fa-lock text-[8px] text-gray-300 flex-shrink-0"></i>' : ''}
+              </div>
+              ${solutionItemHtml}
             </div>`;
           }).join('')
         : `<div class="px-9 py-2 text-[10px] text-gray-300 italic">Chưa có bài học</div>`;
+        
       return `<div class="mb-1">
         <button class="topic-btn w-full text-left px-3 py-2.5 text-[10px] font-black uppercase rounded-xl flex justify-between items-center gap-2 transition-colors ${isCurrent ? 'text-blue-900 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}" onclick="toggleTopic(this)">
           <span class="flex-1 text-left leading-snug">${topic.topic_name}</span>
@@ -571,6 +600,7 @@
     watchSeconds = 0;
     currentLessonId = String(id);
     window.history.pushState({}, '', `?id=${id}`);
+    document.getElementById('solution-mode-banner').classList.add('hidden'); // Thoát chế độ xem video giải khi đổi bài
     loadLesson(id);
     document.getElementById('main-wrap').scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -581,175 +611,111 @@
         .select('id, topic_name, order_index').eq('course_id', courseId).order('order_index', { ascending: true });
       if (e1) throw e1;
       if (!topics?.length) { document.getElementById('sidebar-content').innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`; return; }
+      
       const { data: lessons, error: e2 } = await sb.from('lessons')
-        .select('id, title, topic_id, status').in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
+        .select('id, title, topic_id, status, solution_video_url').in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
       if (e2) throw e2;
 
       let viewedIds = [];
+      let submittedLessonIds = [];
       const user = JSON.parse(localStorage.getItem('user') || 'null');
+      
       if (user) {
-        const { data: views } = await sb.from('lesson_views').select('lesson_id').eq('user_id', user.id || user.uid);
+        const uid = user.id || user.uid;
+        // Lấy danh sách bài giảng đã xem
+        const { data: views } = await sb.from('lesson_views').select('lesson_id').eq('user_id', uid);
         viewedIds = (views || []).map(v => String(v.lesson_id));
+
+        // Lấy danh sách các bài tập về nhà đã nộp
+        const { data: subs } = await sb.from('homework_submissions').select('lesson_id').eq('user_id', uid);
+        submittedLessonIds = (subs || []).map(s => s.lesson_id);
       }
-      renderSidebar(topics, lessons || [], currentTopicId, viewedIds);
+      
+      renderSidebar(topics, lessons || [], currentTopicId, viewedIds, submittedLessonIds);
     } catch (err) {
       document.getElementById('sidebar-content').innerHTML = `<div class="p-3 text-red-400 text-[10px] font-bold">Lỗi: ${err.message}</div>`;
     }
   }
 
   // ══════════════════════════════════════════════
-  // LOGIC BÀI TẬP (CẤU HÌNH TỪ JSONB & VIDEO CHỮA BÀI)
+  // LOGIC XỬ LÝ CHẾ ĐỘ XEM VIDEO CHỮA BÀI TẬP VỀ NHÀ
   // ══════════════════════════════════════════════
-  let currentQuestions = [];       // Lưu danh sách câu hỏi trắc nghiệm của bài hiện tại
-  let currentVideoSolution = null; // Lưu link video chữa bài nếu có
+  function enterSolutionMode(lessonId, event) {
+     if (event) event.stopPropagation();
+     if (!loadedLessonData || String(loadedLessonData.id) !== String(lessonId)) return;
+     
+     if (!loadedLessonData.solution_video_url) {
+        Swal.fire('Thông báo', 'Thầy chưa cập nhật video giải cho bài tập này.', 'info');
+        return;
+     }
 
-  async function loadQuiz(lessonId) {
-    const quizBox = document.getElementById('quiz-box');
-    const container = document.getElementById('quiz-container');
-    
-    // Khởi tạo/Reset trạng thái ban đầu
-    quizBox.classList.add('hidden');
-    container.innerHTML = '';
-    currentQuestions = [];
-    currentVideoSolution = null;
-
-    // Xóa nút video chữa bài cũ (nếu có) để tránh lặp nút
-    const oldSolutionBtn = document.getElementById('btn-video-solution');
-    if (oldSolutionBtn) oldSolutionBtn.remove();
-
-    try {
-      // 1. Gọi dữ liệu trực tiếp từ bảng lesson_homework_config
-      const { data: config, error } = await sb
-        .from('lesson_homework_config')
-        .select('homework_type, homework_payload, video_solution')
-        .eq('lesson_id', lessonId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      // 2. Nếu bài học này có cấu hình bài tập rèn luyện
-      if (config) {
-        currentVideoSolution = config.video_solution;
-
-        // Nếu là bài tập trắc nghiệm ('quiz') hoặc hỗn hợp ('mixed')
-        if ((config.homework_type === 'quiz' || config.homework_type === 'mixed') && config.homework_payload) {
-          
-          // Supabase JS tự động parse trường JSONB thành Mảng Object dạng Array thuần
-          currentQuestions = Array.isArray(config.homework_payload) ? config.homework_payload : [];
-          
-          if (currentQuestions.length > 0) {
-            renderQuiz(currentQuestions);
-            quizBox.classList.remove('hidden');
-          }
-        } else if (config.homework_type === 'essay') {
-          // Trường hợp Thầy chọn bài tập tự luận hình thức viết tập/vở
-          container.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-xs font-bold uppercase tracking-wider text-center">📝 Bài học này có yêu cầu làm bài tập tự luận ra vở. Em nhớ hoàn thành đầy đủ nhé!</div>`;
-          quizBox.classList.remove('hidden');
-          document.getElementById('btn-submit-quiz').classList.add('hidden'); // Ẩn nút nộp trắc nghiệm
-          
-          // Nếu tự luận có kèm video sửa, hiển thị luôn nút video giải
-          if (currentVideoSolution) {
-             showVideoSolutionButton();
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Lỗi load bài tập rèn luyện:', err.message);
-    }
+     document.getElementById('solution-mode-banner').classList.remove('hidden');
+     document.getElementById('lesson-title').innerHTML = `<span class="text-emerald-600">[Đang Xem Video Giải BTVN]</span> ${loadedLessonData.title}`;
+     renderVideo(loadedLessonData.solution_video_url);
+     document.getElementById('main-wrap').scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Hàm sinh giao diện đề thi trắc nghiệm mượt mà từ mảng JSONB
-  function renderQuiz(questions) {
-    const container = document.getElementById('quiz-container');
-    document.getElementById('btn-submit-quiz').classList.remove('hidden'); // Đảm bảo luôn hiện nút nộp bài trắc nghiệm
-
-    container.innerHTML = questions.map((q, idx) => {
-      const qId = q.id || idx; // Đề phòng trường hợp trong phần dữ liệu payload quên ghi id
-      return `
-        <div class="bg-gray-50 p-4 md:p-5 rounded-2xl border border-gray-200 question-block" data-qid="${qId}">
-          <p class="font-bold text-gray-800 text-sm mb-3">Câu ${idx + 1}: ${q.question_text}</p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-semibold text-gray-700">
-            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border hover:bg-blue-50 cursor-pointer transition-colors border-gray-200 focus-within:border-blue-900">
-              <input type="radio" name="question_${qId}" value="A" class="w-4 h-4 text-blue-900 focus:ring-blue-900 accent-blue-900">
-              <span>A. ${q.option_a || ''}</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border hover:bg-blue-50 cursor-pointer transition-colors border-gray-200 focus-within:border-blue-900">
-              <input type="radio" name="question_${qId}" value="B" class="w-4 h-4 text-blue-900 focus:ring-blue-900 accent-blue-900">
-              <span>B. ${q.option_b || ''}</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border hover:bg-blue-50 cursor-pointer transition-colors border-gray-200 focus-within:border-blue-900">
-              <input type="radio" name="question_${qId}" value="C" class="w-4 h-4 text-blue-900 focus:ring-blue-900 accent-blue-900">
-              <span>C. ${q.option_c || ''}</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border hover:bg-blue-50 cursor-pointer transition-colors border-gray-200 focus-within:border-blue-900">
-              <input type="radio" name="question_${qId}" value="D" class="w-4 h-4 text-blue-900 focus:ring-blue-900 accent-blue-900">
-              <span>D. ${q.option_d || ''}</span>
-            </label>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // Hàm kiểm tra nộp bài trắc nghiệm và đếm kết quả đúng/sai
-  function submitQuiz() {
-    if (!currentQuestions.length) return;
-    
-    let score = 0;
-    let unanswered = false;
-
-    currentQuestions.forEach((q, idx) => {
-      const qId = q.id || idx;
-      const selected = document.querySelector(`input[name="question_${qId}"]:checked`);
-      if (!selected) {
-        unanswered = true;
-      } else if (selected.value.trim().toUpperCase() === q.correct_option.trim().toUpperCase()) {
-        score++;
-      }
-    });
-
-    if (unanswered) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Chưa hoàn thành bài làm',
-        text: 'Em hãy kiểm tra và chọn đầy đủ đáp án của các câu hỏi trước khi nộp bài nhé!',
-        confirmButtonColor: '#1e3a8a'
-      });
-      return;
-    }
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Nộp bài thành công!',
-      text: `Chúc mừng em đã trả lời đúng được ${score}/${currentQuestions.length} câu hỏi trắc nghiệm!`,
-      confirmButtonColor: '#1e3a8a'
-    }).then(() => {
-      // Sau khi học sinh bấm nộp bài thành công, hiển thị nút xem video chữa bài chi tiết (nếu có cấu hình)
-      if (currentVideoSolution) {
-        showVideoSolutionButton();
-      }
-    });
-  }
-
-  // Hàm phụ trợ tạo nút xem video giải
-  function showVideoSolutionButton() {
-    if (document.getElementById('btn-video-solution')) return;
-    const btnContainer = document.getElementById('btn-submit-quiz').parentElement;
-    const solutionBtn = document.createElement('a');
-    solutionBtn.id = 'btn-video-solution';
-    solutionBtn.href = currentVideoSolution;
-    solutionBtn.target = '_blank';
-    solutionBtn.rel = 'noopener';
-    solutionBtn.className = 'px-6 py-3 bg-red-600 text-white font-black text-xs uppercase rounded-xl hover:bg-red-700 transition-colors shadow-md inline-flex items-center gap-2 animate-bounce';
-    solutionBtn.innerHTML = `<i class="fab fa-youtube"></i> Xem Video Chữa Bài`;
-    btnContainer.insertBefore(solutionBtn, document.getElementById('btn-submit-quiz'));
+  function exitSolutionMode() {
+     if (!loadedLessonData) return;
+     document.getElementById('solution-mode-banner').classList.add('hidden');
+     document.getElementById('lesson-title').textContent = loadedLessonData.title || '(Không có tiêu đề)';
+     renderVideo(loadedLessonData.video_url);
   }
 
   // ══════════════════════════════════════════════
-  // LOAD LESSON
+  // NỘP BÀI TẬP VỀ NHÀ VỚI SWEETALERT2
+  // ══════════════════════════════════════════════
+  async function triggerSubmitHomework(lessonId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+    const uid = user.id || user.uid;
+
+    const { value: url } = await Swal.fire({
+      title: 'NỘP BÀI TẬP VỀ NHÀ',
+      input: 'url',
+      inputLabel: 'Nhập liên kết bài làm của bạn (Google Drive, link ảnh bài làm, bài gửi công khai)',
+      inputPlaceholder: 'https://drive.google.com/...',
+      showCancelButton: true,
+      confirmButtonColor: '#1e3a8a',
+      cancelButtonText: 'Hủy',
+      confirmButtonText: 'Nộp bài',
+      inputValidator: (value) => {
+        if (!value) return 'Đường dẫn nộp bài tập không được để trống!';
+      }
+    });
+
+    if (url) {
+      Swal.showLoading();
+      try {
+        const { error } = await sb.from('homework_submissions').upsert({
+          user_id: uid,
+          lesson_id: parseInt(lessonId),
+          submission_url: url,
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'user_id,lesson_id' });
+
+        if (error) throw error;
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Nộp bài thành công!',
+          text: 'Mục "Bài giảng chữa BTVN" đã được mở khóa ở cột Danh sách bài học!',
+          confirmButtonColor: '#1e3a8a'
+        });
+
+        // Tải lại bài học hiện tại để làm mới giao diện ngay lập tức
+        await loadLesson(lessonId);
+      } catch (err) {
+        Swal.fire('Lỗi hệ thống', 'Không thể nộp bài tập: ' + err.message, 'error');
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // TẢI NỘI DUNG BÀI HỌC CHÍNH (LOAD LESSON)
   // ══════════════════════════════════════════════
   async function loadLesson(id) {
-    // Reset UI
+    // Đặt lại cấu trúc giao diện
     document.getElementById('lesson-title').innerHTML = '<i class="fas fa-spinner animate-spin text-blue-200"></i>';
     document.getElementById('lesson-content').innerHTML = '';
     document.getElementById('lesson-topic-name').textContent = '';
@@ -758,7 +724,10 @@
     document.getElementById('locked-box').classList.add('hidden');
     document.getElementById('no-enrollment-box').classList.add('hidden');
     document.getElementById('lesson-body').classList.remove('hidden');
-    document.getElementById('quiz-box').classList.add('hidden'); // Reset ẩn hộp bài tập rèn luyện khi sang bài mới
+    document.getElementById('homework-box').classList.add('hidden');
+    document.getElementById('homework-docs-container').classList.add('hidden');
+    document.getElementById('solution-mode-banner').classList.add('hidden');
+    
     const badge = document.getElementById('watch-badge');
     badge.className = ''; badge.style.display = 'none';
     document.getElementById('watch-badge-icon').innerHTML   = '';
@@ -776,17 +745,16 @@
       if (e1) throw new Error('Không lấy được bài học: ' + e1.message);
       if (!lesson) { showError('Không tìm thấy bài học'); return; }
 
-      // ── Lấy topic + course ──────────────────────────
+      loadedLessonData = lesson; // Lưu trữ dữ liệu cấu trúc gốc để hoán đổi video chữa bài
+
       let topic = null;
       if (lesson.topic_id) {
-        const { data: t, error: e2 } = await sb
-          .from('topics')
+        const { data: t, error: e2 } = await sb.from('topics')
           .select('id, topic_name, course_id').eq('id', lesson.topic_id).single();
         if (e2) throw new Error('Không lấy được chuyên đề: ' + e2.message);
         topic = t;
       }
 
-      // ── KIỂM TRA ENROLLMENT ──────────────────────
       if (topic?.course_id) {
         const enrolled = await checkEnrollment(topic.course_id);
         if (!enrolled) {
@@ -798,7 +766,6 @@
         }
       }
 
-      // ── KIỂM TRA TRẠNG THÁI INACTIVE ─
       if (lesson.status === 'Inactive') {
         document.getElementById('lesson-title').textContent = lesson.title || 'Bài học bị khóa';
         document.getElementById('lesson-topic-name').textContent = topic?.topic_name || '';
@@ -810,9 +777,10 @@
         return;
       }
 
-      // ── Hiển thị nội dung bài học ────────────────────
+      // Điền thông tin văn bản bài giảng
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
       document.getElementById('lesson-content').innerHTML = lesson.content || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
+      
       if (lesson.insight) {
         const ins = document.getElementById('lesson-insight');
         ins.innerHTML = '💡 ' + lesson.insight;
@@ -823,8 +791,42 @@
       renderDocs(lesson.documents);
       await showWatchBadge(lessonId);
 
-      // KÍCH HOẠT CHẠY LOAD BÀI TẬP VỀ NHÀ CHO BÀI HỌC HIỆN TẠI
-      await loadQuiz(lessonId);
+      // ── LOGIC XỬ LÝ PHẦN BÀI TẬP VỀ NHÀ ──
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user && (lesson.homework_text || lesson.homework_docs)) {
+         document.getElementById('homework-box').classList.remove('hidden');
+         document.getElementById('homework-text-content').innerHTML = lesson.homework_text || '<p class="text-gray-400 italic">Thầy đã giao bài tập đính kèm ở Kho tài liệu bên phải!</p>';
+         
+         // Kiểm tra xem học sinh này đã nộp bài tập chưa
+         const { data: submission } = await sb.from('homework_submissions')
+           .select('*').eq('user_id', user.id || user.uid).eq('lesson_id', lesson.id).maybeSingle();
+           
+         const msgEl = document.getElementById('homework-status-message');
+         const btnEl = document.getElementById('homework-action-btn');
+         
+         if (submission) {
+            msgEl.innerHTML = `<span class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Bạn đã nộp bài tập! Mục "Bài giảng chữa BTVN" đã mở ở menu bên trái.</span>`;
+            btnEl.innerHTML = `<a href="${submission.submission_url}" target="_blank" class="px-4 py-2 bg-gray-100 text-gray-700 font-bold text-xs uppercase rounded-xl border hover:bg-gray-200 transition-colors"><i class="fas fa-external-link-alt mr-1"></i> Xem bài đã nộp</a>`;
+         } else {
+            msgEl.innerHTML = `<span class="text-amber-800"><i class="fas fa-exclamation-circle mr-1"></i> Hãy hoàn thành bài làm và nộp đúng hạn để xem video chữa chi tiết nhé!</span>`;
+            btnEl.innerHTML = `<button onclick="triggerSubmitHomework('${lesson.id}')" class="px-5 py-2.5 bg-amber-600 text-white font-black text-xs uppercase rounded-xl hover:bg-amber-700 shadow-sm transition-colors"><i class="fas fa-cloud-upload-alt mr-1"></i> Tiến hành nộp bài</button>`;
+         }
+
+         // Xử lý đính kèm tài liệu BTVN ở bên dưới phần Kho tài liệu gốc
+         if (lesson.homework_docs) {
+            let hwDocsList = [];
+            try { hwDocsList = (typeof lesson.homework_docs === 'string') ? JSON.parse(lesson.homework_docs) : lesson.homework_docs; } catch(e){}
+            if (Array.isArray(hwDocsList) && hwDocsList.length > 0) {
+               document.getElementById('homework-docs-container').classList.remove('hidden');
+               document.getElementById('homework-docs-list').innerHTML = hwDocsList.map(f => `
+                  <div class="p-2.5 bg-amber-50/60 rounded-xl border border-amber-100 mb-1.5 flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-amber-900 truncate max-w-[130px]"><i class="fas fa-file-pdf mr-1 text-red-500"></i> ${f.name || 'Bài tập'}</span>
+                    <a href="${f.url}" target="_blank" rel="noopener" class="px-2 py-1 bg-amber-800 text-white text-[8px] font-black uppercase rounded-md hover:bg-amber-900 transition-colors">Tải đề</a>
+                  </div>
+               `).join('');
+            }
+         }
+      }
 
       if (topic) {
         document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
@@ -863,9 +865,6 @@
     renderVideo(null);
   }
 
-  // ══════════════════════════════════════════════
-  // KHỞI ĐỘNG
-  // ══════════════════════════════════════════════
   window.addEventListener('DOMContentLoaded', async () => {
     checkLogin();
     loadYTApi();
