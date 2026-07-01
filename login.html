@@ -18,8 +18,8 @@
             <a href="index.html" class="inline-block mb-4">
                 <img src="logo.png" alt="Logo" class="w-20 h-20 rounded-full border-4 border-white mx-auto shadow-lg bg-white">
             </a>
-            <h1 id="welcomeTitle" class="text-white text-2xl font-black uppercase tracking-tight">Chào mừng bạn trở lại!</h1>
-            <p class="text-blue-200 text-sm font-bold mt-2">Đăng nhập để tiếp tục chinh phục toán học</p>
+            <h1 id="welcomeTitle" class="text-white text-2xl font-black uppercase tracking-tight transition-all duration-500">Chào mừng bạn trở lại!</h1>
+            <p id="welcomeSub" class="text-blue-200 text-sm font-bold mt-2">Đăng nhập để tiếp tục chinh phục toán học</p>
         </div>
 
         <div class="p-8">
@@ -51,7 +51,7 @@
                     <a href="#" class="text-blue-600 text-sm font-bold hover:underline">Quên mật khẩu?</a>
                 </div>
 
-                <button type="submit" 
+                <button type="submit" id="submitBtn"
                     class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1 text-lg uppercase">
                     Vào học ngay
                 </button>
@@ -77,37 +77,35 @@
         const SUBPKey = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
         const supabaseClient = supabase.createClient(SUBPUrl, SUBPKey);
         
-        // ==========================================================
-        // 1. TỰ ĐỘNG CHẠY KHI MỞ TRANG: KIỂM TRA BỘ NHỚ ĐỂ HIỂN THỊ TÊN CHÀO MỪNG
-        // ==========================================================
+        // TỰ ĐỘNG CHÀO NẾU ĐÃ TỪNG ĐĂNG NHẬP TRƯỚC ĐÓ
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             try {
                 const userObj = JSON.parse(savedUser);
                 if (userObj && userObj.fullname) {
-                    document.getElementById('welcomeTitle').innerText = `Chào mừng ${userObj.fullname} đã trở lại học!`;
+                    document.getElementById('welcomeTitle').innerText = `Chào mừng ${userObj.fullname} trở lại!`;
                 }
             } catch (err) {
-                console.error("Lỗi đọc dữ liệu bộ nhớ cũ:", err);
+                console.error("Lỗi đọc bộ nhớ:", err);
             }
         }
 
-        // ==========================================================
-        // 2. XỬ LÝ SỰ KIỆN KHI BẤM NÚT ĐĂNG NHẬP
-        // ==========================================================
+        // XỬ LÝ SỰ KIỆN ĐĂNG NHẬP
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
         
             const identifierValue = document.getElementById('identifier').value.trim();
             const passwordValue = document.getElementById('password').value;
-            const btn = e.target.querySelector('button[type="submit"]');
+            const btn = document.getElementById('submitBtn');
+            
+            // Trạng thái chờ xử lý
             btn.disabled = true;
-            btn.innerText = 'Đang đăng nhập...';
+            btn.innerText = 'Đang kiểm tra...';
         
             try {
                 let emailToLogin = identifierValue;
                 
-                // Kiểm tra xem người dùng gõ Số điện thoại hay Email
+                // Kiểm tra SĐT hoặc Email
                 if (!identifierValue.includes('@')) {
                     const { data: found, error: findError } = await supabaseClient
                         .from('accounts')
@@ -126,7 +124,7 @@
                     emailToLogin = found.email;
                 }
         
-                // Gửi lệnh đăng nhập đến hệ thống Supabase Auth
+                // Xác thực tài khoản qua Supabase Auth
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                     email: emailToLogin,
                     password: passwordValue
@@ -137,21 +135,15 @@
                     btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                 }
         
-                // Đăng nhập Auth thành công, lấy thông tin Profile chi tiết từ bảng public.accounts
+                // Lấy thông tin Profile
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('accounts')
                     .select('id, fullname, role, sdt, status')
                     .eq('id', authData.user.id)
                     .maybeSingle();
         
-                if (profileError) {
-                    alert('Lỗi kết nối bảng accounts: ' + profileError.message);
-                    await supabaseClient.auth.signOut();
-                    btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
-                }
-        
-                if (!profile) {
-                    alert('Tài khoản hợp lệ nhưng không tìm thấy dữ liệu hồ sơ cá nhân!');
+                if (profileError || !profile) {
+                    alert('Không thể tải thông tin tài khoản hoặc dữ liệu bị lỗi!');
                     await supabaseClient.auth.signOut();
                     btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                 }
@@ -162,7 +154,7 @@
                     btn.disabled = false; btn.innerText = 'Vào học ngay'; return;
                 }
         
-                // LƯU THÔNG TIN HỌC SINH VÀO TRÌNH DUYỆT ĐỂ PHỤC VỤ CÁC TÍNH NĂNG CHÀO TÊN
+                // Lưu thông tin vào bộ nhớ máy duyệt
                 localStorage.setItem('user', JSON.stringify({
                     id: profile.id,
                     fullname: profile.fullname,
@@ -170,15 +162,27 @@
                     sdt: profile.sdt
                 }));
         
-                // ĐIỀU HƯỚNG THEO QUYỀN TRUY CẬP (ROLE)
-                if (profile.role === 'admin' || profile.role === 'teacher') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'trangchu.html';
-                }
+                // ==========================================================
+                // HIỆU ỨNG ĐỔI TIÊU ĐỀ CHÀO MỪNG SAU KHI ĐĂNG NHẬP THÀNH CÔNG
+                // ==========================================================
+                document.getElementById('welcomeTitle').innerText = `Chào mừng ${profile.fullname} đã trở lại học!`;
+                document.getElementById('welcomeSub').innerText = 'Hệ thống đang chuẩn bị bài học cho em...';
+                
+                // Đổi nút bấm thành màu xanh lá cây thể hiện thành công
+                btn.className = "w-full bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg transition-all text-lg uppercase";
+                btn.innerText = 'Đang vào học...';
+        
+                // Hoãn lại 1.5 giây (1500 mili-giây) để học sinh kịp nhìn thấy câu chào tên mình
+                setTimeout(() => {
+                    if (profile.role === 'admin' || profile.role === 'teacher') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'trangchu.html';
+                    }
+                }, 1500);
         
             } catch (err) {
-                alert('Lỗi máy chủ cục bộ: ' + err.message);
+                alert('Lỗi máy chủ: ' + err.message);
                 btn.disabled = false; btn.innerText = 'Vào học ngay';
             }
         });
