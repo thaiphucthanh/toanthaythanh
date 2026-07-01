@@ -111,11 +111,7 @@
                     email: emailToLogin,
                     password: passwordValue
                 });
-                
-                console.log('Email đang dùng để login:', emailToLogin);
-                console.log('Auth error:', authError);
-                console.log('Auth data:', authData);
-                
+        
                 if (authError || !authData.user) {
                     alert('Thông tin đăng nhập không chính xác...');
                     btn.disabled = false;
