@@ -18,731 +18,844 @@
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
         .rotate-180 { transform: rotate(180deg); }
-
-        /* Toggle switch */
-        .toggle-switch {
-            position: relative; display: inline-flex; align-items: center;
-            width: 48px; height: 26px; cursor: pointer;
-        }
+        .toggle-switch { position: relative; display: inline-flex; align-items: center; width: 48px; height: 26px; cursor: pointer; }
         .toggle-switch input { display: none; }
-        .toggle-track {
-            width: 100%; height: 100%; border-radius: 999px;
-            background: #e2e8f0; transition: background 0.25s;
-        }
+        .toggle-track { width: 100%; height: 100%; border-radius: 999px; background: #e2e8f0; transition: background 0.25s; }
         .toggle-switch input:checked + .toggle-track { background: #1e3a8a; }
         .toggle-switch .toggle-track.free-mode { background: #e2e8f0; }
-        .toggle-switch input:checked + .toggle-track.free-mode { background: #d97706; } /* Màu cam cho chế độ Free */
-
-        .toggle-thumb {
-            position: absolute; left: 3px; top: 3px;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: white; transition: left 0.25s;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
+        .toggle-switch input:checked + .toggle-track.free-mode { background: #d97706; }
+        .toggle-thumb { position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: left 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
         .toggle-switch input:checked ~ .toggle-thumb { left: 25px; }
-
-        /* Status badge */
         .badge-Active { background: #dcfce7; color: #166534; }
         .badge-Inactive { background: #f1f5f9; color: #64748b; }
         .badge-Free { background: #fef3c7; color: #92400e; }
         .badge-Premium { background: #e0f2fe; color: #0369a1; }
         .badge-hw-yes { background: #fef3c7; color: #92400e; }
         .badge-hw-no { background: #f1f5f9; color: #94a3b8; }
+
+        /* ===== HOMEWORK PANEL ===== */
+        #hw-panel-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #hw-panel-overlay.open { opacity: 1; pointer-events: all; }
+        #hw-panel {
+            position: fixed; top: 0; right: 0; bottom: 0;
+            width: 680px; max-width: 95vw;
+            background: white; z-index: 101;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+            display: flex; flex-direction: column;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+        }
+        #hw-panel.open { transform: translateX(0); }
+
+        /* Question card */
+        .q-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
+        .q-card:hover { border-color: #93c5fd; }
+        .q-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .q-num { background: #1e3a8a; color: white; font-size: 10px; font-weight: 900; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; }
+        .ans-option { display: flex; align-items: center; gap: 8px; }
+        .ans-option label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.15s; user-select: none; }
+        .ans-option input[type="radio"] { display: none; }
+        .ans-option input[type="radio"]:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
+        input[type="text"], textarea, select { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 
-    <aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
-        <div class="p-6 flex items-center gap-3 border-b border-blue-800">
-            <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
-                <div>
-                    <div class="font-black text-lg leading-tight text-white">TOÁN</div>
-                    <div class="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Thầy Thành Cổng Admin</div>
-                </div>
-            </a>
-        </div>
-        <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
-            <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
-                <i class="fas fa-home w-5 text-blue-300"></i>
-                <span class="font-bold">Trang Welcome</span>
-            </a>
-            <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-users w-5 text-blue-300"></i>
-                        <span class="font-bold">Quản lý người dùng</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
-                </div>
-                <div id="user-menu" class="submenu">
-                    <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list-ul mr-2"></i> Danh sách người dùng</a>
-                    <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-user-plus mr-2"></i> Thêm mới</a>
-                </div>
-            </div>
-            <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-book w-5 text-blue-300"></i>
-                        <span class="font-bold text-yellow-400">Quản lý khóa học</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
-                </div>
-                <div id="course-menu" class="submenu show">
-                    <a href="course-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50"><i class="fas fa-list-ul mr-2"></i>Danh sách khóa học</a>
-                    <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i>Thêm khóa học mới</a>
-                </div>
-            </div>
-            <div class="menu-parent">
-                <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
-                        <span class="font-bold">Quản lý thi Online</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
-                </div>
-                <div id="exam-menu" class="submenu">
-                    <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi</a>
-                    <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi</a>
-                    <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-poll opacity-70"></i> Kết quả làm bài</a>
-                </div>
-            </div>
-        </nav>
-        <div class="p-4 border-t border-blue-800">
-            <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
-                <i class="fas fa-arrow-left"></i>
-                <span class="text-sm font-bold">Quay lại trang chủ</span>
-            </a>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+<!-- ===== SIDEBAR ===== -->
+<aside class="w-72 bg-blue-900 text-white flex flex-col shadow-xl z-50">
+    <div class="p-6 flex items-center gap-3 border-b border-blue-800">
+        <a href="admin.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <img src="logo.png" class="w-12 h-12 rounded-full bg-white p-1">
             <div>
-                <span id="course-breadcrumb" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">...</span>
-                <h2 id="topic-title" class="text-xl font-black text-blue-900 uppercase">Đang tải chuyên đề...</h2>
+                <div class="font-black text-lg leading-tight text-white">TOÁN</div>
+                <div class="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Thầy Thành Cổng Admin</div>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleAll('Active')"
-                    class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
-                    <i class="fas fa-lock-open mr-1"></i> Mở tất cả
-                </button>
-                <button onclick="toggleAll('Inactive')"
-                    class="px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">
-                    <i class="fas fa-lock mr-1"></i> Khóa tất cả
-                </button>
-                <button onclick="history.back()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200">
-                    <i class="fas fa-chevron-left mr-2"></i>Quay lại
-                </button>
+        </a>
+    </div>
+    <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
+        <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
+            <i class="fas fa-home w-5 text-blue-300"></i>
+            <span class="font-bold">Trang Welcome</span>
+        </a>
+        <div class="menu-parent">
+            <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-users w-5 text-blue-300"></i>
+                    <span class="font-bold">Quản lý người dùng</span>
+                </div>
+                <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
             </div>
-        </header>
+            <div id="user-menu" class="submenu">
+                <a href="user-list.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-list-ul mr-2"></i> Danh sách người dùng</a>
+                <a href="add-user.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-user-plus mr-2"></i> Thêm mới</a>
+            </div>
+        </div>
+        <div class="menu-parent">
+            <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-book w-5 text-blue-300"></i>
+                    <span class="font-bold text-yellow-400">Quản lý khóa học</span>
+                </div>
+                <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
+            </div>
+            <div id="course-menu" class="submenu show">
+                <a href="course-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50"><i class="fas fa-list-ul mr-2"></i>Danh sách khóa học</a>
+                <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i>Thêm khóa học mới</a>
+            </div>
+        </div>
+        <div class="menu-parent">
+            <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
+                    <span class="font-bold">Quản lý thi Online</span>
+                </div>
+                <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
+            </div>
+            <div id="exam-menu" class="submenu">
+                <a href="exam.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-database opacity-70"></i> Ngân hàng câu hỏi</a>
+                <a href="exam-generate.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-random opacity-70"></i> Trộn đề & Tạo kỳ thi</a>
+                <a href="exam-results.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-poll opacity-70"></i> Kết quả làm bài</a>
+            </div>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-blue-800">
+        <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
+            <i class="fas fa-arrow-left"></i>
+            <span class="text-sm font-bold">Quay lại trang chủ</span>
+        </a>
+    </div>
+</aside>
 
-        <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
-            <div class="max-w-6xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
-                        <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do và BTVN cho học sinh</p>
+<!-- ===== MAIN ===== -->
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
+        <div>
+            <span id="course-breadcrumb" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">...</span>
+            <h2 id="topic-title" class="text-xl font-black text-blue-900 uppercase">Đang tải chuyên đề...</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleAll('Active')" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
+                <i class="fas fa-lock-open mr-1"></i> Mở tất cả
+            </button>
+            <button onclick="toggleAll('Inactive')" class="px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">
+                <i class="fas fa-lock mr-1"></i> Khóa tất cả
+            </button>
+            <button onclick="history.back()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200">
+                <i class="fas fa-chevron-left mr-2"></i>Quay lại
+            </button>
+        </div>
+    </header>
+
+    <div class="p-8 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
+                    <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do và BTVN cho học sinh</p>
+                </div>
+                <button onclick="addNewLesson()" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                    <i class="fas fa-plus"></i><span>Thêm bài học mới</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+                    <div class="text-2xl font-black text-blue-900" id="stat-total">--</div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase">Tổng bài học</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-green-100 text-center">
+                    <div class="text-2xl font-black text-green-600" id="stat-Active">--</div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+                    <div class="text-2xl font-black text-gray-400" id="stat-Inactive">--</div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase">Đang khóa</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-amber-100 text-center">
+                    <div class="text-2xl font-black text-amber-500" id="stat-hw">--</div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase">Có BTVN</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
+                            <th class="p-5 pl-8">Tiêu đề bài học</th>
+                            <th class="p-5">Insight</th>
+                            <th class="p-5 text-center">Video</th>
+                            <th class="p-5 text-center">BTVN</th>
+                            <th class="p-5 text-center">Xem thử</th>
+                            <th class="p-5 text-center">Trạng thái</th>
+                            <th class="p-5 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lesson-table-body" class="divide-y divide-gray-50"></tbody>
+                </table>
+                <div id="loading" class="p-20 text-center">
+                    <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ===== HOMEWORK CONFIG PANEL ===== -->
+<div id="hw-panel-overlay" onclick="closeHwPanel()"></div>
+
+<div id="hw-panel">
+    <!-- Panel Header -->
+    <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div>
+            <div class="text-[10px] text-blue-300 uppercase tracking-widest font-bold mb-0.5" id="hw-panel-lesson-title">---</div>
+            <h3 class="text-lg font-black uppercase">Cấu hình Bài Tập Về Nhà</h3>
+        </div>
+        <button onclick="closeHwPanel()" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center transition-all">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Panel Tabs: Loại bài + Video chữa -->
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase block mb-1.5">Loại bài tập</label>
+                <select id="hw-type" onchange="onHwTypeChange()" class="w-full p-2.5 rounded-xl border border-gray-200 outline-none font-bold text-sm bg-white focus:ring-2 focus:ring-blue-500">
+                    <option value="quiz">Chỉ trắc nghiệm</option>
+                    <option value="essay">Chỉ tự luận</option>
+                    <option value="mixed" selected>Trắc nghiệm + Tự luận</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase block mb-1.5">Link Video chữa BTVN</label>
+                <input id="hw-video" type="text" placeholder="https://youtube.com/..." class="w-full p-2.5 rounded-xl border border-gray-200 outline-none text-sm bg-white focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Section -->
+    <div id="hw-quiz-section" class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h4 class="font-black text-blue-900 uppercase text-sm">Danh sách câu hỏi trắc nghiệm</h4>
+                <p class="text-[10px] text-gray-400 italic mt-0.5" id="hw-q-count">Chưa có câu hỏi nào</p>
+            </div>
+            <button onclick="addQuestion()" class="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-800 transition-all">
+                <i class="fas fa-plus"></i> Thêm câu hỏi
+            </button>
+        </div>
+
+        <!-- Danh sách câu hỏi render ở đây -->
+        <div id="hw-questions-list"></div>
+
+        <!-- Empty state -->
+        <div id="hw-empty" class="text-center py-12 text-gray-300">
+            <i class="fas fa-clipboard-list text-5xl mb-3 block"></i>
+            <p class="text-sm font-bold">Bấm "Thêm câu hỏi" để bắt đầu</p>
+        </div>
+    </div>
+
+    <!-- Panel Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0 flex items-center justify-between">
+        <div id="hw-save-info" class="text-xs text-gray-400 italic"></div>
+        <div class="flex gap-3">
+            <button onclick="closeHwPanel()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all">
+                Hủy
+            </button>
+            <button onclick="saveHomeworkConfig()" class="px-6 py-2.5 rounded-xl bg-blue-900 text-white font-black text-sm hover:bg-blue-800 transition-all flex items-center gap-2">
+                <i class="fas fa-save"></i> Lưu cấu hình
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const urlParams = new URLSearchParams(window.location.search);
+const topicId = urlParams.get('topic_id');
+let currentLessons = [];
+let homeworkMap = {};
+// State của panel BTVN
+let hwLessonId = null;
+let hwQuestions = []; // [{so_cau, noi_dung, lua_chon:{A,B,C,D}, dap_an_dung}]
+
+// =====================
+// INIT
+// =====================
+async function init() {
+    if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
+    await loadTopicHeader();
+    await fetchLessons();
+}
+
+async function loadTopicHeader() {
+    const { data: topic } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', topicId).single();
+    if (topic) {
+        document.getElementById('topic-title').innerText = topic.topic_name;
+        const { data: course } = await supabaseClient.from('courses').select('course_name').eq('id', topic.course_id).single();
+        if (course) document.getElementById('course-breadcrumb').innerText = 'Khóa học: ' + course.course_name;
+    }
+}
+
+// =====================
+// FETCH LESSONS
+// =====================
+async function fetchLessons() {
+    document.getElementById('loading').classList.remove('hidden');
+    const { data: lessons, error } = await supabaseClient
+        .from('lessons').select('*').eq('topic_id', topicId).order('id', { ascending: true });
+    document.getElementById('loading').classList.add('hidden');
+    if (error) { alert(error.message); return; }
+
+    currentLessons = lessons || [];
+    homeworkMap = {};
+
+    if (currentLessons.length > 0) {
+        const lessonIds = currentLessons.map(l => l.id);
+        const { data: configs } = await supabaseClient
+            .from('lesson_homework_config')
+            .select('lesson_id, homework_type, homework_payload, video_solution')
+            .in('lesson_id', lessonIds);
+
+        if (configs) {
+            configs.forEach(c => {
+                const payload = Array.isArray(c.homework_payload) ? c.homework_payload : [];
+                homeworkMap[String(c.lesson_id)] = {
+                    homework_type: c.homework_type,
+                    total_choice: payload.length,
+                    has_video: !!c.video_solution,
+                    has_config: true
+                };
+            });
+        }
+    }
+
+    updateStats(currentLessons);
+    renderLessonTable();
+}
+
+function renderLessonTable() {
+    const tbody = document.getElementById('lesson-table-body');
+    if (currentLessons.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = currentLessons.map(l => {
+        const isActive = l.status === 'Active';
+        const isFree = l.is_free === true;
+        const hw = homeworkMap[String(l.id)];
+
+        let hwBadge = '';
+        if (hw) {
+            const typeLabel = { quiz: 'Trắc nghiệm', essay: 'Tự luận', mixed: 'TN + TL' }[hw.homework_type] || hw.homework_type;
+            hwBadge = `
+                <div class="flex flex-col items-center gap-1">
+                    <button onclick="openHwPanel('${l.id}')" class="badge-hw-yes text-[9px] font-black uppercase px-2 py-1 rounded-full hover:opacity-80 transition-all flex items-center gap-1">
+                        <i class="fas fa-check-circle"></i> ${typeLabel}
+                        ${hw.total_choice > 0 ? `<span class="ml-1 bg-amber-200 rounded-full px-1.5">${hw.total_choice} câu</span>` : ''}
+                    </button>
+                    ${hw.has_video ? '<span class="text-[9px] text-green-600"><i class="fas fa-video mr-1"></i>Có video chữa</span>' : ''}
+                </div>`;
+        } else {
+            hwBadge = `<button onclick="openHwPanel('${l.id}')" class="badge-hw-no text-[9px] font-black uppercase px-2 py-1 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"><i class="fas fa-plus mr-1"></i>Thêm BTVN</button>`;
+        }
+
+        return `
+        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}">
+            <td class="p-5 pl-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                        ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
                     </div>
-                    <button onclick="addNewLesson()"
-                        class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
-                        <i class="fas fa-plus"></i>
-                        <span>Thêm bài học mới</span>
+                    <div>
+                        <div class="font-bold text-blue-900">${l.title}</div>
+                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-5">
+                <div class="text-xs text-gray-600 line-clamp-1 max-w-xs">${l.insight || '---'}</div>
+            </td>
+            <td class="p-5 text-center">
+                ${l.video_url ? '<i class="fab fa-youtube text-red-500 text-lg"></i>' : '<i class="fas fa-video-slash text-gray-300"></i>'}
+            </td>
+            <td class="p-5 text-center">${hwBadge}</td>
+            <td class="p-5">
+                <div class="flex flex-col items-center gap-1">
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${isFree ? 'checked' : ''} onchange="toggleLessonFree('${l.id}', this.checked)">
+                        <div class="toggle-track free-mode"></div>
+                        <div class="toggle-thumb"></div>
+                    </label>
+                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isFree ? 'badge-Free' : 'badge-Premium'}">
+                        ${isFree ? 'Miễn phí' : 'Có khóa học'}
+                    </span>
+                </div>
+            </td>
+            <td class="p-5">
+                <div class="flex flex-col items-center gap-1">
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleLessonStatus('${l.id}', this.checked)">
+                        <div class="toggle-track"></div>
+                        <div class="toggle-thumb"></div>
+                    </label>
+                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isActive ? 'badge-Active' : 'badge-Inactive'}">
+                        ${isActive ? 'Đang mở' : 'Đang khóa'}
+                    </span>
+                </div>
+            </td>
+            <td class="p-5">
+                <div class="flex justify-center gap-2">
+                    <button onclick="editLesson('${l.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg" title="Xóa bài học">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
 
-                <div class="grid grid-cols-3 gap-4 mb-6" id="stats-bar">
-                    <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-                        <div class="text-2xl font-black text-blue-900" id="stat-total">--</div>
-                        <div class="text-[10px] font-bold text-gray-400 uppercase">Tổng bài học</div>
-                    </div>
-                    <div class="bg-white rounded-2xl p-4 border border-green-100 text-center">
-                        <div class="text-2xl font-black text-green-600" id="stat-Active">--</div>
-                        <div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div>
-                    </div>
-                    <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-                        <div class="text-2xl font-black text-gray-400" id="stat-Inactive">--</div>
-                        <div class="text-[10px] font-bold text-gray-400 uppercase">Đang khóa</div>
-                    </div>
-                </div>
+// =====================
+// HOMEWORK PANEL
+// =====================
+async function openHwPanel(lessonId) {
+    hwLessonId = lessonId;
+    hwQuestions = [];
 
-                <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
-                                <th class="p-5 pl-8">Tiêu đề bài học</th>
-                                <th class="p-5">Insight</th>
-                                <th class="p-5 text-center">Video</th>
-                                <th class="p-5 text-center">BTVN</th>
-                                <th class="p-5 text-center">Xem thử (Free)</th>
-                                <th class="p-5 text-center">Trạng thái</th>
-                                <th class="p-5 text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lesson-table-body" class="divide-y divide-gray-50"></tbody>
-                    </table>
-                    <div id="loading" class="p-20 text-center">
-                        <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
+    const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
+    document.getElementById('hw-panel-lesson-title').innerText = lesson ? lesson.title : 'Bài học #' + lessonId;
+    document.getElementById('hw-video').value = '';
+    document.getElementById('hw-type').value = 'mixed';
+    document.getElementById('hw-save-info').innerText = '';
+
+    // Mở panel (hiện overlay + slide in)
+    document.getElementById('hw-panel-overlay').classList.add('open');
+    document.getElementById('hw-panel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Tải cấu hình cũ nếu có
+    const { data: config } = await supabaseClient
+        .from('lesson_homework_config')
+        .select('*')
+        .eq('lesson_id', lessonId)
+        .maybeSingle();
+
+    if (config) {
+        document.getElementById('hw-type').value = config.homework_type || 'mixed';
+        document.getElementById('hw-video').value = config.video_solution || '';
+        hwQuestions = Array.isArray(config.homework_payload) ? config.homework_payload : [];
+        if (config.created_at) {
+            const d = new Date(config.updated_at || config.created_at);
+            document.getElementById('hw-save-info').innerText = 'Đã lưu lúc ' + d.toLocaleString('vi-VN');
+        }
+    }
+
+    onHwTypeChange();
+    renderQuestions();
+}
+
+function closeHwPanel() {
+    document.getElementById('hw-panel-overlay').classList.remove('open');
+    document.getElementById('hw-panel').classList.remove('open');
+    document.body.style.overflow = '';
+    hwLessonId = null;
+    hwQuestions = [];
+}
+
+function onHwTypeChange() {
+    const type = document.getElementById('hw-type').value;
+    const quizSection = document.getElementById('hw-quiz-section');
+    if (type === 'essay') {
+        quizSection.classList.add('hidden');
+    } else {
+        quizSection.classList.remove('hidden');
+    }
+}
+
+// =====================
+// QUẢN LÝ CÂU HỎI TRONG PANEL
+// =====================
+function addQuestion() {
+    const so_cau = hwQuestions.length + 1;
+    hwQuestions.push({
+        so_cau,
+        noi_dung: '',
+        lua_chon: { A: '', B: '', C: '', D: '' },
+        dap_an_dung: ''
+    });
+    renderQuestions();
+    // Scroll xuống câu mới vừa thêm
+    setTimeout(() => {
+        const list = document.getElementById('hw-questions-list');
+        list.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+
+function removeQuestion(index) {
+    hwQuestions.splice(index, 1);
+    // Cập nhật lại số câu
+    hwQuestions.forEach((q, i) => q.so_cau = i + 1);
+    renderQuestions();
+}
+
+function renderQuestions() {
+    const list = document.getElementById('hw-questions-list');
+    const empty = document.getElementById('hw-empty');
+    const countEl = document.getElementById('hw-q-count');
+
+    if (hwQuestions.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        countEl.innerText = 'Chưa có câu hỏi nào';
+        return;
+    }
+
+    empty.classList.add('hidden');
+    countEl.innerText = `${hwQuestions.length} câu hỏi`;
+
+    list.innerHTML = hwQuestions.map((q, idx) => `
+        <div class="q-card" id="q-card-${idx}">
+            <div class="q-card-header">
+                <span class="q-num">Câu ${q.so_cau}</span>
+                <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors" title="Xóa câu này">
+                    <i class="fas fa-trash-alt mr-1"></i><span class="text-xs font-bold">Xóa</span>
+                </button>
+            </div>
+
+            <!-- Nội dung câu hỏi -->
+            <textarea
+                placeholder="Nhập nội dung câu hỏi... (để trống nếu câu hỏi chỉ có trong file PDF)"
+                onchange="hwQuestions[${idx}].noi_dung = this.value"
+                class="w-full p-2.5 rounded-xl border border-gray-200 outline-none text-sm resize-none focus:ring-2 focus:ring-blue-500 mb-3 bg-white"
+                rows="2">${q.noi_dung || ''}</textarea>
+
+            <!-- 4 đáp án -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                ${['A','B','C','D'].map(opt => `
+                    <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-blue-400 transition-colors">
+                        <span class="text-[11px] font-black text-blue-900 bg-blue-50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0">${opt}</span>
+                        <input
+                            type="text"
+                            placeholder="Đáp án ${opt}..."
+                            value="${q.lua_chon[opt] || ''}"
+                            onchange="hwQuestions[${idx}].lua_chon['${opt}'] = this.value"
+                            class="flex-1 text-xs outline-none bg-transparent font-medium">
                     </div>
+                `).join('')}
+            </div>
+
+            <!-- Chọn đáp án đúng -->
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-gray-400 uppercase flex-shrink-0">Đáp án đúng:</span>
+                <div class="ans-option flex gap-2">
+                    ${['A','B','C','D'].map(opt => `
+                        <input type="radio" name="correct-${idx}" id="r-${idx}-${opt}" value="${opt}"
+                            ${q.dap_an_dung === opt ? 'checked' : ''}
+                            onchange="hwQuestions[${idx}].dap_an_dung = this.value">
+                        <label for="r-${idx}-${opt}">${opt}</label>
+                    `).join('')}
                 </div>
             </div>
         </div>
-    </main>
+    `).join('');
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// =====================
+// LƯU CẤU HÌNH BTVN
+// =====================
+async function saveHomeworkConfig() {
+    const type = document.getElementById('hw-type').value;
+    const video = document.getElementById('hw-video').value.trim();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const topicId = urlParams.get('topic_id');
-        let currentLessons = [];
-        // Map lesson_id (string) -> { homework_type, total_choice, has_config }
-        let homeworkMap = {};
-
-        async function init() {
-            if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
-            await loadTopicHeader();
-            await fetchLessons();
+    // Validate
+    if (type !== 'essay') {
+        if (hwQuestions.length === 0) {
+            Swal.fire('Thiếu câu hỏi!', 'Vui lòng thêm ít nhất 1 câu hỏi trắc nghiệm.', 'warning');
+            return;
         }
-
-        async function loadTopicHeader() {
-            const { data: topic } = await supabaseClient
-                .from('topics').select('topic_name, course_id').eq('id', topicId).single();
-            if (topic) {
-                document.getElementById('topic-title').innerText = topic.topic_name;
-                const { data: course } = await supabaseClient.from('courses').select('course_name').eq('id', topic.course_id).single();
-                if (course) document.getElementById('course-breadcrumb').innerText = 'Khóa học: ' + course.course_name;
-            }
+        const noAnswer = hwQuestions.filter(q => !q.dap_an_dung);
+        if (noAnswer.length > 0) {
+            const nums = noAnswer.map(q => `Câu ${q.so_cau}`).join(', ');
+            Swal.fire('Chưa chọn đáp án đúng!', `${nums} chưa được chọn đáp án đúng.`, 'warning');
+            return;
         }
+    }
 
-        // =====================
-        // FETCH LESSONS + HOMEWORK CONFIG MAP
-        // =====================
-        async function fetchLessons() {
-            const tbody = document.getElementById('lesson-table-body');
-            const loader = document.getElementById('loading');
-            loader.classList.remove('hidden');
+    const payload = type === 'essay' ? [] : hwQuestions;
 
-            const { data: lessons, error } = await supabaseClient
-                .from('lessons').select('*').eq('topic_id', topicId).order('id', { ascending: true });
+    Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-            if (error) { loader.classList.add('hidden'); alert(error.message); return; }
+    const { error } = await supabaseClient
+        .from('lesson_homework_config')
+        .upsert({
+            lesson_id: hwLessonId,
+            homework_type: type,
+            homework_payload: payload,
+            video_solution: video || null
+        }, { onConflict: 'lesson_id' });
 
-            currentLessons = lessons || [];
-            updateStats(currentLessons);
+    if (error) {
+        Swal.fire('Lỗi!', 'Không thể lưu: ' + error.message, 'error');
+        return;
+    }
 
-            // Lấy luôn trạng thái cấu hình BTVN của tất cả bài học trong chuyên đề này
-            homeworkMap = {};
-            if (currentLessons.length > 0) {
-                const lessonIds = currentLessons.map(l => l.id);
-                const { data: configs, error: hwError } = await supabaseClient
-                    .from('lesson_homework_config')
-                    .select('lesson_id, homework_type, homework_payload, video_solution')
-                    .in('lesson_id', lessonIds);
+    Swal.fire({ icon: 'success', title: 'Đã lưu cấu hình BTVN!', timer: 1200, showConfirmButton: false });
+    closeHwPanel();
+    await fetchLessons();
+}
 
-                if (!hwError && configs) {
-                    configs.forEach(c => {
-                        homeworkMap[String(c.lesson_id)] = {
-                            homework_type: c.homework_type,
-                            total_choice: Array.isArray(c.homework_payload) ? c.homework_payload.length : 0,
-                            has_video: !!c.video_solution,
-                            has_config: true
-                        };
-                    });
-                }
-                // Nếu hwError xảy ra (vd. do RLS chặn vì tài khoản không phải teacher/admin),
-                // homeworkMap sẽ rỗng và giao diện sẽ hiển thị "Chưa có BTVN" cho tất cả — không chặn trang load.
-            }
+// =====================
+// TOGGLE FREE / STATUS
+// =====================
+async function toggleLessonFree(lessonId, isChecked) {
+    const { error } = await supabaseClient.from('lessons').update({ is_free: isChecked }).eq('id', lessonId);
+    if (error) { alert('Lỗi: ' + error.message); fetchLessons(); return; }
+    const l = currentLessons.find(l => String(l.id) === String(lessonId));
+    if (l) l.is_free = isChecked;
+    renderLessonTable();
+}
 
-            loader.classList.add('hidden');
-            renderLessonTable();
-        }
+async function toggleLessonStatus(lessonId, isChecked) {
+    const newStatus = isChecked ? 'Active' : 'Inactive';
+    const { error } = await supabaseClient.from('lessons').update({ status: newStatus }).eq('id', lessonId);
+    if (error) { alert('Lỗi: ' + error.message); fetchLessons(); return; }
+    const l = currentLessons.find(l => String(l.id) === String(lessonId));
+    if (l) l.status = newStatus;
+    updateStats(currentLessons);
+    renderLessonTable();
+}
 
-        function renderLessonTable() {
-            const tbody = document.getElementById('lesson-table-body');
+async function toggleAll(status) {
+    const result = await Swal.fire({
+        title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
+        text: `Thầy có chắc muốn ${status === 'Active' ? 'mở' : 'khóa'} tất cả bài học không?`,
+        icon: 'question', showCancelButton: true,
+        confirmButtonText: 'Xác nhận', cancelButtonText: 'Hủy',
+        confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a',
+    });
+    if (!result.isConfirmed) return;
+    const ids = currentLessons.map(l => l.id);
+    const { error } = await supabaseClient.from('lessons').update({ status }).in('id', ids);
+    if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
+    fetchLessons();
+}
 
-            if (currentLessons.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
-                return;
-            }
+// =====================
+// THỐNG KÊ
+// =====================
+function updateStats(lessons) {
+    document.getElementById('stat-total').innerText = lessons.length;
+    document.getElementById('stat-Active').innerText = lessons.filter(l => l.status === 'Active').length;
+    document.getElementById('stat-Inactive').innerText = lessons.filter(l => l.status !== 'Active').length;
+    document.getElementById('stat-hw').innerText = Object.keys(homeworkMap).length;
+}
 
-            tbody.innerHTML = currentLessons.map((l, index) => {
-                const isActive = l.status === 'Active';
-                const isFree = l.is_free === true;
-                const hw = homeworkMap[String(l.id)];
-                const hasHomework = !!hw;
-
-                return `
-                <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}">
-                    <td class="p-5 pl-8">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
-                                ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
-                            </div>
-                            <div>
-                                <div class="font-bold text-blue-900">${l.title}</div>
-                                <div class="text-[10px] text-gray-400 italic">ID: ${l.id}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="p-5">
-                        <div class="text-xs text-gray-600 line-clamp-1 max-w-xs">${l.insight || '---'}</div>
-                    </td>
-                    <td class="p-5 text-center">
-                        ${l.video_url
-                            ? `<i class="fab fa-youtube text-red-500 text-lg"></i>`
-                            : `<i class="fas fa-video-slash text-gray-300"></i>`}
-                    </td>
-                    <td class="p-5">
-                        <div class="flex flex-col items-center gap-1">
-                            <button onclick="configHomework('${l.id}')"
-                                class="text-[9px] font-black uppercase px-2 py-1 rounded-full ${hasHomework ? 'badge-hw-yes' : 'badge-hw-no'} hover:opacity-80 transition-all flex items-center gap-1">
-                                <i class="fas fa-clipboard-list"></i>
-                                ${hasHomework ? (hw.total_choice > 0 ? hw.total_choice + ' câu' : 'Đã cấu hình') : 'Chưa có BTVN'}
-                            </button>
-                        </div>
-                    </td>
-                    <td class="p-5">
-                        <div class="flex flex-col items-center gap-1">
-                            <label class="toggle-switch" title="${isFree ? 'Khách/Học sinh được xem tự do' : 'Cần đăng ký khóa học để xem'}">
-                                <input type="checkbox" ${isFree ? 'checked' : ''} onchange="toggleLessonFree('${l.id}', this.checked)">
-                                <div class="toggle-track free-mode"></div>
-                                <div class="toggle-thumb"></div>
-                            </label>
-                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isFree ? 'badge-Free' : 'badge-Premium'}">
-                                ${isFree ? 'Miễn phí (Free)' : 'Trong khóa học'}
-                            </span>
-                        </div>
-                    </td>
-                    <td class="p-5">
-                        <div class="flex flex-col items-center gap-1">
-                            <label class="toggle-switch" title="${isActive ? 'Nhấn để khóa bài' : 'Nhấn để mở bài'}">
-                                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleLessonStatus('${l.id}', this.checked)">
-                                <div class="toggle-track"></div>
-                                <div class="toggle-thumb"></div>
-                            </label>
-                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isActive ? 'badge-Active' : 'badge-Inactive'}">
-                                ${isActive ? 'Đang mở' : 'Đang khóa'}
-                            </span>
-                        </div>
-                    </td>
-                    <td class="p-5">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="editLesson('${l.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg" title="Xóa bài học">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
-
-        // =====================
-        // CẤU HÌNH BTVN (homework)
-        // =====================
-        async function configHomework(lessonId) {
-            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            const { data: config, error: loadError } = await supabaseClient
-                .from('lesson_homework_config')
-                .select('*')
-                .eq('lesson_id', lessonId)
-                .maybeSingle();
-
-            if (loadError) {
-                Swal.fire('Lỗi!', 'Không thể tải cấu hình BTVN: ' + loadError.message, 'error');
-                return;
-            }
-
-            const existingPayload = (config && Array.isArray(config.homework_payload)) ? config.homework_payload : [];
-            const answersString = existingPayload.map(q => q.dap_an_dung).join(',');
-            const currentType = config?.homework_type || 'mixed';
-
-            const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-900 font-black uppercase">Cấu hình BTVN</span>',
-                width: 560,
-                html: `
-                    <div class="text-left space-y-3">
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Loại bài tập</label>
-                            <select id="swal-hw-type" class="w-full p-3 rounded-xl border border-gray-200 outline-none font-bold text-sm">
-                                <option value="quiz" ${currentType === 'quiz' ? 'selected' : ''}>Chỉ trắc nghiệm</option>
-                                <option value="essay" ${currentType === 'essay' ? 'selected' : ''}>Chỉ tự luận</option>
-                                <option value="mixed" ${currentType === 'mixed' ? 'selected' : ''}>Cả trắc nghiệm + tự luận</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">
-                                Đáp án đúng trắc nghiệm (theo thứ tự câu 1, 2, 3..., cách nhau dấu phẩy)
-                            </label>
-                            <textarea id="swal-hw-answers" class="w-full p-3 rounded-xl border border-gray-200 outline-none h-20" placeholder="A,B,C,A,D,B,A,C,D,D">${answersString}</textarea>
-                            <p class="text-[10px] text-gray-400 italic mt-1">Số lượng đáp án nhập vào = số câu trắc nghiệm hệ thống sẽ tự sinh. Để trống nếu bài chỉ có tự luận.</p>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link Video chữa BTVN</label>
-                            <input id="swal-hw-video" class="w-full p-3 rounded-xl border border-gray-200 outline-none" placeholder="https://www.youtube.com/watch?v=..." value="${config?.video_solution || ''}">
-                        </div>
-                        ${existingPayload.length > 0 ? `<p class="text-[11px] text-amber-600 italic"><i class="fas fa-info-circle mr-1"></i>Bài này đang có ${existingPayload.length} câu trắc nghiệm đã cấu hình.</p>` : ''}
-                    </div>`,
-                showCancelButton: true,
-                confirmButtonText: existingPayload.length > 0 || config ? 'Cập nhật cấu hình' : 'Lưu cấu hình',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#1e3a8a',
-                preConfirm: () => {
-                    const type = document.getElementById('swal-hw-type').value;
-                    const answersRaw = document.getElementById('swal-hw-answers').value.trim();
-                    const video = document.getElementById('swal-hw-video').value.trim();
-
-                    let payload = [];
-                    if (answersRaw) {
-                        const answers = answersRaw.split(',').map(a => a.trim().toUpperCase()).filter(a => a.length > 0);
-                        const invalid = answers.filter(a => !['A', 'B', 'C', 'D'].includes(a));
-                        if (invalid.length > 0) {
-                            Swal.showValidationMessage('Đáp án chỉ được chứa A, B, C, hoặc D, cách nhau bởi dấu phẩy! Giá trị sai: ' + invalid.join(', '));
-                            return false;
-                        }
-                        payload = answers.map((dap_an_dung, idx) => ({ so_cau: idx + 1, dap_an_dung }));
-                    }
-
-                    if ((type === 'quiz' || type === 'mixed') && payload.length === 0) {
-                        Swal.showValidationMessage('Loại bài này cần nhập ít nhất 1 đáp án trắc nghiệm!');
-                        return false;
-                    }
-
-                    if (type === 'essay' && payload.length > 0) {
-                        // Nếu Thầy chọn "Chỉ tự luận" nhưng vẫn còn nhập đáp án thì xác nhận lại có thể bỏ qua bước này,
-                        // ở đây mình mặc định vẫn cho lưu (không chặn) vì có thể Thầy đổi ý loại bài.
-                    }
-
-                    return { type, payload, video };
-                }
-            });
-
-            if (!formValues) return;
-
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            const { error } = await supabaseClient
-                .from('lesson_homework_config')
-                .upsert({
-                    lesson_id: lessonId,
-                    homework_type: formValues.type,
-                    homework_payload: formValues.payload,
-                    video_solution: formValues.video || null
-                }, { onConflict: 'lesson_id' });
-
-            if (error) {
-                Swal.fire('Lỗi!', 'Không thể lưu cấu hình BTVN: ' + error.message, 'error');
-            } else {
-                Swal.fire({ icon: 'success', title: 'Đã lưu cấu hình BTVN!', timer: 1200, showConfirmButton: false });
-                await fetchLessons();
-            }
-        }
-
-        // =====================
-        // TOGGLE TRẠNG THÁI FREE
-        // =====================
-        async function toggleLessonFree(lessonId, isChecked) {
-            const { error } = await supabaseClient
-                .from('lessons').update({ is_free: isChecked }).eq('id', lessonId);
-            if (error) {
-                alert('Lỗi cập nhật quyền truy cập: ' + error.message);
-                fetchLessons();
-                return;
-            }
-            const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
-            if (lesson) lesson.is_free = isChecked;
-            renderLessonTable();
-        }
-
-        // =====================
-        // TOGGLE TỪNG BÀI
-        // =====================
-        async function toggleLessonStatus(lessonId, isChecked) {
-            const newStatus = isChecked ? 'Active' : 'Inactive';
-            const { error } = await supabaseClient
-                .from('lessons').update({ status: newStatus }).eq('id', lessonId);
-            if (error) {
-                alert('Lỗi: ' + error.message);
-                fetchLessons();
-                return;
-            }
-            const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
-            if (lesson) lesson.status = newStatus;
-            updateStats(currentLessons);
-            renderLessonTable();
-        }
-
-        // =====================
-        // MỞ / KHÓA TẤT CẢ
-        // =====================
-        async function toggleAll(status) {
-            const label = status === 'Active' ? 'mở tất cả bài học' : 'khóa tất cả bài học';
-            const confirm = await Swal.fire({
-                title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
-                text: `Thầy có chắc muốn ${label} trong chuyên đề này không?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Xác nhận',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a',
-            });
-            if (!confirm.isConfirmed) return;
-
-            const ids = currentLessons.map(l => l.id);
-            const { error } = await supabaseClient
-                .from('lessons').update({ status }).in('id', ids);
-
-            if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
-            fetchLessons();
-        }
-
-        // =====================
-        // THỐNG KÊ
-        // =====================
-        function updateStats(lessons) {
-            const total = lessons.length;
-            const Active = lessons.filter(l => l.status === 'Active').length;
-            const Inactive = total - Active;
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-Active').innerText = Active;
-            document.getElementById('stat-Inactive').innerText = Inactive;
-        }
-
-        // =====================
-        // THÊM BÀI HỌC MỚI
-        // =====================
-        async function addNewLesson() {
-            const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
-                html: `
-                    <div class="text-left space-y-3">
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
-                            <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập hình học">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
-                            <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=...">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
-                            <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Các em hay nhầm lẫn..."></textarea>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái ban đầu</label>
-                                <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                                    <option value="Inactive">🔒 Đang khóa</option>
-                                    <option value="Active" selected>✅ Mở ngay</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
-                                <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                                    <option value="false" selected>💎 Trong khóa học</option>
-                                    <option value="true">🔓 Miễn phí (Free)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tài liệu PDF</label>
-                            <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf">
-                        </div>
-                    </div>`,
-                showCancelButton: true,
-                confirmButtonText: 'Lưu bài học',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#1e3a8a',
-                preConfirm: () => {
-                    const title = document.getElementById('swal-title').value.trim();
-                    if (!title) { Swal.showValidationMessage('Chưa nhập tên bài học!'); return false; }
-                    return {
-                        title,
-                        video: document.getElementById('swal-video').value,
-                        insight: document.getElementById('swal-insight').value,
-                        status: document.getElementById('swal-status').value,
-                        isFree: document.getElementById('swal-free').value === 'true',
-                        file: document.getElementById('swal-file').files[0]
-                    };
-                }
-            });
-
-            if (!formValues) return;
-
-            Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            let finalDocs = [];
-            if (formValues.file) {
-                const cleanName = slugify(formValues.file.name);
-                const fileName = `${Date.now()}-${cleanName}`;
-                const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
-                if (!upErr) {
-                    const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-                    finalDocs.push({ name: formValues.file.name, url: urlData.publicUrl });
-                }
-            }
-
-            const { error } = await supabaseClient
-                .from('lessons')
-                .insert([{
-                    topic_id: topicId,
-                    title: formValues.title,
-                    video_url: formValues.video || null,
-                    insight: formValues.insight || null,
-                    status: formValues.status,
-                    is_free: formValues.isFree,
-                    documents: finalDocs
-                }]);
-
-            if (error) {
-                Swal.fire('Lỗi!', error.message, 'error');
-            } else {
-                Swal.fire({ icon: 'success', title: 'Đã thêm bài học!', timer: 1200, showConfirmButton: false });
-                fetchLessons();
-            }
-        }
-
-        // =====================
-        // CHỈNH SỬA BÀI HỌC
-        // =====================
-        async function editLesson(id) {
-            Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
-            if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
-
-            const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-900 font-black uppercase">Chỉnh sửa bài học</span>',
-                html: `
-                    <div class="text-left space-y-3">
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
-                            <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.title || ''}">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
-                            <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.video_url || ''}">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
-                            <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20">${lesson.insight || ''}</textarea>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái</label>
-                                <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                                    <option value="Inactive" ${lesson.status !== 'Active' ? 'selected' : ''}>🔒 Đang khóa</option>
-                                    <option value="Active" ${lesson.status === 'Active' ? 'selected' : ''}>✅ Mở</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
-                                <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                                    <option value="false" ${!lesson.is_free ? 'selected' : ''}>💎 Trong khóa học</option>
-                                    <option value="true" ${lesson.is_free ? 'selected' : ''}>🔓 Miễn phí (Free)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cập nhật tài liệu PDF (để trống = giữ nguyên)</label>
-                            <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
-                            ${lesson.documents?.length > 0 ? `<p class="text-[10px] text-green-600 mt-1 italic"><i class="fas fa-check mr-1"></i>Hiện có: ${lesson.documents[0].name}</p>` : ''}
-                        </div>
-                    </div>`,
-                showCancelButton: true,
-                confirmButtonText: 'Cập nhật',
-                cancelButtonText: 'Hủy',
-                confirmButtonColor: '#1e3a8a',
-                preConfirm: () => {
-                    const title = document.getElementById('swal-title').value.trim();
-                    if (!title) { Swal.showValidationMessage('Tên bài học không được để trống!'); return false; }
-                    return {
-                        title,
-                        video: document.getElementById('swal-video').value,
-                        insight: document.getElementById('swal-insight').value,
-                        status: document.getElementById('swal-status').value,
-                        isFree: document.getElementById('swal-free').value === 'true',
-                        file: document.getElementById('swal-file').files[0]
-                    };
-                }
-            });
-
-            if (!formValues) return;
-
-            Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            let updatedData = {
-                title: formValues.title,
-                video_url: formValues.video || null,
-                insight: formValues.insight || null,
-                status: formValues.status,
-                is_free: formValues.isFree
+// =====================
+// THÊM BÀI HỌC MỚI
+// =====================
+async function addNewLesson() {
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
+                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập hình học">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
+                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
+                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Các em hay nhầm lẫn..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái ban đầu</label>
+                        <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                            <option value="Inactive">🔒 Đang khóa</option>
+                            <option value="Active" selected>✅ Mở ngay</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
+                        <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                            <option value="false" selected>💎 Trong khóa học</option>
+                            <option value="true">🔓 Miễn phí (Free)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tài liệu PDF</label>
+                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf">
+                </div>
+            </div>`,
+        showCancelButton: true, confirmButtonText: 'Lưu bài học', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
+        preConfirm: () => {
+            const title = document.getElementById('swal-title').value.trim();
+            if (!title) { Swal.showValidationMessage('Chưa nhập tên bài học!'); return false; }
+            return {
+                title, video: document.getElementById('swal-video').value,
+                insight: document.getElementById('swal-insight').value,
+                status: document.getElementById('swal-status').value,
+                isFree: document.getElementById('swal-free').value === 'true',
+                file: document.getElementById('swal-file').files[0]
             };
-
-            if (formValues.file) {
-                const cleanName = slugify(formValues.file.name);
-                const fileName = `${Date.now()}-${cleanName}`;
-                const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
-                if (!upErr) {
-                    const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-                    updatedData.documents = [{ name: formValues.file.name, url: urlData.publicUrl }];
-                }
-            }
-
-            const { error: updateError } = await supabaseClient.from('lessons').update(updatedData).eq('id', id);
-            if (updateError) Swal.fire('Lỗi!', updateError.message, 'error');
-            else {
-                Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false });
-                fetchLessons();
-            }
         }
+    });
+    if (!formValues) return;
 
-        async function deleteLesson(id) {
-            const res = await Swal.fire({
-                title: 'Xóa bài học này?',
-                text: 'Hành động này không thể hoàn tác! Toàn bộ cấu hình BTVN và bài làm của học sinh liên quan cũng sẽ bị xóa.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'Xóa',
-                cancelButtonText: 'Hủy'
-            });
+    Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-            if (!res.isConfirmed) return;
-
-            try {
-                await supabaseClient.from('notifications').delete().eq('lesson_id', id);
-                await supabaseClient.from('lesson_views').delete().eq('lesson_id', id);
-                await supabaseClient.from('homework_submissions').delete().eq('lesson_id', id);
-                await supabaseClient.from('lesson_homework_config').delete().eq('lesson_id', id);
-                const { error: lessonError } = await supabaseClient.from('lessons').delete().eq('id', id);
-
-                if (lessonError) throw lessonError;
-
-                Swal.fire('Đã xóa!', 'Bài học đã được xóa thành công.', 'success');
-                fetchLessons();
-            } catch(e) {
-                console.error(e);
-                Swal.fire('Lỗi', e.message, 'error');
-            }
+    let finalDocs = [];
+    if (formValues.file) {
+        const fileName = `${Date.now()}-${slugify(formValues.file.name)}`;
+        const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
+        if (!upErr) {
+            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+            finalDocs.push({ name: formValues.file.name, url: urlData.publicUrl });
         }
+    }
 
-        function slugify(name) {
-            const map = {'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ắ':'a','ặ':'a','ằ':'a','ẳ':'a','ẵ':'a','â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a','đ':'d','è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e','ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i','ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o','ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o','ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u','ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y'};
-            return name.toLowerCase().split('').map(c => map[c] || c).join('').replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    const { error } = await supabaseClient.from('lessons').insert([{
+        topic_id: topicId, title: formValues.title, video_url: formValues.video || null,
+        insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree, documents: finalDocs
+    }]);
+
+    if (error) Swal.fire('Lỗi!', error.message, 'error');
+    else { Swal.fire({ icon: 'success', title: 'Đã thêm bài học!', timer: 1200, showConfirmButton: false }); fetchLessons(); }
+}
+
+// =====================
+// CHỈNH SỬA BÀI HỌC
+// =====================
+async function editLesson(id) {
+    Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
+    if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
+
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-blue-900 font-black uppercase">Chỉnh sửa bài học</span>',
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
+                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.title || ''}">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
+                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.video_url || ''}">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
+                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20">${lesson.insight || ''}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái</label>
+                        <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                            <option value="Inactive" ${lesson.status !== 'Active' ? 'selected' : ''}>🔒 Đang khóa</option>
+                            <option value="Active" ${lesson.status === 'Active' ? 'selected' : ''}>✅ Mở</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
+                        <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                            <option value="false" ${!lesson.is_free ? 'selected' : ''}>💎 Trong khóa học</option>
+                            <option value="true" ${lesson.is_free ? 'selected' : ''}>🔓 Miễn phí (Free)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cập nhật tài liệu PDF (để trống = giữ nguyên)</label>
+                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
+                    ${lesson.documents?.length > 0 ? `<p class="text-[10px] text-green-600 mt-1 italic"><i class="fas fa-check mr-1"></i>Hiện có: ${lesson.documents[0].name}</p>` : ''}
+                </div>
+            </div>`,
+        showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
+        preConfirm: () => {
+            const title = document.getElementById('swal-title').value.trim();
+            if (!title) { Swal.showValidationMessage('Tên bài học không được để trống!'); return false; }
+            return {
+                title, video: document.getElementById('swal-video').value,
+                insight: document.getElementById('swal-insight').value,
+                status: document.getElementById('swal-status').value,
+                isFree: document.getElementById('swal-free').value === 'true',
+                file: document.getElementById('swal-file').files[0]
+            };
         }
+    });
+    if (!formValues) return;
 
-        function toggleSubmenu(id, element) {
-            document.getElementById(id).classList.toggle('show');
-            element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
+    Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    let updatedData = { title: formValues.title, video_url: formValues.video || null, insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree };
+
+    if (formValues.file) {
+        const fileName = `${Date.now()}-${slugify(formValues.file.name)}`;
+        const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
+        if (!upErr) {
+            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+            updatedData.documents = [{ name: formValues.file.name, url: urlData.publicUrl }];
         }
+    }
 
-        init();
-    </script>
+    const { error: updateError } = await supabaseClient.from('lessons').update(updatedData).eq('id', id);
+    if (updateError) Swal.fire('Lỗi!', updateError.message, 'error');
+    else { Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false }); fetchLessons(); }
+}
+
+// =====================
+// XÓA BÀI HỌC
+// =====================
+async function deleteLesson(id) {
+    const res = await Swal.fire({
+        title: 'Xóa bài học này?',
+        text: 'Toàn bộ BTVN, bài làm học sinh liên quan cũng sẽ bị xóa. Không thể hoàn tác!',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa', cancelButtonText: 'Hủy'
+    });
+    if (!res.isConfirmed) return;
+    try {
+        await supabaseClient.from('notifications').delete().eq('lesson_id', id);
+        await supabaseClient.from('lesson_views').delete().eq('lesson_id', id);
+        await supabaseClient.from('homework_submissions').delete().eq('lesson_id', id);
+        await supabaseClient.from('lesson_homework_config').delete().eq('lesson_id', id);
+        const { error } = await supabaseClient.from('lessons').delete().eq('id', id);
+        if (error) throw error;
+        Swal.fire('Đã xóa!', '', 'success');
+        fetchLessons();
+    } catch(e) {
+        Swal.fire('Lỗi', e.message, 'error');
+    }
+}
+
+// =====================
+// UTILS
+// =====================
+function slugify(name) {
+    const map = {'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ắ':'a','ặ':'a','ằ':'a','ẳ':'a','ẵ':'a','â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a','đ':'d','è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e','ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i','ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o','ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o','ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u','ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y'};
+    return name.toLowerCase().split('').map(c => map[c] || c).join('').replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function toggleSubmenu(id, element) {
+    document.getElementById(id).classList.toggle('show');
+    element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
+}
+
+init();
+</script>
 </body>
 </html>
