@@ -367,6 +367,12 @@ function renderLessonTable() {
         const isActive = l.status === 'Active';
         const isFree = l.is_free === true;
         const hw = homeworkMap[String(l.id)];
+        const docCount = (() => {
+            try {
+                const d = typeof l.documents === 'string' ? JSON.parse(l.documents) : l.documents;
+                return Array.isArray(d) ? d.length : 0;
+            } catch(e) { return 0; }
+        })();
 
         let hwBadge = '';
         if (hw) {
@@ -392,7 +398,7 @@ function renderLessonTable() {
                     </div>
                     <div>
                         <div class="font-bold text-blue-900">${l.title}</div>
-                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id}</div>
+                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id} ${docCount > 0 ? `· <i class="fas fa-paperclip"></i> ${docCount} tài liệu` : ''}</div>
                     </div>
                 </div>
             </td>
@@ -776,6 +782,33 @@ function updateStats(lessons) {
 }
 
 // =====================
+// UPLOAD TÀI LIỆU (ĐÃ SỬA: KHÔNG CÒN NUỐT LỖI ÂM THẦM)
+// =====================
+// Trả về mảng documents mới nếu upload OK, hoặc null nếu thất bại / không có file.
+// Nếu thất bại, hiển thị lỗi rõ ràng cho thầy thay vì lưu bài học mà thiếu file.
+async function uploadLessonDocument(file) {
+    if (!file) return { ok: true, doc: null };
+
+    const fileName = `${Date.now()}-${slugify(file.name)}`;
+    const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, file);
+
+    if (upErr) {
+        console.error('Upload documents error:', upErr);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Tải tài liệu PDF thất bại!',
+            html: `Không thể tải file lên bucket <b>documents</b>.<br><br>
+                   <span class="text-xs text-gray-500">Chi tiết lỗi: ${upErr.message}</span><br><br>
+                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: bucket <b>documents</b> chưa có Policy cho phép <b>INSERT</b> (upload) cho role anon/public. Vào Supabase → Storage → documents → Policies để kiểm tra.</span>`
+        });
+        return { ok: false, doc: null };
+    }
+
+    const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+    return { ok: true, doc: { name: file.name, url: urlData.publicUrl } };
+}
+
+// =====================
 // ADD & EDIT & DELETE LESSONS
 // =====================
 async function addNewLesson() {
@@ -835,11 +868,20 @@ async function addNewLesson() {
 
     let finalDocs = [];
     if (formValues.file) {
-        const fileName = `${Date.now()}-${slugify(formValues.file.name)}`;
-        const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
-        if (!upErr) {
-            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-            finalDocs.push({ name: formValues.file.name, url: urlData.publicUrl });
+        const uploadResult = await uploadLessonDocument(formValues.file);
+        if (!uploadResult.ok) {
+            // Đã hiển thị lỗi upload rõ ràng cho thầy trong uploadLessonDocument().
+            // Hỏi thầy có muốn tiếp tục lưu bài học mà KHÔNG có tài liệu hay hủy để thử lại.
+            const cont = await Swal.fire({
+                title: 'Vẫn lưu bài học (không kèm tài liệu)?',
+                text: 'Bài học sẽ được lưu nhưng chưa có file PDF đính kèm. Thầy có thể sửa lại sau khi khắc phục lỗi upload.',
+                icon: 'question', showCancelButton: true,
+                confirmButtonText: 'Vẫn lưu', cancelButtonText: 'Hủy, để tôi kiểm tra lại',
+                confirmButtonColor: '#1e3a8a'
+            });
+            if (!cont.isConfirmed) return;
+        } else if (uploadResult.doc) {
+            finalDocs.push(uploadResult.doc);
         }
     }
 
@@ -856,6 +898,9 @@ async function editLesson(id) {
     Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
     if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
+
+    let existingDocs = [];
+    try { existingDocs = typeof lesson.documents === 'string' ? JSON.parse(lesson.documents) : (lesson.documents || []); } catch(e) { existingDocs = []; }
 
     const { value: formValues } = await Swal.fire({
         title: '<span class="text-blue-900 font-black uppercase">Chỉnh sửa bài học</span>',
@@ -890,8 +935,12 @@ async function editLesson(id) {
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cập nhật tài liệu PDF</label>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">
+                        Cập nhật tài liệu PDF
+                        ${existingDocs.length > 0 ? `<span class="text-green-600 normal-case font-normal">(hiện có: ${existingDocs.map(d => d.name).join(', ')})</span>` : `<span class="text-gray-400 normal-case font-normal">(chưa có tài liệu nào)</span>`}
+                    </label>
                     <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
+                    <p class="text-[10px] text-gray-400 italic mt-1">Chọn file mới sẽ thay thế tài liệu cũ. Để trống nếu không muốn đổi tài liệu.</p>
                 </div>
             </div>`,
         showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
@@ -914,17 +963,37 @@ async function editLesson(id) {
     let updatedData = { title: formValues.title, video_url: formValues.video || null, insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree };
 
     if (formValues.file) {
-        const fileName = `${Date.now()}-${slugify(formValues.file.name)}`;
-        const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, formValues.file);
-        if (!upErr) {
-            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-            updatedData.documents = [{ name: formValues.file.name, url: urlData.publicUrl }];
+        const uploadResult = await uploadLessonDocument(formValues.file);
+        if (!uploadResult.ok) {
+            const cont = await Swal.fire({
+                title: 'Vẫn cập nhật các thông tin khác?',
+                text: 'Tài liệu PDF sẽ giữ nguyên như cũ (chưa thay đổi được) do upload thất bại. Các thông tin khác (tiêu đề, video, insight...) vẫn sẽ được lưu.',
+                icon: 'question', showCancelButton: true,
+                confirmButtonText: 'Vẫn cập nhật', cancelButtonText: 'Hủy, để tôi kiểm tra lại',
+                confirmButtonColor: '#1e3a8a'
+            });
+            if (!cont.isConfirmed) return;
+            // Không gán updatedData.documents -> giữ nguyên tài liệu cũ trong DB
+        } else if (uploadResult.doc) {
+            updatedData.documents = [uploadResult.doc];
         }
     }
 
-    const { error: updateError } = await supabaseClient.from('lessons').update(updatedData).eq('id', id);
-    if (updateError) Swal.fire('Lỗi!', updateError.message, 'error');
-    else { Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false }); fetchLessons(); }
+    const { data: updatedRows, error: updateError } = await supabaseClient
+        .from('lessons')
+        .update(updatedData)
+        .eq('id', id)
+        .select();
+
+    if (updateError) {
+        Swal.fire('Lỗi!', updateError.message, 'error');
+    } else if (!updatedRows || updatedRows.length === 0) {
+        // Không có dòng nào bị ảnh hưởng -> nhiều khả năng do RLS chặn UPDATE trên bảng lessons
+        Swal.fire('Cảnh báo!', 'Không có thay đổi nào được ghi nhận trong cơ sở dữ liệu. Có thể do quyền (RLS) trên bảng "lessons" đang chặn cập nhật. Vui lòng kiểm tra Policy UPDATE trong Supabase.', 'warning');
+    } else {
+        Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false });
+        fetchLessons();
+    }
 }
 
 async function deleteLesson(id) {
