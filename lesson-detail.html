@@ -8,6 +8,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" id="mathjax-script"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     html, body { height: 100%; margin: 0; }
@@ -165,6 +172,21 @@
   const sb = supabase.createClient(SB_URL, SB_KEY);
 
   const HOMEWORK_BUCKET = "homework"; // Đã đổi lại theo tên bạn cấu hình (hoặc 'homework-submissions')
+
+  // Gọi MathJax để render công thức LaTeX bên trong 1 phần tử (an toàn nếu MathJax chưa kịp tải xong)
+  function typesetMath(el) {
+    if (!el) return;
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([el]).catch(err => console.error('MathJax lỗi:', err));
+    } else {
+      // MathJax chưa sẵn sàng (đang tải) -> thử lại sau khi nó load xong
+      window.addEventListener('load', () => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([el]).catch(err => console.error('MathJax lỗi:', err));
+        }
+      }, { once: true });
+    }
+  }
 
   const params        = new URLSearchParams(window.location.search);
   let currentLessonId = params.get('id');
@@ -624,6 +646,7 @@
               `;
           }
           container.innerHTML = html;
+          typesetMath(container);
           return;
       }
 
@@ -678,6 +701,7 @@
       </form>`;
 
       container.innerHTML = html;
+      typesetMath(container);
   }
 
   async function submitHomework(event) {
@@ -960,6 +984,7 @@
 
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
       document.getElementById('lesson-content').innerHTML = lesson.content || `<p class="text-gray-400 italic text-sm">Chưa có nội dung.</p>`;
+      typesetMath(document.getElementById('lesson-content'));
       if (lesson.insight) {
         const ins = document.getElementById('lesson-insight');
         ins.innerHTML = '💡 ' + lesson.insight;
