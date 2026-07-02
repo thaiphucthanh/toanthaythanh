@@ -97,23 +97,21 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         // ==========================================================
-        // ⚙️ CẤU HÌNH NHẬN EMAIL THÔNG BÁO QUA APPS SCRIPT (ĐÃ THÊM LINK FB)
+        // ⚙️ CẤU HÌNH NHẬN EMAIL THÔNG BÁO QUA APPS SCRIPT
         // ==========================================================
         const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3DlCvN2m2yPt2K3a92kWxQbv6QeUOd6PIIAJt4r7eJPd0pnuhxViv35YnSA3Vy75C/exec";
 
         function sendNotificationToTeacher(fullname, email, sdt, link_fb) {
             if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("ĐIỀN_ĐƯỜNG_LINK")) return;
-
-            // Bắn dữ liệu đăng ký sang Google Apps Script ngầm để gửi Email
             fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', 
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fullname: fullname,
                     email: email,
                     phone: sdt,
-                    link_fb: link_fb, // Đã đẩy thêm biến này sang Apps Script để thầy tiện bấm vào duyệt bài
+                    link_fb: link_fb,
                     subject: "Đăng ký tài khoản mới"
                 })
             }).catch(err => console.error("Lỗi gửi email ngầm:", err));
@@ -128,7 +126,7 @@
             const fullnameValue = document.getElementById('fullname').value.trim();
             const emailValue = document.getElementById('email').value.trim().toLowerCase();
             const sdtValue = document.getElementById('sdt').value.trim();
-            const linkFbValue = document.getElementById('link_fb').value.trim(); // Lấy dữ liệu link FB
+            const linkFbValue = document.getElementById('link_fb').value.trim();
             const passwordValue = document.getElementById('password').value;
 
             if (passwordValue.length < 6) {
@@ -140,7 +138,7 @@
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
 
             try {
-                // 3. Kiểm tra trùng lặp tài khoản
+                // 3. Kiểm tra trùng lặp tài khoản (email/sđt) trong bảng accounts
                 const { data: existingUser, error: checkError } = await supabaseClient
                     .from('accounts')
                     .select('email, sdt')
@@ -155,32 +153,70 @@
                     return;
                 }
 
-                // 4. Tiến hành đẩy thông tin vào bảng accounts đồng bộ trường link_fb
+                // 4. TẠO TÀI KHOẢN THẬT TRÊN SUPABASE AUTH (bước quan trọng nhất, trước đây bị thiếu)
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                    email: emailValue,
+                    password: passwordValue
+                });
+
+                if (authError) {
+                    if (authError.message?.toLowerCase().includes('already registered')) {
+                        Swal.fire('Lỗi đăng ký', 'Email này đã được đăng ký trên hệ thống xác thực. Em thử đăng nhập hoặc dùng email khác nhé!', 'error');
+                    } else {
+                        Swal.fire('Lỗi tạo tài khoản', authError.message, 'error');
+                    }
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
+                    return;
+                }
+
+                if (!authData.user) {
+                    Swal.fire('Lỗi', 'Không thể khởi tạo tài khoản xác thực. Vui lòng thử lại sau.', 'error');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
+                    return;
+                }
+
+                // 5. Đẩy hồ sơ vào bảng `accounts`, dùng ĐÚNG id vừa tạo ở Supabase Auth
+                //    -> Đây là điểm mấu chốt để login.html sau này match được profile theo authData.user.id
                 const { error: insertError } = await supabaseClient
                     .from('accounts')
                     .insert([{
+                        id: authData.user.id,
                         fullname: fullnameValue,
                         email: emailValue,
                         sdt: sdtValue,
-                        link_fb: linkFbValue, // Đồng bộ lưu dữ liệu lên Supabase cột link_fb
-                        password: passwordValue,
+                        link_fb: linkFbValue,
                         role: 'student',
-                        status: 'inactive', 
+                        status: 'inactive',
                         created_at: new Date().toISOString()
                     }]);
 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    // Hồ sơ accounts không tạo được dù đã có user Auth -> dọn dẹp để tránh tài khoản "mồ côi"
+                    console.error('Lỗi insert accounts sau khi đã tạo Auth user:', insertError);
+                    Swal.fire('Lỗi hệ thống', 'Tài khoản xác thực đã tạo nhưng không lưu được hồ sơ học sinh. Vui lòng báo Thầy để kiểm tra: ' + insertError.message, 'error');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
+                    return;
+                }
 
-                // 🔥 Gọi hàm gửi email về hòm thư của thầy bao gồm link FB học sinh
+                // 🔥 Gọi hàm gửi email về hòm thư của thầy
                 sendNotificationToTeacher(fullnameValue, emailValue, sdtValue, linkFbValue);
 
-                // 5. Hiện thông báo hộp thoại hướng dẫn học sinh
+                // 6. Xác định có cần xác nhận email hay không (tuỳ cấu hình Supabase Auth của thầy)
+                const needsEmailConfirm = !authData.session; // Nếu bật "Confirm email", session sẽ là null sau signUp
+
                 Swal.fire({
                     icon: 'success',
                     title: 'ĐĂNG KÝ THÀNH CÔNG!',
                     html: `
                         <div class="text-left space-y-3 text-sm text-gray-600 mt-2">
                             <p>🎯 Tài khoản của em <b>${fullnameValue}</b> đã được tạo trên hệ thống Toán Thầy Thành.</p>
+                            ${needsEmailConfirm ? `
+                            <p class="p-3 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded-xl text-xs leading-relaxed">
+                                📧 Vui lòng kiểm tra hộp thư <b>${emailValue}</b> và bấm vào link xác nhận trước khi đăng nhập lần đầu.
+                            </p>` : ''}
                             <p class="p-3 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-xl text-xs leading-relaxed">
                                 ⚠️ Trạng thái: <b>CHỜ THẦY DUYỆT</b>.<br>
                                 Để bảo mật lộ trình, tài khoản cần được thầy kích hoạt trước khi mở các video bài giảng.
