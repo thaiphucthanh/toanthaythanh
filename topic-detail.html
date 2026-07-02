@@ -725,7 +725,24 @@ function renderMathPreview(idx) {
 // =====================
 async function uploadHomeworkImage(file) {
     if (!file) return { ok: false, url: null };
-    const fileName = `${Date.now()}-${slugify(file.name)}`;
+
+    // Bucket 'homework' yêu cầu path bắt đầu bằng UID của người đăng nhập (theo Policy hiện tại:
+    // "Allow authenticated students to upload their own homework" -> kiểm tra
+    // (storage.foldername(name))[1] = auth.uid()). Vì trang admin chỉ tự lưu localStorage,
+    // cần lấy UID thật từ phiên Supabase Auth để đường dẫn khớp Policy.
+    const { data: authData, error: authErr } = await supabaseClient.auth.getUser();
+    if (authErr || !authData?.user) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'Phiên đăng nhập Supabase đã hết hạn!',
+            html: `Không xác thực được tài khoản qua Supabase Auth.<br><br>
+                   <span class="text-xs text-gray-500">Vui lòng đăng xuất, đăng nhập lại ở trang <b>login.html</b> rồi thử tải ảnh lần nữa.</span>`
+        });
+        return { ok: false, url: null };
+    }
+
+    const uid = authData.user.id;
+    const fileName = `${uid}/${Date.now()}-${slugify(file.name)}`;
     const { error: upErr } = await supabaseClient.storage.from('homework').upload(fileName, file);
     if (upErr) {
         console.error('Upload homework image error:', upErr);
@@ -734,7 +751,7 @@ async function uploadHomeworkImage(file) {
             title: 'Tải ảnh thất bại!',
             html: `Không thể tải ảnh lên bucket <b>homework</b>.<br><br>
                    <span class="text-xs text-gray-500">Chi tiết lỗi: ${upErr.message}</span><br><br>
-                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: bucket <b>homework</b> chưa tồn tại hoặc chưa có Policy cho phép <b>INSERT</b> (upload). Vào Supabase → Storage → homework → Policies để kiểm tra.</span>`
+                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: Policy trên bucket <b>homework</b> yêu cầu đường dẫn file phải nằm trong thư mục đúng UID của người upload. Vào Supabase → Storage → homework → Policies để kiểm tra.</span>`
         });
         return { ok: false, url: null };
     }
