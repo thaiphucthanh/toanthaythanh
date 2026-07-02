@@ -8,6 +8,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" id="mathjax-script"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -66,6 +73,16 @@
         .ans-option input[type="radio"] { display: none; }
         .ans-option input[type="radio"]:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
         input[type="text"], textarea, select { font-family: 'Inter', sans-serif; }
+
+        /* Essay question: text/LaTeX vs image mode */
+        .upload-area { border: 2px dashed #fbbf24; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: #fffdf5; transition: all 0.2s; }
+        .upload-area:hover { border-color: #d97706; background: #fef3c7; }
+        .upload-area.done { border-style: solid; border-color: #16a34a; background: #f0fdf4; }
+        .essay-mode-btn { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; transition: all 0.15s; cursor: pointer; border: 1.5px solid #fde68a; }
+        .essay-mode-btn.active { background: #d97706; color: white; border-color: #d97706; }
+        .essay-mode-btn:not(.active) { background: white; color: #92400e; }
+        .math-preview { background: white; border: 1.5px dashed #fde68a; border-radius: 12px; padding: 10px 12px; min-height: 38px; font-size: 13px; color: #374151; }
+        .math-preview:empty::before { content: 'Xem trước LaTeX sẽ hiện ở đây...'; color: #d1d5db; font-style: italic; font-size: 12px; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -493,7 +510,9 @@ async function openHwPanel(lessonId) {
                 return {
                     so_cau: q.order_index,
                     type: 'essay',
-                    noi_dung: q.question
+                    noi_dung: q.question,
+                    image_url: q.image_url || null,
+                    input_mode: q.image_url ? 'image' : 'text'
                 };
             } else {
                 let lua_chon = { A: '', B: '', C: '', D: '' };
@@ -561,7 +580,9 @@ function addQuestion(qType) {
         hwQuestions.push({
             so_cau,
             type: 'essay',
-            noi_dung: ''
+            noi_dung: '',
+            image_url: null,
+            input_mode: 'text' // 'text' (LaTeX/văn bản) hoặc 'image' (ảnh minh họa)
         });
     }
     renderQuestions();
@@ -605,13 +626,12 @@ function renderQuestions() {
                 </button>
             </div>
 
-            <textarea
-                placeholder="Nhập yêu cầu đề bài..."
-                onchange="hwQuestions[${idx}].noi_dung = this.value"
-                class="w-full p-2.5 rounded-xl border ${isEssay ? 'border-amber-200 focus:ring-amber-400' : 'border-gray-200 focus:ring-blue-500'} outline-none text-sm resize-none focus:ring-2 mb-3 bg-white"
-                rows="2">${q.noi_dung || ''}</textarea>
-
             ${!isEssay ? `
+                <textarea
+                    placeholder="Nhập yêu cầu đề bài..."
+                    onchange="hwQuestions[${idx}].noi_dung = this.value"
+                    class="w-full p-2.5 rounded-xl border border-gray-200 focus:ring-blue-500 outline-none text-sm resize-none focus:ring-2 mb-3 bg-white"
+                    rows="2">${q.noi_dung || ''}</textarea>
                 <div class="grid grid-cols-2 gap-2 mb-3">
                     ${['A','B','C','D'].map(opt => `
                         <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-blue-400 transition-colors">
@@ -636,9 +656,122 @@ function renderQuestions() {
                         `).join('')}
                     </div>
                 </div>
-            ` : ''}
+            ` : `
+                <div class="flex gap-2 mb-3">
+                    <button type="button" onclick="setEssayInputMode(${idx}, 'text')" class="essay-mode-btn ${q.input_mode !== 'image' ? 'active' : ''}">
+                        <i class="fas fa-square-root-alt mr-1"></i>Văn bản / LaTeX
+                    </button>
+                    <button type="button" onclick="setEssayInputMode(${idx}, 'image')" class="essay-mode-btn ${q.input_mode === 'image' ? 'active' : ''}">
+                        <i class="fas fa-image mr-1"></i>Ảnh đề bài
+                    </button>
+                </div>
+
+                ${q.input_mode === 'image' ? `
+                    <input type="file" id="essay-img-input-${idx}" accept="image/*" style="display:none" onchange="handleEssayImgSelect(${idx}, event)">
+                    <div class="upload-area ${q.image_url ? 'done' : ''}" id="essay-upload-area-${idx}" onclick="triggerEssayImgInput(${idx})">
+                        <i class="fas fa-cloud-upload-alt text-amber-400 text-xl mb-1 block"></i>
+                        <span id="essay-upload-status-${idx}" class="text-xs text-gray-500 font-bold">
+                            ${q.image_url ? '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh' : 'Nhấn để chọn ảnh đề bài từ máy'}
+                        </span>
+                        <img id="essay-img-preview-${idx}" src="${q.image_url || ''}" style="display:${q.image_url ? 'block' : 'none'}; max-height:120px; border-radius:8px; margin:8px auto 0;">
+                    </div>
+                    ${q.image_url ? `<button type="button" onclick="removeEssayImg(${idx})" class="text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh</button>` : ''}
+                    <textarea
+                        placeholder="Ghi chú thêm cho câu hỏi (tuỳ chọn)..."
+                        onchange="hwQuestions[${idx}].noi_dung = this.value"
+                        class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mt-3 bg-white"
+                        rows="2">${q.noi_dung || ''}</textarea>
+                ` : `
+                    <textarea
+                        placeholder="Nhập yêu cầu đề bài, có thể dùng LaTeX. Ví dụ: Giải phương trình \\$x^2 - 3x + 2 = 0\\$"
+                        oninput="hwQuestions[${idx}].noi_dung = this.value; renderMathPreview(${idx})"
+                        class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mb-2 bg-white"
+                        rows="3">${q.noi_dung || ''}</textarea>
+                    <div class="math-preview" id="essay-preview-${idx}"></div>
+                `}
+            `}
         </div>`;
     }).join('');
+
+    // Render live LaTeX preview cho các câu tự luận đang ở chế độ văn bản
+    hwQuestions.forEach((q, idx) => {
+        if (q.type === 'essay' && q.input_mode !== 'image') renderMathPreview(idx);
+    });
+}
+
+// =====================
+// TỰ LUẬN: CHUYỂN CHẾ ĐỘ NHẬP (VĂN BẢN/LATEX <-> ẢNH)
+// =====================
+function setEssayInputMode(idx, mode) {
+    hwQuestions[idx].input_mode = mode;
+    renderQuestions();
+}
+
+function renderMathPreview(idx) {
+    const el = document.getElementById(`essay-preview-${idx}`);
+    if (!el) return;
+    const raw = (hwQuestions[idx] && hwQuestions[idx].noi_dung) || '';
+    // Escape HTML để tránh injection, MathJax sẽ tự nhận diện $...$ hoặc $$...$$
+    const div = document.createElement('div');
+    div.innerText = raw;
+    el.innerHTML = div.innerHTML;
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el]).catch(err => console.error('MathJax lỗi:', err));
+    }
+}
+
+// =====================
+// TỰ LUẬN: UPLOAD ẢNH MINH HỌA (BUCKET: homework)
+// =====================
+async function uploadHomeworkImage(file) {
+    if (!file) return { ok: false, url: null };
+    const fileName = `${Date.now()}-${slugify(file.name)}`;
+    const { error: upErr } = await supabaseClient.storage.from('homework').upload(fileName, file);
+    if (upErr) {
+        console.error('Upload homework image error:', upErr);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Tải ảnh thất bại!',
+            html: `Không thể tải ảnh lên bucket <b>homework</b>.<br><br>
+                   <span class="text-xs text-gray-500">Chi tiết lỗi: ${upErr.message}</span><br><br>
+                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: bucket <b>homework</b> chưa tồn tại hoặc chưa có Policy cho phép <b>INSERT</b> (upload). Vào Supabase → Storage → homework → Policies để kiểm tra.</span>`
+        });
+        return { ok: false, url: null };
+    }
+    const { data: urlData } = supabaseClient.storage.from('homework').getPublicUrl(fileName);
+    return { ok: true, url: urlData.publicUrl };
+}
+
+function triggerEssayImgInput(idx) {
+    document.getElementById(`essay-img-input-${idx}`)?.click();
+}
+
+async function handleEssayImgSelect(idx, event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById(`essay-upload-status-${idx}`);
+    const areaEl = document.getElementById(`essay-upload-area-${idx}`);
+    if (statusEl) statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải ảnh lên...';
+
+    const result = await uploadHomeworkImage(file);
+    if (!result.ok) {
+        if (statusEl) statusEl.innerHTML = 'Nhấn để chọn ảnh đề bài từ máy';
+        return;
+    }
+
+    hwQuestions[idx].image_url = result.url;
+    if (areaEl) areaEl.classList.add('done');
+    if (statusEl) statusEl.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh';
+    const previewEl = document.getElementById(`essay-img-preview-${idx}`);
+    if (previewEl) { previewEl.src = result.url; previewEl.style.display = 'block'; }
+
+    renderQuestions();
+}
+
+function removeEssayImg(idx) {
+    hwQuestions[idx].image_url = null;
+    renderQuestions();
 }
 
 // =====================
@@ -658,6 +791,14 @@ async function saveHomeworkConfig() {
     if (noAnsChoices.length > 0) {
         const listErr = noAnsChoices.map(q => `Câu ${q.so_cau}`).join(', ');
         Swal.fire('Chưa chọn đáp án!', `${listErr} chưa thiết lập đáp án đúng mẫu.`, 'warning');
+        return;
+    }
+
+    // Kiểm tra câu tự luận: phải có nội dung văn bản HOẶC ảnh đề bài
+    const emptyEssays = hwQuestions.filter(q => q.type === 'essay' && !(q.noi_dung && q.noi_dung.trim()) && !q.image_url);
+    if (emptyEssays.length > 0) {
+        const listErr = emptyEssays.map(q => `Câu ${q.so_cau}`).join(', ');
+        Swal.fire('Thiếu đề bài!', `${listErr} chưa có nội dung văn bản/LaTeX hoặc ảnh minh họa.`, 'warning');
         return;
     }
 
@@ -695,6 +836,7 @@ async function saveHomeworkConfig() {
             order_index: q.so_cau,
             question_type: q.type,
             question: q.noi_dung || '',
+            image_url: q.type === 'essay' ? (q.image_url || null) : null,
             score: 1
         }));
 
