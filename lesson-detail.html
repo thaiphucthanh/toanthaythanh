@@ -665,7 +665,10 @@
           </div>
         </div>
       </div>`;
-    updateBellBadge(); return user;
+    updateBellBadge();
+    document.getElementById('mob-login')?.classList.add('hidden');
+    document.getElementById('mob-reg')?.classList.add('hidden');
+    return user;
   }
   function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
   function logout() {
@@ -676,6 +679,7 @@
     if (!e.target.closest('#bell-wrap')) { document.getElementById('bell-dropdown')?.classList.add('hidden'); _notifOpen = false; }
     if (!e.target.closest('#user-section')) { document.getElementById('dropdownUser')?.classList.remove('active'); }
   });
+
 
   // ══════════════════════════════════════════════
   // ENROLLMENT
