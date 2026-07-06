@@ -323,6 +323,7 @@
   let currentCourseIdGlobal = null;
   let currentHomeworkConfig   = null;
   let currentHomeworkQuestions = [];
+  let currentSubmissionId = null;
 
   // ── Per-câu essay file state ──
   // Map: questionId -> FileList-like array (File objects)
@@ -665,7 +666,10 @@
           </div>
         </div>
       </div>`;
-    updateBellBadge(); return user;
+    updateBellBadge();
+    document.getElementById('mob-login')?.classList.add('hidden');
+    document.getElementById('mob-reg')?.classList.add('hidden');
+    return user;
   }
   function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
   function logout() {
@@ -771,9 +775,23 @@
       width: 'auto', background: '#000', backdrop: 'rgba(0,0,0,0.9)' });
   }
 
+  // Lấy submission hiện có, hoặc tạo mới nếu chưa có (dùng để gắn từng câu trả lời vào)
+  async function getOrCreateSubmissionId(lessonId, studentId) {
+    const { data: existing, error: selErr } = await sb.from('homework_submissions')
+      .select('id').eq('lesson_id', parseInt(lessonId)).eq('student_id', studentId).maybeSingle();
+    if (selErr) throw selErr;
+    if (existing) return existing.id;
+    const { data: created, error: insErr } = await sb.from('homework_submissions')
+      .insert({ lesson_id: parseInt(lessonId), student_id: studentId, status: 'pending' })
+      .select('id').single();
+    if (insErr) throw insErr;
+    return created.id;
+  }
+
   async function loadHomework(lessonId) {
     const homeworkSection = document.getElementById('homework-section');
     resetEssayFiles();
+    currentSubmissionId = null;
     try {
       const { data: config, error: configError } = await sb.from('lesson_homework_config')
         .select('*').eq('lesson_id', parseInt(lessonId)).maybeSingle();
@@ -792,55 +810,55 @@
 
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       const studentId = user ? (user.id || user.uid) : null;
-      let existingSubmission = null;
+      let answeredMap = {};
+
       if (studentId) {
         const { data: submission } = await sb.from('homework_submissions')
-          .select('*').eq('lesson_id', parseInt(lessonId)).eq('student_id', studentId).maybeSingle();
-        existingSubmission = submission;
+          .select('id').eq('lesson_id', parseInt(lessonId)).eq('student_id', studentId).maybeSingle();
+        if (submission) {
+          currentSubmissionId = submission.id;
+          const qIds = currentHomeworkQuestions.map(q => q.id);
+          if (qIds.length) {
+            const { data: answers } = await sb.from('submission_answers')
+              .select('id, question_id, selected_choice_id, answer_text, score, teacher_comment')
+              .eq('submission_id', submission.id).in('question_id', qIds);
+
+            const answerIds = (answers || []).map(a => a.id);
+            let filesByAnswer = {};
+            if (answerIds.length) {
+              const { data: fileRows } = await sb.from('submission_files')
+                .select('answer_id, file_url').in('answer_id', answerIds);
+              (fileRows || []).forEach(f => {
+                (filesByAnswer[f.answer_id] = filesByAnswer[f.answer_id] || []).push(f.file_url);
+              });
+            }
+            for (const a of (answers || [])) {
+              answeredMap[a.question_id] = { ...a, files: filesByAnswer[a.id] || [] };
+            }
+          }
+        }
       }
-      renderHomeworkUI(existingSubmission);
+      renderHomeworkUI(answeredMap);
     } catch (error) {
       console.error("Lỗi tải bài tập:", error);
       Swal.fire('Lỗi', 'Không thể tải dữ liệu bài tập: ' + error.message, 'error');
     }
   }
 
-  function renderHomeworkUI(submission) {
+  function renderHomeworkUI(answeredMap) {
     const container = document.getElementById('homework-body');
     if (!container) return;
 
-    if (submission) {
-      let html = `
-        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
-          <h3 class="text-blue-800 font-bold mb-2 text-sm"><i class="fas fa-check-circle mr-2 text-green-500"></i>Em đã nộp bài tập này!</h3>
-          <p class="text-xs text-gray-500">Thời gian nộp: ${new Date(submission.created_at).toLocaleString('vi-VN')}</p>
-          <div class="mt-3 flex flex-wrap gap-3">
-            ${submission.choice_score !== null ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Điểm trắc nghiệm:</span> <span class="text-green-600 font-black">${submission.choice_score}đ</span></div>` : ''}
-            <div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs">
-              <span class="text-gray-500">Trạng thái:</span>
-              <span class="font-black ${submission.status === 'graded' ? 'text-blue-600' : 'text-amber-500'}">
-                ${submission.status === 'graded' ? '✓ Đã chấm xong' : '⏳ Chờ giáo viên chấm'}
-              </span>
-            </div>
-          </div>
-          ${submission.essay_score !== null ? `<p class="mt-2 text-xs"><span class="text-gray-500">Điểm tự luận:</span> <span class="text-blue-600 font-black">${submission.essay_score}đ</span></p>` : ''}
-          ${submission.teacher_comment ? `<div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-xs text-gray-700 rounded-r-xl"><i class="fas fa-comment-alt text-yellow-500 mr-1"></i><strong>Thầy nhận xét:</strong> ${submission.teacher_comment}</div>` : ''}
-        </div>`;
-      if (currentHomeworkConfig?.video_solution) {
-        html += `<div class="mt-3 p-4 bg-gray-100 rounded-xl">
-          <h4 class="font-bold text-gray-800 text-xs mb-2"><i class="fab fa-youtube text-red-500 mr-2"></i>Video hướng dẫn giải chi tiết:</h4>
-          <a href="${currentHomeworkConfig.video_solution}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">Bấm vào đây để xem video chữa bài</a>
-        </div>`;
-      }
-      container.innerHTML = html;
-      typesetMath(container);
+    if (!currentHomeworkQuestions.length) {
+      container.innerHTML = `<div class="text-gray-400 italic text-sm">Chưa có câu hỏi cho bài tập này.</div>`;
       return;
     }
 
-    // ── Form nộp bài ──
-    let html = `<form id="homework-form" class="space-y-5">`;
+    let html = `<div class="space-y-5">`;
 
     currentHomeworkQuestions.forEach((q, index) => {
+      const answer = answeredMap[q.id];
+
       html += `<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 question-box" data-qid="${q.id}" data-type="${q.question_type}">
         <p class="font-semibold text-gray-800 mb-3 text-sm">
           Câu ${index + 1}: ${q.question}
@@ -848,130 +866,160 @@
         </p>
         ${q.image_url ? `<img src="${q.image_url}" class="max-w-full h-auto rounded-lg mb-3 max-h-60 object-contain border" alt="Đề bài">` : ''}`;
 
-      if (q.question_type === 'choice') {
-        html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">`;
-        q.homework_choices.forEach(choice => {
-          html += `<label class="flex items-center p-3 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
-            <input type="radio" name="question_${q.id}" value="${choice.id}" data-correct="${choice.is_correct}"
-              class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3 flex-shrink-0">
-            <span class="font-black text-blue-900 mr-2 text-sm">${choice.option_label}.</span>
-            <span class="text-gray-700 text-sm">${choice.option_text}</span>
-          </label>`;
-        });
-        html += `</div>`;
-
-      } else if (q.question_type === 'essay') {
-        // Upload ảnh riêng cho từng câu tự luận
-        html += `<div class="mt-2">
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs mb-3">
-            <i class="fas fa-info-circle mr-1"></i>
-            Câu tự luận — em làm ra giấy, chụp ảnh rồi tải lên bên dưới.
+      if (answer) {
+        // ── ĐÃ NỘP CÂU NÀY — khóa lại, chỉ hiển thị kết quả ──
+        if (q.question_type === 'choice') {
+          const chosen = (q.homework_choices || []).find(c => c.id === answer.selected_choice_id);
+          const isCorrect = chosen ? !!chosen.is_correct : false;
+          html += `<div class="mt-2 p-3 rounded-xl border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
+            <div class="text-xs font-bold ${isCorrect ? 'text-green-700' : 'text-red-700'} flex items-center gap-1.5">
+              <i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+              Đã nộp — Bạn đã chọn: <span class="text-blue-900">${chosen ? `${chosen.option_label}. ${chosen.option_text}` : '(không chọn đáp án nào)'}</span>
+            </div>
+            ${answer.score != null ? `<div class="text-xs text-gray-500 mt-1">Điểm: <b>${answer.score}</b></div>` : ''}
+          </div>`;
+        } else {
+          html += `<div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-center gap-1.5">
+            <i class="fas fa-check-circle"></i> Đã nộp câu này — không thể sửa lại.
           </div>
-          <div class="essay-upload-box">
-            <label class="flex items-center gap-2 cursor-pointer text-xs text-blue-700 font-bold mb-2">
-              <i class="fas fa-camera text-blue-500"></i>
-              Tải ảnh bài làm câu ${index + 1}
-            </label>
-            <input type="file" accept="image/*" multiple
-              onchange="onEssayFileChange('${q.id}', this)"
-              class="block w-full text-xs text-gray-500
-                file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0
-                file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700
-                hover:file:bg-blue-200 cursor-pointer">
-            <div id="essay-preview-${q.id}" class="essay-preview-wrap"></div>
+          <div class="essay-preview-wrap mt-2">
+            ${(answer.files || []).map(url => `<div class="essay-preview-item"><img src="${url}" alt="ảnh bài làm" onclick="viewEssayImg('${url}')"></div>`).join('')}
           </div>
-        </div>`;
+          ${answer.score != null ? `<div class="text-xs text-gray-500 mt-2">Điểm: <b>${answer.score}</b></div>` : ''}
+          ${answer.teacher_comment ? `<div class="mt-2 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-xs text-gray-700 rounded-r-xl"><i class="fas fa-comment-alt text-yellow-500 mr-1"></i>${answer.teacher_comment}</div>` : ''}`;
+        }
+      } else {
+        // ── CHƯA NỘP — hiện form để làm câu này ──
+        if (q.question_type === 'choice') {
+          html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">`;
+          (q.homework_choices || []).forEach(choice => {
+            html += `<label class="flex items-center p-3 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
+              <input type="radio" name="question_${q.id}" value="${choice.id}" data-correct="${choice.is_correct}"
+                class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3 flex-shrink-0">
+              <span class="font-black text-blue-900 mr-2 text-sm">${choice.option_label}.</span>
+              <span class="text-gray-700 text-sm">${choice.option_text}</span>
+            </label>`;
+          });
+          html += `</div>
+          <button type="button" onclick="submitChoiceQuestion('${q.id}')"
+            class="mt-3 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white font-black py-2.5 px-6 rounded-xl shadow transition text-xs uppercase tracking-wide">
+            <i class="fas fa-paper-plane mr-2"></i>Nộp câu này
+          </button>`;
+        } else if (q.question_type === 'essay') {
+          html += `<div class="mt-2">
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs mb-3">
+              <i class="fas fa-info-circle mr-1"></i>
+              Câu tự luận — em làm ra giấy, chụp ảnh rồi tải lên bên dưới. Lưu ý: mỗi câu chỉ nộp được 1 lần.
+            </div>
+            <div class="essay-upload-box">
+              <label class="flex items-center gap-2 cursor-pointer text-xs text-blue-700 font-bold mb-2">
+                <i class="fas fa-camera text-blue-500"></i>
+                Tải ảnh bài làm câu ${index + 1}
+              </label>
+              <input type="file" accept="image/*" multiple
+                onchange="onEssayFileChange('${q.id}', this)"
+                class="block w-full text-xs text-gray-500
+                  file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0
+                  file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700
+                  hover:file:bg-blue-200 cursor-pointer">
+              <div id="essay-preview-${q.id}" class="essay-preview-wrap"></div>
+            </div>
+            <button type="button" onclick="submitEssayQuestion('${q.id}')"
+              class="mt-3 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white font-black py-2.5 px-6 rounded-xl shadow transition text-xs uppercase tracking-wide">
+              <i class="fas fa-paper-plane mr-2"></i>Nộp câu này
+            </button>
+          </div>`;
+        }
       }
 
       html += `</div>`;
     });
 
-    html += `<div class="pt-2">
-      <button type="button" onclick="submitHomework()"
-        class="w-full bg-blue-700 hover:bg-blue-800 active:scale-95 text-white font-black py-3.5 px-8 rounded-2xl shadow transition text-sm uppercase tracking-wide">
-        <i class="fas fa-paper-plane mr-2"></i>Nộp bài tập ngay
-      </button>
-    </div></form>`;
+    if (currentHomeworkConfig?.video_solution && currentSubmissionId) {
+      html += `<div class="p-4 bg-gray-100 rounded-xl">
+        <h4 class="font-bold text-gray-800 text-xs mb-2"><i class="fab fa-youtube text-red-500 mr-2"></i>Video hướng dẫn giải chi tiết:</h4>
+        <a href="${currentHomeworkConfig.video_solution}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">Bấm vào đây để xem video chữa bài</a>
+      </div>`;
+    }
 
+    html += `</div>`;
     container.innerHTML = html;
     typesetMath(container);
   }
 
-  async function submitHomework() {
+  // Nộp 1 câu trắc nghiệm
+  async function submitChoiceQuestion(questionId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     const studentId = user ? (user.id || user.uid) : null;
-    if (!studentId) {
-      Swal.fire('Nhắc nhở', 'Vui lòng đăng nhập để nộp bài tập!', 'warning'); return;
-    }
+    if (!studentId) { Swal.fire('Nhắc nhở', 'Vui lòng đăng nhập để nộp bài tập!', 'warning'); return; }
 
-    Swal.fire({ title: 'Đang nộp bài...', text: 'Vui lòng đợi trong giây lát.',
-      allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    const sel = document.querySelector(`input[name="question_${questionId}"]:checked`);
+    if (!sel) { Swal.fire('Thiếu đáp án', 'Em hãy chọn 1 đáp án trước khi nộp câu này!', 'warning'); return; }
 
+    Swal.fire({ title: 'Đang nộp câu này...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
     try {
-      let choiceScore = 0, hasChoice = false;
-      const studentAnswers = [];
-      // Map: questionId -> array of uploaded URLs
-      const essayImagesByQ = {};
+      const submissionId = await getOrCreateSubmissionId(currentLessonId, studentId);
+      const q = currentHomeworkQuestions.find(x => String(x.id) === String(questionId));
+      const isCorrect = sel.getAttribute('data-correct') === 'true';
+      const score = isCorrect ? parseFloat(q?.score || 0) : 0;
 
-      // 1. Xử lý câu trắc nghiệm
-      currentHomeworkQuestions.forEach(q => {
-        if (q.question_type === 'choice') {
-          hasChoice = true;
-          const sel = document.querySelector(`input[name="question_${q.id}"]:checked`);
-          if (sel) {
-            const isCorrect = sel.getAttribute('data-correct') === 'true';
-            if (isCorrect) choiceScore += parseFloat(q.score || 0);
-            studentAnswers.push({ question_id: q.id, selected_choice_id: sel.value, answer_text: null });
-          } else {
-            studentAnswers.push({ question_id: q.id, selected_choice_id: null, answer_text: null });
-          }
-        } else if (q.question_type === 'essay') {
-          studentAnswers.push({ question_id: q.id, selected_choice_id: null, answer_text: 'Nộp kèm ảnh đính kèm' });
-          essayImagesByQ[q.id] = [];
-        }
+      const { error } = await sb.from('submission_answers').insert({
+        submission_id: submissionId,
+        question_id: questionId,
+        selected_choice_id: sel.value,
+        answer_text: null,
+        score
       });
+      if (error) throw error;
 
-      // 2. Upload ảnh từng câu tự luận
-      for (const q of currentHomeworkQuestions) {
-        if (q.question_type !== 'essay') continue;
-        const files = essayFilesPerQ[q.id] || [];
-        for (const file of files) {
-          const ext = file.name.split('.').pop();
-          const fileName = `${studentId}/${q.id}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-          const { error: upErr } = await sb.storage.from(HOMEWORK_BUCKET).upload(fileName, file);
-          if (upErr) throw upErr;
-          const { data: urlData } = sb.storage.from(HOMEWORK_BUCKET).getPublicUrl(fileName);
-          essayImagesByQ[q.id].push(urlData.publicUrl);
-        }
-      }
-
-      // 3. Gộp tất cả URL ảnh vào 1 mảng phẳng (giữ tương thích với cột essay_images hiện tại)
-      // Đồng thời nhúng metadata câu vào answer_text để admin biết ảnh thuộc câu nào
-      const essayImagesFlat = [];
-      for (const q of currentHomeworkQuestions) {
-        if (q.question_type !== 'essay') continue;
-        const urls = essayImagesByQ[q.id] || [];
-        urls.forEach(u => essayImagesFlat.push(u));
-        // Cập nhật answer_text cho câu đó để ghi lại URL cụ thể
-        const ans = studentAnswers.find(a => a.question_id === q.id);
-        if (ans && urls.length) ans.answer_text = `[${urls.join(', ')}]`;
-      }
-
-      const { error: insertError } = await sb.from('homework_submissions').insert({
-        lesson_id: parseInt(currentLessonId),
-        student_id: studentId,
-        student_answers: studentAnswers,
-        choice_score: hasChoice ? choiceScore : null,
-        essay_images: essayImagesFlat,
-        status: 'pending'
-      });
-      if (insertError) throw insertError;
-
-      Swal.fire('Nộp bài thành công! 🎉', 'Bài tập của em đã được gửi tới Thầy.', 'success');
+      Swal.fire('Đã nộp câu này! ✅', '', 'success');
       loadHomework(currentLessonId);
-
     } catch (error) {
-      console.error("Lỗi nộp bài:", error);
+      console.error("Lỗi nộp câu trắc nghiệm:", error);
+      Swal.fire('Lỗi nộp bài', error.message, 'error');
+    }
+  }
+
+  // Nộp 1 câu tự luận (kèm ảnh)
+  async function submitEssayQuestion(questionId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const studentId = user ? (user.id || user.uid) : null;
+    if (!studentId) { Swal.fire('Nhắc nhở', 'Vui lòng đăng nhập để nộp bài tập!', 'warning'); return; }
+
+    const files = essayFilesPerQ[questionId] || [];
+    if (!files.length) { Swal.fire('Thiếu ảnh', 'Em hãy tải ít nhất 1 ảnh bài làm trước khi nộp câu này!', 'warning'); return; }
+
+    Swal.fire({ title: 'Đang nộp câu này...', text: 'Vui lòng đợi trong giây lát.',
+      allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    try {
+      const submissionId = await getOrCreateSubmissionId(currentLessonId, studentId);
+
+      const { data: answerRow, error: ansErr } = await sb.from('submission_answers')
+        .insert({ submission_id: submissionId, question_id: questionId, selected_choice_id: null, answer_text: null })
+        .select('id').single();
+      if (ansErr) throw ansErr;
+
+      const uploadedUrls = [];
+      for (const file of files) {
+        const ext = file.name.split('.').pop();
+        const fileName = `${studentId}/${questionId}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await sb.storage.from(HOMEWORK_BUCKET).upload(fileName, file);
+        if (upErr) throw upErr;
+        const { data: urlData } = sb.storage.from(HOMEWORK_BUCKET).getPublicUrl(fileName);
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      if (uploadedUrls.length) {
+        const rows = uploadedUrls.map(url => ({ answer_id: answerRow.id, file_url: url }));
+        const { error: fileErr } = await sb.from('submission_files').insert(rows);
+        if (fileErr) throw fileErr;
+      }
+
+      delete essayFilesPerQ[questionId];
+      Swal.fire('Đã nộp câu này! ✅', '', 'success');
+      loadHomework(currentLessonId);
+    } catch (error) {
+      console.error("Lỗi nộp câu tự luận:", error);
       Swal.fire('Lỗi nộp bài', error.message, 'error');
     }
   }
@@ -1201,10 +1249,23 @@
         .select('*').eq('lesson_id', id).maybeSingle();
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       let submission = null;
+      let totalScore = 0, answeredCount = 0, totalQuestions = 0;
       if (user) {
+        const studentId = user.id || user.uid;
         const { data: sub } = await sb.from('homework_submissions')
-          .select('*').eq('lesson_id', id).eq('student_id', user.id || user.uid).maybeSingle();
+          .select('*').eq('lesson_id', id).eq('student_id', studentId).maybeSingle();
         submission = sub;
+        if (sub) {
+          const { data: qs } = await sb.from('homework_questions').select('id').eq('lesson_id', id);
+          totalQuestions = (qs || []).length;
+          const qIds = (qs || []).map(q => q.id);
+          if (qIds.length) {
+            const { data: answers } = await sb.from('submission_answers')
+              .select('score').eq('submission_id', sub.id).in('question_id', qIds);
+            answeredCount = (answers || []).length;
+            totalScore = (answers || []).reduce((s, a) => s + (a.score != null ? Number(a.score) : 0), 0);
+          }
+        }
       }
 
       document.getElementById('lesson-title').textContent = (lesson.title || 'Bài học') + ' — Chữa bài tập về nhà';
@@ -1217,13 +1278,12 @@
         renderVideo(config.video_solution);
         let resultHtml = '';
         if (submission) {
-          resultHtml = `<div class="p-4 rounded-xl border ${submission.status === 'graded' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}">
-            <div class="font-black text-[11px] uppercase mb-1 ${submission.status === 'graded' ? 'text-green-700' : 'text-yellow-700'}">
-              ${submission.status === 'graded' ? 'Bài làm của bạn đã được chấm' : 'Bài làm của bạn đang chờ chấm'}
+          const done = totalQuestions > 0 && answeredCount >= totalQuestions;
+          resultHtml = `<div class="p-4 rounded-xl border ${done ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}">
+            <div class="font-black text-[11px] uppercase mb-1 ${done ? 'text-green-700' : 'text-yellow-700'}">
+              Đã làm ${answeredCount}/${totalQuestions || '?'} câu
             </div>
-            ${submission.choice_score != null ? `<div class="text-xs text-gray-600">Điểm trắc nghiệm: <b>${submission.choice_score}</b>/10</div>` : ''}
-            ${submission.essay_score  != null ? `<div class="text-xs text-gray-600">Điểm tự luận: <b>${submission.essay_score}</b>/10</div>` : ''}
-            ${submission.teacher_comment ? `<div class="text-xs text-gray-600 mt-1 italic">Nhận xét của thầy: ${submission.teacher_comment}</div>` : ''}
+            <div class="text-xs text-gray-600">Tổng điểm hiện tại: <b>${totalScore}</b></div>
           </div>`;
         }
         document.getElementById('lesson-content').innerHTML = resultHtml || `<p class="text-gray-400 italic text-sm">Xem video chữa bài tập ở trên.</p>`;
