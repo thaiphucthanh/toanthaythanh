@@ -138,7 +138,7 @@
             btnSubmit.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
 
             try {
-                // 3. Kiểm tra trùng lặp tài khoản (email/sđt) trong bảng accounts
+                // 3. Kiểm tra trùng lặp tài khoản (email/sđt) trong bảng accounts công khai trước
                 const { data: existingUser, error: checkError } = await supabaseClient
                     .from('accounts')
                     .select('email, sdt')
@@ -153,10 +153,19 @@
                     return;
                 }
 
-                // 4. TẠO TÀI KHOẢN THẬT TRÊN SUPABASE AUTH (bước quan trọng nhất, trước đây bị thiếu)
+                // 4. TẠO TÀI KHOẢN TRÊN SUPABASE AUTH
+                // -> Khi lệnh này thành công, Trigger trên Supabase sẽ tự động chèn dữ liệu vào bảng public.accounts công khai ngầm.
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: emailValue,
-                    password: passwordValue
+                    password: passwordValue,
+                    options: {
+                        // Đẩy thêm data thông tin học sinh vào metadata của Auth để hàm Trigger nhận được thông tin lưu vào bảng accounts công khai
+                        data: {
+                            fullname: fullnameValue,
+                            sdt: sdtValue,
+                            link_fb: linkFbValue
+                        }
+                    }
                 });
 
                 if (authError) {
@@ -177,35 +186,14 @@
                     return;
                 }
 
-                // 5. Đẩy hồ sơ vào bảng `accounts`, dùng ĐÚNG id vừa tạo ở Supabase Auth
-                //    -> Đây là điểm mấu chốt để login.html sau này match được profile theo authData.user.id
-                const { error: insertError } = await supabaseClient
-                    .from('accounts')
-                    .insert([{
-                        id: authData.user.id,
-                        fullname: fullnameValue,
-                        email: emailValue,
-                        sdt: sdtValue,
-                        link_fb: linkFbValue,
-                        role: 'student',
-                        status: 'inactive',
-                        created_at: new Date().toISOString()
-                    }]);
+                // 🔥 Giai đoạn 5 cũ (Lệnh chèn thủ công .from('accounts').insert()) đã được xóa bỏ hoàn toàn tại đây
+                // để nhường quyền xử lý hoàn hảo cho Trigger, loại bỏ triệt để lỗi "duplicate key" đá nhau!
 
-                if (insertError) {
-                    // Hồ sơ accounts không tạo được dù đã có user Auth -> dọn dẹp để tránh tài khoản "mồ côi"
-                    console.error('Lỗi insert accounts sau khi đã tạo Auth user:', insertError);
-                    Swal.fire('Lỗi hệ thống', 'Tài khoản xác thực đã tạo nhưng không lưu được hồ sơ học sinh. Vui lòng báo Thầy để kiểm tra: ' + insertError.message, 'error');
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Gửi yêu cầu đăng ký';
-                    return;
-                }
-
-                // 🔥 Gọi hàm gửi email về hòm thư của thầy
+                // 🔥 Gọi hàm gửi thông báo về hòm thư của thầy qua Google Apps Script
                 sendNotificationToTeacher(fullnameValue, emailValue, sdtValue, linkFbValue);
 
                 // 6. Xác định có cần xác nhận email hay không (tuỳ cấu hình Supabase Auth của thầy)
-                const needsEmailConfirm = !authData.session; // Nếu bật "Confirm email", session sẽ là null sau signUp
+                const needsEmailConfirm = !authData.session; 
 
                 Swal.fire({
                     icon: 'success',
@@ -237,7 +225,7 @@
                 });
 
             } catch (err) {
-                console.error("Lỗi đăng ký:", err);
+                console.error("Lỗi hệ thống đăng ký:", err);
                 Swal.fire('Lỗi hệ thống', 'Không thể kết nối dữ liệu đến Supabase. Thầy hãy kiểm tra lại cấu hình nhé!', 'error');
             } finally {
                 btnSubmit.disabled = false;
