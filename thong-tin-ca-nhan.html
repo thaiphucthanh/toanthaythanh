@@ -455,23 +455,20 @@ function renderHeader(user) {
                 <div class="text-blue-900 font-black text-xs uppercase">${user.fullname}</div>
                 <div class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">${user.role === 'admin' ? 'Quản trị viên' : 'Học sinh'}</div>
             </div>
+            <img src="logo.png" class="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-blue-900 object-cover shadow flex-shrink-0">
             <div class="dropdown-user" id="dropdownUser">
-                ${adminLink}
-                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle" style="margin-right:12px;color:#3b82f6"></i>Thông tin cá nhân</a>
-                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open" style="margin-right:12px;color:#22c55e"></i>Khóa học của tôi</a>
+                ${adminOpt}
+                <a href="thong-tin-ca-nhan.html" class="item-dropdown"><i class="fas fa-user-circle mr-3 text-blue-500"></i>Hồ sơ</a>
+                <a href="khoa-hoc-cua-toi.html" class="item-dropdown"><i class="fas fa-book-open mr-3 text-green-500"></i>Khóa học</a>
                 <div class="divider"></div>
-                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown" style="color:#ef4444">
-                    <i class="fas fa-sign-out-alt" style="margin-right:12px"></i>Đăng xuất
-                </a>
+                <a href="javascript:void(0)" onclick="logout()" class="item-dropdown text-red-600"><i class="fas fa-sign-out-alt mr-3"></i>Đăng xuất</a>
             </div>
         </div>`;
-    ['menu-dk', 'mob-login', 'mob-reg'].forEach(id => {
+        ['menu-dk', 'mob-login', 'mob-reg'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    if (user.role === 'admin') document.getElementById('btn-edit-date').classList.remove('hidden');
 }
-
 
 function toggleMenu(e) { e.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('active'); }
 function logout() {
