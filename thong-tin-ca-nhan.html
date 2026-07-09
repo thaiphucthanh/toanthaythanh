@@ -620,7 +620,7 @@ async function saveInfo() {
     }
 }
 
-// ── Đổi mật khẩu ─────────────────────────────
+// ── Đổi mật khẩu (dùng Supabase Auth) ────────
 async function changePassword() {
     const oldPw = document.getElementById('inp-pw-old').value;
     const newPw = document.getElementById('inp-pw-new').value;
@@ -635,35 +635,33 @@ async function changePassword() {
     if (newPw !== confirmPw) {
         showAlert('pw', false, 'Mật khẩu nhập lại không khớp!'); return;
     }
+    if (oldPw === newPw) {
+        showAlert('pw', false, 'Mật khẩu mới phải khác mật khẩu hiện tại!'); return;
+    }
 
     const btn = document.getElementById('btn-change-pw');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang xử lý...';
 
     try {
-        // Kiểm tra mật khẩu cũ
-        const { data: acc, error: chkErr } = await sb
-            .from('accounts')
-            .select('id, password')
-            .eq('id', currentUser.id)
-            .single();
+        if (!currentUser?.email) {
+            showAlert('pw', false, 'Không tìm thấy email tài khoản, vui lòng đăng nhập lại!');
+            return;
+        }
 
-        if (chkErr) throw chkErr;
+        // Bước 1: Xác minh mật khẩu hiện tại bằng cách đăng nhập lại qua Supabase Auth
+        const { error: signInErr } = await sb.auth.signInWithPassword({
+            email: currentUser.email,
+            password: oldPw
+        });
 
-        if (acc.password !== oldPw) {
+        if (signInErr) {
             showAlert('pw', false, 'Mật khẩu hiện tại không đúng!');
             return;
         }
-        if (oldPw === newPw) {
-            showAlert('pw', false, 'Mật khẩu mới phải khác mật khẩu hiện tại!');
-            return;
-        }
 
-        // Cập nhật mật khẩu
-        const { error: upErr } = await sb
-            .from('accounts')
-            .update({ password: newPw })
-            .eq('id', currentUser.id);
+        // Bước 2: Đổi mật khẩu cho user đang đăng nhập (session vừa xác thực ở bước 1)
+        const { error: upErr } = await sb.auth.updateUser({ password: newPw });
 
         if (upErr) throw upErr;
 
@@ -675,7 +673,7 @@ async function changePassword() {
 
         showAlert('pw', true);
 
-        // Thông báo đăng xuất sau 3s
+        // Thông báo đăng xuất sau 1s
         setTimeout(() => {
             Swal.fire({
                 icon: 'success',
@@ -684,7 +682,8 @@ async function changePassword() {
                 confirmButtonText: 'Đăng nhập lại',
                 confirmButtonColor: '#1e3a8a',
                 allowOutsideClick: false
-            }).then(() => {
+            }).then(async () => {
+                await sb.auth.signOut();
                 localStorage.removeItem('user');
                 window.location.href = 'login.html';
             });
