@@ -103,19 +103,29 @@
     <div id="mob-drawer">
         <div class="flex items-center justify-between p-4 border-b border-white/10">
             <div class="flex items-center gap-3">
-                <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-white/30">
+                <img src="logo.png" class="w-9 h-9 rounded-full border-2 border-white/30" onerror="this.style.display='none'">
                 <div>
-                    <div class="font-black text-white text-sm uppercase italic leading-none">Toán Thầy Thành</div>
+                    <div class="font-black text-white text-sm uppercase leading-none">Toán Thầy Thành</div>
                     <div class="text-blue-300 text-[9px] font-bold uppercase tracking-widest mt-0.5">Luyện thi vào 10</div>
                 </div>
             </div>
-            <button onclick="closeMob()" class="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
+            <button onclick="closeMob()" class="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center text-xs">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <nav class="flex-1 py-1">
-            <a href="trangchu.html" class="mi"><i class="fas fa-home w-4 text-blue-300 text-sm"></i> Trang chủ</a>
+        <nav class="flex-1 py-1" id="mob-nav">
+            <a href="trangchu.html" class="mi"><i class="fas fa-home w-4 text-yellow-300 text-sm"></i> Trang chủ</a>
             <a href="khoa-hoc-cua-toi.html" class="mi"><i class="fas fa-graduation-cap w-4 text-blue-300 text-sm"></i> Khóa học</a>
-            <a href="#" class="mi"><i class="fas fa-file-alt w-4 text-blue-300 text-sm"></i> Tài liệu</a>
+            <a href="tailieu-free.html" class="mi"><i class="fas fa-file-alt w-4 text-blue-300 text-sm"></i> Tài liệu miễn phí</a>
+            <a href="hoc-online.html" class="mi"><i class="fas fa-chalkboard-teacher w-4 text-blue-300 text-sm"></i> Học Online</a>
+            <a href="infor-detail.html" class="mi"><i class="fas fa-info-circle w-4 text-blue-300 text-sm"></i> Thông tin</a>
+            <a href="thong-tin-ca-nhan.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1"><i class="fa-solid fa-user"></i>Hồ sơ cá nhân</a>
+            <a href="login.html" class="mi" id="mob-login"><i class="fas fa-sign-in-alt w-4 text-blue-300 text-sm"></i> Đăng nhập</a>
+            <a href="register.html" class="mi mi-hl" id="mob-reg"><i class="fas fa-bolt w-4 text-sm"></i> Đăng ký ngay</a>
         </nav>
+        <div class="p-4 border-t border-white/10">
+            <div class="text-[9px] text-blue-300/60 font-bold uppercase tracking-widest text-center">Dạy học từ tâm · Nâng tầm kiến thức</div>
+        </div>
     </div>
 </div>
 
@@ -136,20 +146,21 @@
             </button>
         </div>
     </div>
-    <nav class="thanh-menu-ngang hidden md:block">
+    <nav class="thanh-menu-ngang hidden md:block shadow-inner">
         <div class="khung-trang">
-            <ul class="flex gap-5 list-none p-0 m-0 py-2">
-                <li><a href="trangchu.html" class="item-menu text-sm opacity-80 hover:opacity-100">Trang chủ</a></li>
-                <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100">Khóa học của tôi</a></li>
-                <li><a href="thong-tin-ca-nhan.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1">Hồ sơ cá nhân</a></li>
+            <ul class="flex gap-7 list-none p-0 m-0 py-3 items-center">
+                <li><a href="trangchu.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1 inline-flex items-center gap-1.5"><i class="fas fa-home text-xs text-yellow-300"></i>Trang chủ</a></li>
+                <li><a href="khoa-hoc-cua-toi.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-graduation-cap text-xs"></i>Khóa học của tôi</a></li>
+                <li><a href="tailieu-free.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-file-alt text-xs"></i>Tài liệu miễn phí</a></li>
+                <li><a href="hoc-online.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-teacher text-xs"></i>Học Online</a></li>
+                <li><a href="infor-detail.html" class="item-menu text-sm opacity-80 hover:opacity-100 hover:text-yellow-300 transition-all inline-flex items-center gap-1.5"><i class="fas fa-info-circle text-xs"></i>Thông tin</a></li>
+                <li><a href="thong-tin-ca-nhan.html" class="item-menu text-sm border-b-2 border-yellow-400 pb-1"><i class="fa-solid fa-user"></i>Hồ sơ cá nhân</a></li>
+                <li id="menu-dk" class="ml-auto">
+                    <a href="register.html" class="item-menu text-sm bg-yellow-400 text-blue-900 px-4 py-2 rounded-xl font-black hover:bg-yellow-300 hover:-translate-y-[1px] transition-all shadow-sm inline-flex items-center gap-1.5">
+                        <i class="fas fa-bolt text-xs"></i>Đăng ký ngay
+                    </a>
+                </li>
             </ul>
-        </div>
-    </nav>
-    <nav class="thanh-menu-ngang md:hidden overflow-x-auto">
-        <div class="flex gap-4 px-4 py-2 whitespace-nowrap">
-            <a href="trangchu.html" class="item-menu text-xs opacity-80 flex-shrink-0">Trang chủ</a>
-            <a href="khoa-hoc-cua-toi.html" class="item-menu text-xs opacity-80 flex-shrink-0">Khóa học</a>
-            <a href="thong-tin-ca-nhan.html" class="item-menu text-xs border-b-2 border-yellow-400 pb-1 flex-shrink-0">Hồ sơ</a>
         </div>
     </nav>
 </header>
