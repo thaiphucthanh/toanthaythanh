@@ -244,12 +244,20 @@
         }
 
         window.onload = () => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user?.fullname) {
-                document.getElementById('admin-name').innerHTML =
-                    `Chào ${user.fullname}<br><span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>`;
-            }
-            loadStats();
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') {
+            alert("Cảnh báo: Bạn không có quyền truy cập khu vực Quản trị!");
+            window.location.href = "trangchu.html"; // Hoặc login.html tùy cấu trúc của Thầy
+            return; // Dừng thực thi các lệnh phía sau
+        }
+        
+        if (user.fullname) {
+            document.getElementById('admin-name').innerHTML =
+                `Chào ${user.fullname}<br><span class="text-[10px] text-gray-400 uppercase font-medium">Quản trị viên</span>`;
+        }
+        
+        // 4. Tiến hành tải số liệu thống kê từ database
+        loadStats();
         };
     </script>
 </body>
