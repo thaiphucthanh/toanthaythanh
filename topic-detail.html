@@ -15,6 +15,7 @@
         };
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" id="mathjax-script"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -83,6 +84,11 @@
         .essay-mode-btn:not(.active) { background: white; color: #92400e; }
         .math-preview { background: white; border: 1.5px dashed #fde68a; border-radius: 12px; padding: 10px 12px; min-height: 38px; font-size: 13px; color: #374151; }
         .math-preview:empty::before { content: 'Xem trước LaTeX sẽ hiện ở đây...'; color: #d1d5db; font-style: italic; font-size: 12px; }
+
+        /* AI import */
+        .ai-import-box { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1.5px dashed #818cf8; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+        .ai-progress-log { background: #0f172a; color: #a5f3fc; font-family: monospace; font-size: 11px; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
+        .q-mini-img { max-height: 90px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -258,6 +264,26 @@
     </div>
 
     <div id="hw-questions-section" class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
+
+        <!-- ===== AI AUTO IMPORT FROM PDF ===== -->
+        <div class="ai-import-box">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h4 class="font-black text-indigo-900 text-sm flex items-center gap-2">
+                        <i class="fas fa-robot"></i> Thêm tự động từ file PDF (AI)
+                    </h4>
+                    <p class="text-[11px] text-indigo-500 mt-0.5">Tải đề PDF lên, AI sẽ tự tách câu trắc nghiệm (A/B/C/D), câu tự luận và cắt ảnh minh họa (nếu có) — giữ nguyên chất lượng gốc.</p>
+                </div>
+                <button onclick="document.getElementById('ai-pdf-input').click()" id="btn-ai-import" class="flex-shrink-0 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20">
+                    <i class="fas fa-file-pdf"></i> Chọn file PDF
+                </button>
+                <input type="file" id="ai-pdf-input" accept="application/pdf" style="display:none" onchange="handleAiPdfSelect(event)">
+            </div>
+            <div id="ai-progress-wrap" class="hidden">
+                <div id="ai-progress-log" class="ai-progress-log"></div>
+            </div>
+        </div>
+
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h4 class="font-black text-blue-900 uppercase text-sm">Danh sách câu hỏi</h4>
@@ -301,6 +327,9 @@
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+// ĐIỀN URL Web App của Google Apps Script sau khi Deploy (xem file Code.gs đi kèm)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuwORtLCIvz_SRHTfslyW3d5Bp9rOVC_cKGp-QxJPR_3_I0Col_o7115ixDdM87qMX/exec";
 
 const urlParams = new URLSearchParams(window.location.search);
 const topicId = urlParams.get('topic_id');
@@ -476,6 +505,7 @@ async function openHwPanel(lessonId) {
     document.getElementById('hw-video').value = '';
     document.getElementById('hw-type').value = 'mixed';
     document.getElementById('hw-save-info').innerText = '';
+    resetAiProgress();
 
     document.getElementById('hw-panel-overlay').classList.add('open');
     document.getElementById('hw-panel').classList.add('open');
@@ -527,6 +557,7 @@ async function openHwPanel(lessonId) {
                     so_cau: q.order_index,
                     type: 'choice',
                     noi_dung: q.question,
+                    image_url: q.image_url || null,
                     lua_chon,
                     dap_an_dung
                 };
@@ -573,6 +604,7 @@ function addQuestion(qType) {
             so_cau,
             type: 'choice',
             noi_dung: '',
+            image_url: null,
             lua_chon: { A: '', B: '', C: '', D: '' },
             dap_an_dung: ''
         });
@@ -627,6 +659,11 @@ function renderQuestions() {
             </div>
 
             ${!isEssay ? `
+                ${q.image_url ? `
+                    <div class="mb-2">
+                        <img src="${q.image_url}" class="q-mini-img">
+                        <button type="button" onclick="removeQuestionImg(${idx})" class="block text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh minh họa</button>
+                    </div>` : ''}
                 <textarea
                     placeholder="Nhập yêu cầu đề bài..."
                     onchange="hwQuestions[${idx}].noi_dung = this.value"
@@ -697,6 +734,11 @@ function renderQuestions() {
     hwQuestions.forEach((q, idx) => {
         if (q.type === 'essay' && q.input_mode !== 'image') renderMathPreview(idx);
     });
+}
+
+function removeQuestionImg(idx) {
+    hwQuestions[idx].image_url = null;
+    renderQuestions();
 }
 
 // =====================
@@ -791,6 +833,187 @@ function removeEssayImg(idx) {
     renderQuestions();
 }
 
+// =====================================================================
+// AI AUTO-IMPORT TỪ FILE PDF (Apps Script + Gemini + pdf.js crop ảnh)
+// =====================================================================
+function resetAiProgress() {
+    const wrap = document.getElementById('ai-progress-wrap');
+    const log = document.getElementById('ai-progress-log');
+    if (wrap) wrap.classList.add('hidden');
+    if (log) log.innerHTML = '';
+}
+
+function aiLog(msg, isError) {
+    const wrap = document.getElementById('ai-progress-wrap');
+    const log = document.getElementById('ai-progress-log');
+    if (!wrap || !log) return;
+    wrap.classList.remove('hidden');
+    const line = document.createElement('div');
+    line.style.color = isError ? '#fca5a5' : '#a5f3fc';
+    line.innerText = '› ' + msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleAiPdfSelect(event) {
+    const file = event.target.files[0];
+    event.target.value = ''; // cho phép chọn lại cùng 1 file lần sau
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+        Swal.fire('Sai định dạng!', 'Vui lòng chọn file .pdf', 'warning');
+        return;
+    }
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('XXXXXXXX')) {
+        Swal.fire('Chưa cấu hình!', 'Thầy cần deploy Google Apps Script (file Code.gs đi kèm) và điền URL vào biến APPS_SCRIPT_URL trong file HTML này.', 'warning');
+        return;
+    }
+    await importFromPdfAI(file);
+}
+
+async function importFromPdfAI(file) {
+    resetAiProgress();
+    const btn = document.getElementById('btn-ai-import');
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+
+    try {
+        aiLog(`Đang đọc file "${file.name}"...`);
+        const [base64, arrayBuffer] = await Promise.all([
+            fileToBase64(file),
+            file.arrayBuffer()
+        ]);
+
+        aiLog('Đang gửi PDF sang Apps Script → Gemini để phân tích (có thể mất 30-90 giây)...');
+        const resp = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // tránh CORS preflight với Apps Script
+            body: JSON.stringify({ pdfBase64: base64, fileName: file.name })
+        });
+
+        if (!resp.ok) throw new Error('Apps Script trả về lỗi HTTP ' + resp.status);
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Apps Script/Gemini báo lỗi không xác định.');
+
+        const questions = Array.isArray(data.questions) ? data.questions : [];
+        if (questions.length === 0) throw new Error('AI không tách được câu hỏi nào từ file này. Thầy kiểm tra lại file PDF (có thể là ảnh scan mờ hoặc quá dài).');
+
+        aiLog(`AI đã tách được ${questions.length} câu hỏi. Đang xử lý ảnh minh họa (nếu có)...`);
+
+        const hasImages = questions.some(q => q.has_image);
+        let pdfDoc = null;
+        if (hasImages) {
+            if (!window.pdfjsLib) throw new Error('Thư viện pdf.js chưa tải được, không thể cắt ảnh. Thầy kiểm tra kết nối mạng rồi thử lại.');
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        }
+
+        let addedCount = 0, imgOkCount = 0, imgFailCount = 0;
+        for (const q of questions) {
+            let entry;
+            if (q.type === 'true_false' || q.type === 'mcq' || q.type === 'choice') {
+                const lua_chon = { A: '', B: '', C: '', D: '' };
+                let dap_an_dung = '';
+                const rawOptions = q.options || q.sub_questions || [];
+                rawOptions.forEach((opt, i) => {
+                    const label = (opt.label || String.fromCharCode(65 + i)).toUpperCase().slice(0,1);
+                    if (['A','B','C','D'].includes(label)) {
+                        lua_chon[label] = opt.text || '';
+                        if (opt.is_correct) dap_an_dung = label;
+                    }
+                });
+                entry = { so_cau: 0, type: 'choice', noi_dung: q.question_text || '', image_url: null, lua_chon, dap_an_dung };
+            } else {
+                entry = { so_cau: 0, type: 'essay', noi_dung: q.question_text || '', image_url: null, input_mode: 'text' };
+            }
+
+            if (q.has_image && pdfDoc && q.image_page && q.image_bbox) {
+                try {
+                    aiLog(`Đang cắt ảnh minh họa cho câu (trang ${q.image_page})...`);
+                    const blob = await renderPdfPageCrop(pdfDoc, q.image_page, q.image_bbox);
+                    const url = await uploadCroppedImage(blob, hwQuestions.length + addedCount);
+                    entry.image_url = url;
+                    if (entry.type === 'essay') entry.input_mode = 'image';
+                    imgOkCount++;
+                } catch (imgErr) {
+                    console.error('Lỗi cắt/upload ảnh:', imgErr);
+                    imgFailCount++;
+                    aiLog('Cắt ảnh thất bại cho 1 câu, thầy có thể tự upload lại thủ công sau. Lỗi: ' + imgErr.message, true);
+                }
+            }
+
+            hwQuestions.push(entry);
+            addedCount++;
+        }
+
+        hwQuestions.forEach((qq, i) => qq.so_cau = i + 1);
+        renderQuestions();
+
+        aiLog(`Hoàn tất: thêm ${addedCount} câu (${imgOkCount} ảnh cắt thành công${imgFailCount ? ', ' + imgFailCount + ' ảnh lỗi' : ''}).`);
+
+        await Swal.fire({
+            icon: 'success',
+            title: `Đã import ${addedCount} câu hỏi từ AI!`,
+            html: `⚠️ Độ chính xác AI khoảng 90-95%. Vui lòng <b>kiểm tra kỹ lại</b> nội dung, công thức LaTeX, đáp án đúng và ảnh minh họa trước khi bấm "Lưu cấu hình".`,
+            confirmButtonText: 'Đã hiểu, để tôi soát lại'
+        });
+
+    } catch (err) {
+        console.error(err);
+        aiLog('LỖI: ' + err.message, true);
+        Swal.fire('Import AI thất bại!', err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+    }
+}
+
+// Render 1 trang PDF ở độ phân giải cao (scale=3 ~ tương đương in ấn) rồi cắt đúng vùng bbox
+// bbox tính theo % kích thước trang: { x, y, width, height } (0-100), gốc (0,0) ở góc trên-trái
+async function renderPdfPageCrop(pdfDoc, pageNum, bboxPercent, scale = 3) {
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale });
+
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = viewport.width;
+    pageCanvas.height = viewport.height;
+    const ctx = pageCanvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const cropX = Math.max(0, (bboxPercent.x / 100) * pageCanvas.width);
+    const cropY = Math.max(0, (bboxPercent.y / 100) * pageCanvas.height);
+    const cropW = Math.min(pageCanvas.width - cropX, (bboxPercent.width / 100) * pageCanvas.width);
+    const cropH = Math.min(pageCanvas.height - cropY, (bboxPercent.height / 100) * pageCanvas.height);
+
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = Math.max(1, Math.round(cropW));
+    cropCanvas.height = Math.max(1, Math.round(cropH));
+    cropCanvas.getContext('2d').drawImage(
+        pageCanvas, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height
+    );
+
+    return new Promise((resolve, reject) => {
+        cropCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Không tạo được ảnh từ canvas')), 'image/png', 1.0);
+    });
+}
+
+// Upload ảnh đã cắt (giữ nguyên chất lượng, PNG lossless) lên bucket 'documents'
+async function uploadCroppedImage(blob, idx) {
+    const fileName = `auto-cut/${Date.now()}-cau${idx + 1}.png`;
+    const { error } = await supabaseClient.storage.from('documents').upload(fileName, blob, { contentType: 'image/png' });
+    if (error) throw new Error(error.message);
+    const { data } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+    return data.publicUrl;
+}
+
 // =====================
 // SAVE HOMEWORK STRUCTURED DATA (FIXED)
 // =====================
@@ -848,12 +1071,14 @@ async function saveHomeworkConfig() {
         await supabaseClient.from('homework_questions').delete().eq('lesson_id', hwLessonId);
 
         // Bước 3: Đẩy danh sách câu hỏi mới lên bảng `homework_questions`
+        // Lưu ý: image_url được lưu cho MỌI loại câu hỏi (cả trắc nghiệm lẫn tự luận),
+        // vì đề Toán có thể có hình vẽ minh họa ở câu trắc nghiệm.
         const questionsPayload = hwQuestions.map(q => ({
             lesson_id: hwLessonId,
             order_index: q.so_cau,
             question_type: q.type,
             question: q.noi_dung || '',
-            image_url: q.type === 'essay' ? (q.image_url || null) : null,
+            image_url: q.image_url || null,
             score: 1
         }));
 
