@@ -329,7 +329,7 @@ const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
 // ĐIỀN URL Web App của Google Apps Script sau khi Deploy (xem file Code.gs đi kèm)
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuwORtLCIvz_SRHTfslyW3d5Bp9rOVC_cKGp-QxJPR_3_I0Col_o7115ixDdM87qMX/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec";
 
 const urlParams = new URLSearchParams(window.location.search);
 const topicId = urlParams.get('topic_id');
@@ -864,6 +864,19 @@ function fileToBase64(file) {
     });
 }
 
+// Gemini đôi khi trả về question_text bị chèn \n thừa giữa từng từ/công thức
+// (do đọc theo dàn dòng gốc của PDF). Hàm này gộp lại thành văn xuôi liền mạch,
+// chỉ giữ xuống dòng thật sự khi có 2 dòng trống liên tiếp (ngăn cách ý a/b/c).
+function normalizeQuestionText(raw) {
+    if (!raw) return '';
+    return raw
+        .replace(/\r\n/g, '\n')
+        .split(/\n{2,}/)                 // giữ lại ranh giới đoạn thật sự (ý a, ý b...)
+        .map(block => block.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim())
+        .join('\n\n')
+        .trim();
+}
+
 async function handleAiPdfSelect(event) {
     const file = event.target.files[0];
     event.target.value = ''; // cho phép chọn lại cùng 1 file lần sau
@@ -930,9 +943,9 @@ async function importFromPdfAI(file) {
                         if (opt.is_correct) dap_an_dung = label;
                     }
                 });
-                entry = { so_cau: 0, type: 'choice', noi_dung: q.question_text || '', image_url: null, lua_chon, dap_an_dung };
+                entry = { so_cau: 0, type: 'choice', noi_dung: normalizeQuestionText(q.question_text), image_url: null, lua_chon, dap_an_dung };
             } else {
-                entry = { so_cau: 0, type: 'essay', noi_dung: q.question_text || '', image_url: null, input_mode: 'text' };
+                entry = { so_cau: 0, type: 'essay', noi_dung: normalizeQuestionText(q.question_text), image_url: null, input_mode: 'text' };
             }
 
             if (q.has_image && pdfDoc && q.image_page && q.image_bbox) {
