@@ -184,6 +184,24 @@
       font-size: 22px; opacity: 0; transition: opacity 0.2s, transform 0.15s; pointer-events: none;
     }
     #cc-center-play.show { opacity: 1; }
+
+    /* Menu cài đặt: tốc độ phát + chất lượng */
+    #cc-settings-menu {
+      position: absolute; bottom: 44px; right: 8px; z-index: 60;
+      background: rgba(17,24,39,0.97); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 10px; width: 190px; color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #cc-settings-menu.hidden { display: none; }
+    .cc-settings-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55; margin-bottom: 6px; }
+    .cc-speed-btn, .cc-quality-btn {
+      font-size: 11px; font-weight: 700; padding: 5px 0; border-radius: 8px;
+      background: rgba(255,255,255,0.06); cursor: pointer; text-align: center;
+      transition: background 0.15s;
+    }
+    .cc-speed-btn:hover, .cc-quality-btn:hover { background: rgba(255,255,255,0.15); }
+    .cc-speed-btn.cc-active, .cc-quality-btn.cc-active { background: #3b82f6; }
+    .cc-quality-btn { text-align: left; padding: 6px 10px; }
   </style>
 </head>
 <body>
@@ -313,6 +331,17 @@
                 class="w-14 md:w-20" oninput="ccSetVolume(this.value)">
               <span id="cc-time" class="text-white text-[10px] md:text-[11px] font-bold tabular-nums ml-1 opacity-90">0:00 / 0:00</span>
               <div class="flex-1"></div>
+              <div class="relative">
+                <button type="button" class="cc-btn w-6 h-6 flex items-center justify-center text-xs" onclick="ccToggleSettingsMenu(event)">
+                  <i class="fas fa-cog"></i>
+                </button>
+                <div id="cc-settings-menu" class="hidden">
+                  <div class="cc-settings-label">Tốc độ phát</div>
+                  <div id="cc-speed-list" class="grid grid-cols-4 gap-1 mb-3"></div>
+                  <div class="cc-settings-label">Chất lượng</div>
+                  <div id="cc-quality-list" class="flex flex-col gap-1 max-h-32 overflow-y-auto"></div>
+                </div>
+              </div>
               <button type="button" class="cc-btn w-6 h-6 flex items-center justify-center text-xs" onclick="ccToggleFullscreen()">
                 <i class="fas fa-expand" id="cc-fs-icon"></i>
               </button>
@@ -563,6 +592,7 @@
     const p = document.getElementById('cc-progress'); if (p) p.value = 0;
     const t = document.getElementById('cc-time'); if (t) t.textContent = '0:00 / 0:00';
     const icon = document.getElementById('cc-play-icon'); if (icon) icon.className = 'fas fa-play';
+    document.getElementById('cc-settings-menu')?.classList.add('hidden');
     ccShowControls();
   }
 
@@ -577,6 +607,8 @@
     clearTimeout(ccHideTimer);
     ccHideTimer = setTimeout(() => {
       try {
+        const menuOpen = !document.getElementById('cc-settings-menu')?.classList.contains('hidden');
+        if (menuOpen) { ccScheduleHide(); return; }
         if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
           document.getElementById('custom-controls')?.classList.add('cc-hidden');
         }
@@ -697,6 +729,73 @@
     hideEndscreenShield();
     try { ytPlayer && ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch(e) {}
   }
+
+  // ══════════════════════════════════════════════
+  // CÀI ĐẶT: TỐC ĐỘ PHÁT + CHẤT LƯỢNG
+  // ══════════════════════════════════════════════
+  const QUALITY_LABELS = {
+    highres: 'Cao nhất', hd2160: '2160p (4K)', hd1440: '1440p', hd1080: '1080p',
+    hd720: '720p', large: '480p', medium: '360p', small: '240p', tiny: '144p', auto: 'Tự động'
+  };
+  const SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  function ccToggleSettingsMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('cc-settings-menu');
+    if (!menu) return;
+    const opening = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden');
+    if (opening) { ccPopulateSettingsMenu(); ccOnActivity(); }
+  }
+
+  function ccPopulateSettingsMenu() {
+    if (!ytPlayer) return;
+    // Tốc độ phát
+    let curRate = 1;
+    try { curRate = ytPlayer.getPlaybackRate() || 1; } catch(e) {}
+    const speedList = document.getElementById('cc-speed-list');
+    if (speedList) {
+      speedList.innerHTML = SPEED_OPTIONS.map(r => `
+        <div class="cc-speed-btn ${Math.abs(r - curRate) < 0.01 ? 'cc-active' : ''}" onclick="ccSetSpeed(${r})">${r}x</div>
+      `).join('');
+    }
+    // Chất lượng
+    let qualities = [];
+    let curQuality = 'auto';
+    try {
+      qualities = ytPlayer.getAvailableQualityLevels() || [];
+      curQuality = ytPlayer.getPlaybackQuality() || 'auto';
+    } catch(e) {}
+    const qualityList = document.getElementById('cc-quality-list');
+    if (qualityList) {
+      if (!qualities.length) {
+        qualityList.innerHTML = `<div class="text-[10px] opacity-50 italic px-1">Tự động theo mạng</div>`;
+      } else {
+        const opts = qualities.includes('auto') ? qualities : [...qualities, 'auto'];
+        qualityList.innerHTML = opts.map(q => `
+          <div class="cc-quality-btn ${q === curQuality ? 'cc-active' : ''}" onclick="ccSetQuality('${q}')">${QUALITY_LABELS[q] || q}</div>
+        `).join('');
+      }
+    }
+  }
+
+  function ccSetSpeed(rate) {
+    if (!ytPlayer) return;
+    try { ytPlayer.setPlaybackRate(rate); } catch(e) {}
+    ccPopulateSettingsMenu();
+  }
+  function ccSetQuality(q) {
+    if (!ytPlayer) return;
+    try { ytPlayer.setPlaybackQuality(q); } catch(e) {}
+    // YouTube có thể mất một chút để áp dụng chất lượng mới
+    setTimeout(ccPopulateSettingsMenu, 400);
+  }
+
+  window.addEventListener('click', (e) => {
+    if (!e.target.closest('#cc-settings-menu') && !e.target.closest('[onclick*="ccToggleSettingsMenu"]')) {
+      document.getElementById('cc-settings-menu')?.classList.add('hidden');
+    }
+  });
 
   function startWatchTimer() {
     if (watchInterval) return;
