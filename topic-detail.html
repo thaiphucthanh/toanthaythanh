@@ -864,17 +864,14 @@ function fileToBase64(file) {
     });
 }
 
-// Gemini đôi khi trả về question_text bị chèn \n thừa giữa từng từ/công thức
-// (do đọc theo dàn dòng gốc của PDF). Hàm này gộp lại thành văn xuôi liền mạch,
-// chỉ giữ xuống dòng thật sự khi có 2 dòng trống liên tiếp (ngăn cách ý a/b/c).
+// Gemini đôi khi trả về question_text bị chèn \n (đơn hoặc kép) giữa TỪNG TỪ/công thức
+// (do đọc theo dàn dòng gốc của PDF, không chỉ ở ranh giới ý a/b). Vì vậy không thể tin cậy
+// việc phân biệt "xuống dòng thật" và "xuống dòng rác" dựa vào số lượng \n liên tiếp.
+// Giải pháp an toàn nhất: gộp phẳng TOÀN BỘ khoảng trắng/xuống dòng thành đúng 1 dấu cách,
+// trả về văn xuôi liền mạch một dòng duy nhất.
 function normalizeQuestionText(raw) {
     if (!raw) return '';
-    return raw
-        .replace(/\r\n/g, '\n')
-        .split(/\n{2,}/)                 // giữ lại ranh giới đoạn thật sự (ý a, ý b...)
-        .map(block => block.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim())
-        .join('\n\n')
-        .trim();
+    return raw.replace(/\s+/g, ' ').trim();
 }
 
 async function handleAiPdfSelect(event) {
