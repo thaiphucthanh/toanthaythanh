@@ -125,6 +125,41 @@
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       border: 2px solid white; font-weight: 900;
     }
+
+    /* ══════════════════════════════════════════════
+       CHỐNG CHIA SẺ VIDEO
+       ══════════════════════════════════════════════ */
+    #video-wrap { position: relative; }
+    #video-wrap iframe { pointer-events: auto; }
+
+    /* Chắn vùng top: nơi hiện tên video / avatar kênh -> link ra YouTube khi hover/pause */
+    #shield-top {
+      position: absolute; top: 0; left: 0; right: 0; height: 24%;
+      z-index: 30; cursor: default; background: transparent;
+    }
+    /* Chắn góc dưới-phải: nơi logo YouTube + link "Xem trên YouTube" hay xuất hiện */
+    #shield-corner {
+      position: absolute; bottom: 0; right: 0; width: 15%; height: 14%;
+      min-width: 46px; min-height: 30px;
+      z-index: 30; cursor: default; background: transparent;
+    }
+    /* Chắn toàn màn hình khi video kết thúc (màn hình gợi ý video liên quan) */
+    #shield-endscreen {
+      position: absolute; inset: 0; z-index: 31; display: none;
+      background: rgba(0,0,0,0.0); cursor: default;
+    }
+    #shield-endscreen.show { display: block; }
+
+    #video-watermark {
+      position: absolute; z-index: 25; pointer-events: none; user-select: none;
+      color: rgba(255,255,255,0.55);
+      font-size: 11px; font-weight: 800;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+      white-space: nowrap; transition: top 1.2s ease, left 1.2s ease;
+      display: none;
+      letter-spacing: 0.02em;
+    }
+    #video-watermark.show { display: block; }
   </style>
 </head>
 <body>
@@ -222,8 +257,12 @@
     <div class="p-4 md:p-6 flex-1">
       <div class="max-w-5xl mx-auto space-y-4">
 
-        <div class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white">
+        <div id="video-wrap" class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white" oncontextmenu="return false;">
           <div id="yt-player" class="absolute inset-0 w-full h-full"></div>
+          <div id="shield-top" oncontextmenu="return false;" onclick="return false;"></div>
+          <div id="shield-corner" oncontextmenu="return false;" onclick="return false;"></div>
+          <div id="shield-endscreen" oncontextmenu="return false;" onclick="replayCurrentVideo()"></div>
+          <div id="video-watermark"></div>
           <div id="no-video" class="absolute inset-0 flex items-center justify-center flex-col gap-2 text-gray-500 bg-gray-900">
             <i class="fas fa-video-slash text-3xl"></i>
             <span class="text-xs font-bold uppercase tracking-widest">Chưa có video</span>
@@ -360,10 +399,13 @@
     const noVid = document.getElementById('no-video');
     const ytId  = getYtId(url);
     stopWatchTimer();
+    hideEndscreenShield();
     if (!ytId) {
       noVid.classList.remove('hidden');
       if (ytPlayer) { try { ytPlayer.destroy(); } catch(e){} ytPlayer = null; }
-      currentYtId = null; return;
+      currentYtId = null;
+      hideWatermark();
+      return;
     }
     noVid.classList.add('hidden');
     currentYtId = ytId;
@@ -374,6 +416,7 @@
         if (window._pendingYtId) { _doCreatePlayer(window._pendingYtId); window._pendingYtId = null; }
       };
     }
+    showWatermark();
   }
 
   function _doCreatePlayer(ytId) {
@@ -401,11 +444,26 @@
     if (state === YT.PlayerState.PLAYING) {
       if (!hasStartedWatching) { hasStartedWatching = true; markFirstView(trackerLessonId); }
       startWatchTimer(); updateBadgePlaying();
+      hideEndscreenShield();
     } else if (state === YT.PlayerState.ENDED) {
       stopWatchTimer(); saveWatchData(true);
+      // Video kết thúc -> YouTube hiện màn hình gợi ý video liên quan, có thể chứa link ra ngoài.
+      // Che toàn bộ vùng player lại để tránh học sinh bấm sang video khác/kênh khác.
+      showEndscreenShield();
     } else if (state === YT.PlayerState.PAUSED) {
       stopWatchTimer(); if (watchSeconds > 0) saveWatchData(false); updateBadgePaused();
     }
+  }
+
+  function showEndscreenShield() {
+    document.getElementById('shield-endscreen')?.classList.add('show');
+  }
+  function hideEndscreenShield() {
+    document.getElementById('shield-endscreen')?.classList.remove('show');
+  }
+  function replayCurrentVideo() {
+    hideEndscreenShield();
+    try { ytPlayer && ytPlayer.seekTo(0) && ytPlayer.playVideo(); } catch(e) {}
   }
 
   function startWatchTimer() {
@@ -536,6 +594,56 @@
         document.getElementById('watch-badge-timer').textContent = fmtTime(sessionPrevSecs);
       }
     } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════
+  // WATERMARK ĐỘNG CHỐNG CHIA SẺ VIDEO
+  // ══════════════════════════════════════════════
+  let watermarkTimer = null;
+
+  function buildWatermarkLabel(user) {
+    const name  = (user.fullname || '').trim();
+    const email = (user.email || '').trim();
+    const uid   = String(user.id || user.uid || '').slice(0, 8);
+    const parts = [];
+    if (name)  parts.push(name);
+    if (email) parts.push(email);
+    if (uid)   parts.push('#' + uid);
+    return parts.join('  ·  ') || 'Học viên';
+  }
+
+  function moveWatermark() {
+    const wrap = document.getElementById('video-wrap');
+    const wm   = document.getElementById('video-watermark');
+    if (!wrap || !wm || !wm.classList.contains('show')) return;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    const wmW = wm.offsetWidth || 160, wmH = wm.offsetHeight || 16;
+    // Tránh vùng shield-top (24% trên cùng) và control bar dưới cùng (~12%) để không che khuất/đè lên vùng chắn
+    const minY = h * 0.26;
+    const maxY = Math.max(h * 0.80 - wmH, minY + 10);
+    const maxX = Math.max(w - wmW - 12, 12);
+    const x = 12 + Math.floor(Math.random() * maxX);
+    const y = minY + Math.floor(Math.random() * Math.max(maxY - minY, 10));
+    wm.style.left = x + 'px';
+    wm.style.top  = y + 'px';
+  }
+
+  function showWatermark() {
+    const user = getCurrentUser();
+    const wm = document.getElementById('video-watermark');
+    if (!user || !wm) return;
+    wm.textContent = buildWatermarkLabel(user);
+    wm.classList.add('show');
+    moveWatermark();
+    if (watermarkTimer) clearInterval(watermarkTimer);
+    // Di chuyển vị trí ngẫu nhiên mỗi 10-15 giây
+    watermarkTimer = setInterval(moveWatermark, 10000 + Math.floor(Math.random() * 5000));
+  }
+
+  function hideWatermark() {
+    const wm = document.getElementById('video-watermark');
+    if (wm) wm.classList.remove('show');
+    if (watermarkTimer) { clearInterval(watermarkTimer); watermarkTimer = null; }
   }
 
   // ══════════════════════════════════════════════
