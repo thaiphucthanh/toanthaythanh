@@ -1380,12 +1380,13 @@
         const isCorrect = !!selectedId && correctChoice && selectedId === String(correctChoice.id);
         if (isCorrect) correctCount++;
 
+        // Chỉ đánh dấu lựa chọn học sinh đã chọn (đúng/sai), KHÔNG lộ đáp án đúng
+        // để học sinh tự làm lại và tìm ra chỗ sai.
         const choicesHtml = q.homework_choices.map(c => {
           let cls = 'bg-white border-gray-200';
           let tag = '';
-          if (String(c.id) === selectedId && c.is_correct) { cls = 'bg-green-50 border-green-400'; tag = '<span class="text-[9px] font-black text-green-600 ml-auto">Bạn chọn · Đúng</span>'; }
-          else if (String(c.id) === selectedId && !c.is_correct) { cls = 'bg-red-50 border-red-400'; tag = '<span class="text-[9px] font-black text-red-600 ml-auto">Bạn chọn · Sai</span>'; }
-          else if (c.is_correct) { cls = 'bg-green-50 border-green-300'; tag = '<span class="text-[9px] font-black text-green-500 ml-auto">Đáp án đúng</span>'; }
+          if (String(c.id) === selectedId && isCorrect) { cls = 'bg-green-50 border-green-400'; tag = '<span class="text-[9px] font-black text-green-600 ml-auto">Bạn đã chọn</span>'; }
+          else if (String(c.id) === selectedId && !isCorrect) { cls = 'bg-red-50 border-red-400'; tag = '<span class="text-[9px] font-black text-red-600 ml-auto">Bạn đã chọn</span>'; }
           return `<div class="p-2 rounded-lg border text-xs ${cls} flex items-center gap-2">
             <span class="font-black">${c.option_label}.</span><span>${c.option_text}</span>${tag}
           </div>`;
@@ -1396,7 +1397,8 @@
             <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white flex-shrink-0 ${isCorrect ? 'bg-green-500' : 'bg-red-500'}">
               <i class="fas ${isCorrect ? 'fa-check' : 'fa-times'}"></i>
             </span>
-            <span>Câu ${idx + 1}: ${q.question}</span>
+            <span class="flex-1">Câu ${idx + 1}: ${q.question}</span>
+            <span class="text-[9px] font-black uppercase ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? 'Đúng' : 'Sai'}</span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${choicesHtml}</div>
         </div>`;
