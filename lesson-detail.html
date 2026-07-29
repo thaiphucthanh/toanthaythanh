@@ -202,6 +202,22 @@
     .cc-speed-btn:hover, .cc-quality-btn:hover { background: rgba(255,255,255,0.15); }
     .cc-speed-btn.cc-active, .cc-quality-btn.cc-active { background: #3b82f6; }
     .cc-quality-btn { text-align: left; padding: 6px 10px; }
+
+    /* ── BTVN: màn hình bắt đầu + đồng hồ + bảng trạng thái câu hỏi ── */
+    .hw-start-box { text-align:center; padding: 28px 16px; background: linear-gradient(135deg,#eff6ff,#f0f9ff); border-radius: 18px; border: 1px dashed #93c5fd; }
+    .hw-topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#1e293b; color:white; padding:10px 14px; border-radius:14px; margin-bottom:14px; }
+    #hw-timer { font-weight:900; font-variant-numeric: tabular-nums; font-size: 13px; display:flex; align-items:center; gap:6px; }
+    #hw-timer i { color:#fbbf24; }
+    .hw-status-board { display:flex; flex-wrap:wrap; gap:6px; }
+    .hw-status-chip {
+      width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 800;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all .15s;
+    }
+    .hw-status-chip:hover { background: rgba(255,255,255,0.22); }
+    .hw-status-chip.done { background: #22c55e; color: white; }
+    .hw-review-summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 12px; }
+    .hw-review-pill { padding: 8px 14px; border-radius: 12px; font-size: 11px; font-weight: 800; }
   </style>
 </head>
 <body>
@@ -452,6 +468,10 @@
   // Map: questionId -> FileList-like array (File objects)
   const essayFilesPerQ = {};
 
+  // ── BTVN: đồng hồ đếm giờ làm bài ──
+  let homeworkStartTime     = null; // Date.now() lúc bấm "Làm bài"
+  let homeworkTimerInterval = null;
+
   // ══════════════════════════════════════════════
   // WATCH TRACKER
   // ══════════════════════════════════════════════
@@ -569,8 +589,6 @@
 
   // ══════════════════════════════════════════════
   // CUSTOM CONTROLS — thanh điều khiển video tự thiết kế
-  // (thay thế hoàn toàn giao diện gốc của YouTube: iframe bị tắt pointer-events,
-  //  mọi thao tác play/pause/tua/âm lượng/toàn màn hình đều đi qua các hàm dưới đây)
   // ══════════════════════════════════════════════
   let ccProgressInterval = null;
   let ccHideTimer        = null;
@@ -1134,6 +1152,7 @@
     essayFilesPerQ[qId] = [...essayFilesPerQ[qId], ...newFiles];
     input.value = ''; // reset để cho phép chọn lại ảnh trùng
     renderEssayPreviews(qId);
+    updateQuestionStatus(qId);
   }
 
   // Xóa ảnh index trong câu qId
@@ -1141,6 +1160,7 @@
     if (!essayFilesPerQ[qId]) return;
     essayFilesPerQ[qId].splice(idx, 1);
     renderEssayPreviews(qId);
+    updateQuestionStatus(qId);
   }
 
   // Render danh sách ảnh preview cho 1 câu
@@ -1167,6 +1187,8 @@
   async function loadHomework(lessonId) {
     const homeworkSection = document.getElementById('homework-section');
     resetEssayFiles();
+    stopHomeworkTimer();
+    homeworkStartTime = null;
     try {
       const { data: config, error: configError } = await sb.from('lesson_homework_config')
         .select('*').eq('lesson_id', parseInt(lessonId)).maybeSingle();
@@ -1198,40 +1220,46 @@
     }
   }
 
+  // ── Màn hình chính của BTVN: đã nộp -> hiện kết quả; chưa nộp -> hiện nút "Làm bài" ──
   function renderHomeworkUI(submission) {
     const container = document.getElementById('homework-body');
     if (!container) return;
 
     if (submission) {
-      let html = `
-        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
-          <h3 class="text-blue-800 font-bold mb-2 text-sm"><i class="fas fa-check-circle mr-2 text-green-500"></i>Em đã nộp bài tập này!</h3>
-          <p class="text-xs text-gray-500">Thời gian nộp: ${new Date(submission.created_at).toLocaleString('vi-VN')}</p>
-          <div class="mt-3 flex flex-wrap gap-3">
-            ${submission.choice_score !== null ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Điểm trắc nghiệm:</span> <span class="text-green-600 font-black">${submission.choice_score}đ</span></div>` : ''}
-            <div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs">
-              <span class="text-gray-500">Trạng thái:</span>
-              <span class="font-black ${submission.status === 'graded' ? 'text-blue-600' : 'text-amber-500'}">
-                ${submission.status === 'graded' ? '✓ Đã chấm xong' : '⏳ Chờ giáo viên chấm'}
-              </span>
-            </div>
-          </div>
-          ${submission.essay_score !== null ? `<p class="mt-2 text-xs"><span class="text-gray-500">Điểm tự luận:</span> <span class="text-blue-600 font-black">${submission.essay_score}đ</span></p>` : ''}
-          ${submission.teacher_comment ? `<div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-xs text-gray-700 rounded-r-xl"><i class="fas fa-comment-alt text-yellow-500 mr-1"></i><strong>Thầy nhận xét:</strong> ${submission.teacher_comment}</div>` : ''}
-        </div>`;
-      if (currentHomeworkConfig?.video_solution) {
-        html += `<div class="mt-3 p-4 bg-gray-100 rounded-xl">
-          <h4 class="font-bold text-gray-800 text-xs mb-2"><i class="fab fa-youtube text-red-500 mr-2"></i>Video hướng dẫn giải chi tiết:</h4>
-          <a href="${currentHomeworkConfig.video_solution}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">Bấm vào đây để xem video chữa bài</a>
-        </div>`;
-      }
-      container.innerHTML = html;
-      typesetMath(container);
+      renderHomeworkResult(submission);
       return;
     }
 
-    // ── Form nộp bài ──
-    let html = `<form id="homework-form" class="space-y-5">`;
+    // Chưa nộp -> hiện màn hình bắt đầu, chưa hiện đề bài ngay
+    container.innerHTML = `
+      <div class="hw-start-box">
+        <i class="fas fa-pen-nib text-3xl text-blue-400 mb-3 block"></i>
+        <div class="font-black text-blue-900 text-sm uppercase mb-1">Sẵn sàng làm bài tập về nhà?</div>
+        <div class="text-gray-500 text-xs mb-4">Có ${currentHomeworkQuestions.length} câu hỏi. Đồng hồ sẽ bắt đầu tính giờ ngay khi em bấm bắt đầu.</div>
+        <button onclick="startHomeworkAttempt()"
+          class="bg-blue-700 hover:bg-blue-800 active:scale-95 text-white font-black py-3 px-8 rounded-2xl shadow transition text-xs uppercase tracking-wide">
+          <i class="fas fa-play mr-2"></i>Làm bài tập ngay
+        </button>
+      </div>`;
+  }
+
+  // Bấm "Làm bài tập ngay": bắt đầu tính giờ + hiện đề bài
+  function startHomeworkAttempt() {
+    homeworkStartTime = Date.now();
+    renderHomeworkForm();
+    startHomeworkTimer();
+  }
+
+  function renderHomeworkForm() {
+    const container = document.getElementById('homework-body');
+    if (!container) return;
+
+    let html = `
+      <div class="hw-topbar">
+        <div id="hw-timer"><i class="fas fa-stopwatch"></i><span id="hw-timer-text">0:00</span></div>
+        <div class="hw-status-board" id="hw-status-board"></div>
+      </div>
+      <form id="homework-form" class="space-y-5">`;
 
     currentHomeworkQuestions.forEach((q, index) => {
       html += `<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 question-box" data-qid="${q.id}" data-type="${q.question_type}">
@@ -1246,6 +1274,7 @@
         q.homework_choices.forEach(choice => {
           html += `<label class="flex items-center p-3 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
             <input type="radio" name="question_${q.id}" value="${choice.id}" data-correct="${choice.is_correct}"
+              onchange="updateQuestionStatus('${q.id}')"
               class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3 flex-shrink-0">
             <span class="font-black text-blue-900 mr-2 text-sm">${choice.option_label}.</span>
             <span class="text-gray-700 text-sm">${choice.option_text}</span>
@@ -1287,6 +1316,138 @@
     </div></form>`;
 
     container.innerHTML = html;
+    renderQuestionStatusBoard();
+    typesetMath(container);
+  }
+
+  // ── Đồng hồ đếm giờ làm bài ──
+  function startHomeworkTimer() {
+    stopHomeworkTimer();
+    updateHomeworkTimerDisplay();
+    homeworkTimerInterval = setInterval(updateHomeworkTimerDisplay, 1000);
+  }
+  function stopHomeworkTimer() {
+    if (homeworkTimerInterval) { clearInterval(homeworkTimerInterval); homeworkTimerInterval = null; }
+  }
+  function updateHomeworkTimerDisplay() {
+    const el = document.getElementById('hw-timer-text');
+    if (!el || !homeworkStartTime) return;
+    const secs = Math.floor((Date.now() - homeworkStartTime) / 1000);
+    el.textContent = fmtClock(secs);
+  }
+
+  // ── Bảng trạng thái câu hỏi đã làm / chưa làm ──
+  function renderQuestionStatusBoard() {
+    const wrap = document.getElementById('hw-status-board');
+    if (!wrap) return;
+    wrap.innerHTML = currentHomeworkQuestions.map((q, i) => {
+      const done = isQuestionAnswered(q.id);
+      return `<div id="hw-status-${q.id}" class="hw-status-chip ${done ? 'done' : ''}" title="Câu ${i+1}" onclick="scrollToQuestion('${q.id}')">${i+1}</div>`;
+    }).join('');
+  }
+  function isQuestionAnswered(qId) {
+    const q = currentHomeworkQuestions.find(x => String(x.id) === String(qId));
+    if (!q) return false;
+    if (q.question_type === 'choice') {
+      return !!document.querySelector(`input[name="question_${qId}"]:checked`);
+    }
+    return (essayFilesPerQ[qId] || []).length > 0;
+  }
+  function updateQuestionStatus(qId) {
+    const chip = document.getElementById(`hw-status-${qId}`);
+    if (!chip) return;
+    chip.classList.toggle('done', isQuestionAnswered(qId));
+  }
+  function scrollToQuestion(qId) {
+    document.querySelector(`.question-box[data-qid="${qId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ── Hiển thị kết quả sau khi đã nộp: câu đúng/sai + đáp án đúng + thời gian làm bài ──
+  function renderHomeworkResult(submission) {
+    const container = document.getElementById('homework-body');
+    if (!container) return;
+
+    const answersMap = {};
+    (submission.student_answers || []).forEach(a => { answersMap[String(a.question_id)] = a; });
+
+    let correctCount = 0, totalChoice = 0;
+    const reviewHtml = currentHomeworkQuestions.map((q, idx) => {
+      if (q.question_type === 'choice') {
+        totalChoice++;
+        const ans = answersMap[String(q.id)];
+        const selectedId = ans?.selected_choice_id ? String(ans.selected_choice_id) : null;
+        const correctChoice = q.homework_choices.find(c => c.is_correct);
+        const isCorrect = !!selectedId && correctChoice && selectedId === String(correctChoice.id);
+        if (isCorrect) correctCount++;
+
+        const choicesHtml = q.homework_choices.map(c => {
+          let cls = 'bg-white border-gray-200';
+          let tag = '';
+          if (String(c.id) === selectedId && c.is_correct) { cls = 'bg-green-50 border-green-400'; tag = '<span class="text-[9px] font-black text-green-600 ml-auto">Bạn chọn · Đúng</span>'; }
+          else if (String(c.id) === selectedId && !c.is_correct) { cls = 'bg-red-50 border-red-400'; tag = '<span class="text-[9px] font-black text-red-600 ml-auto">Bạn chọn · Sai</span>'; }
+          else if (c.is_correct) { cls = 'bg-green-50 border-green-300'; tag = '<span class="text-[9px] font-black text-green-500 ml-auto">Đáp án đúng</span>'; }
+          return `<div class="p-2 rounded-lg border text-xs ${cls} flex items-center gap-2">
+            <span class="font-black">${c.option_label}.</span><span>${c.option_text}</span>${tag}
+          </div>`;
+        }).join('');
+
+        return `<div class="p-3 rounded-xl border mb-2 ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}">
+          <div class="text-xs font-bold mb-2 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white flex-shrink-0 ${isCorrect ? 'bg-green-500' : 'bg-red-500'}">
+              <i class="fas ${isCorrect ? 'fa-check' : 'fa-times'}"></i>
+            </span>
+            <span>Câu ${idx + 1}: ${q.question}</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${choicesHtml}</div>
+        </div>`;
+      }
+      // essay
+      const ans = answersMap[String(q.id)];
+      let imgs = [];
+      if (ans?.answer_text) {
+        const m = ans.answer_text.match(/\[(.*)\]/);
+        if (m) imgs = m[1].split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return `<div class="p-3 rounded-xl border border-blue-100 bg-blue-50/30 mb-2">
+        <div class="text-xs font-bold mb-2"><i class="fas fa-pen-nib text-blue-400 mr-1"></i>Câu ${idx + 1} (tự luận): ${q.question}</div>
+        ${imgs.length ? `<div class="flex flex-wrap gap-2 mb-1">${imgs.map(u => `<img src="${u}" class="w-16 h-16 object-cover rounded-lg border" onclick="viewEssayImg('${u}')">`).join('')}</div>` : ''}
+        <div class="text-[10px] text-gray-400 italic">
+          ${submission.essay_score != null ? `Điểm: <b class="text-blue-600">${submission.essay_score}</b>` : 'Chờ giáo viên chấm điểm'}
+        </div>
+      </div>`;
+    }).join('');
+
+    const durationText = submission.duration_seconds != null ? fmtClock(submission.duration_seconds) : null;
+
+    let html = `
+      <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
+        <h3 class="text-blue-800 font-bold mb-2 text-sm"><i class="fas fa-check-circle mr-2 text-green-500"></i>Em đã nộp bài tập này!</h3>
+        <p class="text-xs text-gray-500">Thời gian nộp: ${new Date(submission.created_at).toLocaleString('vi-VN')}</p>
+        <div class="mt-3 flex flex-wrap gap-3">
+          ${totalChoice > 0 ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Số câu đúng:</span> <span class="text-green-600 font-black">${correctCount}/${totalChoice}</span></div>` : ''}
+          ${submission.choice_score !== null ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Điểm trắc nghiệm:</span> <span class="text-green-600 font-black">${submission.choice_score}đ</span></div>` : ''}
+          ${durationText ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><i class="fas fa-stopwatch text-blue-400 mr-1"></i><span class="text-gray-500">Thời gian làm bài:</span> <span class="text-blue-700 font-black">${durationText}</span></div>` : ''}
+          <div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs">
+            <span class="text-gray-500">Trạng thái:</span>
+            <span class="font-black ${submission.status === 'graded' ? 'text-blue-600' : 'text-amber-500'}">
+              ${submission.status === 'graded' ? '✓ Đã chấm xong' : '⏳ Chờ giáo viên chấm'}
+            </span>
+          </div>
+        </div>
+        ${submission.essay_score !== null ? `<p class="mt-2 text-xs"><span class="text-gray-500">Điểm tự luận:</span> <span class="text-blue-600 font-black">${submission.essay_score}đ</span></p>` : ''}
+        ${submission.teacher_comment ? `<div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-xs text-gray-700 rounded-r-xl"><i class="fas fa-comment-alt text-yellow-500 mr-1"></i><strong>Thầy nhận xét:</strong> ${submission.teacher_comment}</div>` : ''}
+      </div>
+      <div class="mb-2 text-xs font-black text-gray-500 uppercase tracking-widest">Chi tiết bài làm</div>
+      ${reviewHtml}`;
+
+    if (currentHomeworkConfig?.video_solution) {
+      html += `<div class="mt-3 p-4 bg-gray-100 rounded-xl">
+        <h4 class="font-bold text-gray-800 text-xs mb-2"><i class="fab fa-youtube text-red-500 mr-2"></i>Video hướng dẫn giải chi tiết:</h4>
+        <a href="${currentHomeworkConfig.video_solution}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">Bấm vào đây để xem video chữa bài</a>
+      </div>`;
+    }
+
+    container.innerHTML = html;
     typesetMath(container);
   }
 
@@ -1296,6 +1457,10 @@
     if (!studentId) {
       Swal.fire('Nhắc nhở', 'Vui lòng đăng nhập để nộp bài tập!', 'warning'); return;
     }
+
+    stopHomeworkTimer();
+    const durationSeconds = homeworkStartTime ? Math.floor((Date.now() - homeworkStartTime) / 1000) : null;
+    const startedAtIso = homeworkStartTime ? new Date(homeworkStartTime).toISOString() : null;
 
     Swal.fire({ title: 'Đang nộp bài...', text: 'Vui lòng đợi trong giây lát.',
       allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
@@ -1356,7 +1521,9 @@
         student_answers: studentAnswers,
         choice_score: hasChoice ? choiceScore : null,
         essay_images: essayImagesFlat,
-        status: 'pending'
+        status: 'pending',
+        started_at: startedAtIso,
+        duration_seconds: durationSeconds
       });
       if (insertError) throw insertError;
 
