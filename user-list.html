@@ -121,6 +121,30 @@
             display: block;
         }
 
+        /* Mini modal đặt ngày nghỉ học */
+        .mini-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .mini-modal-overlay.active {
+            display: flex;
+        }
+
+        .mini-modal-box {
+            background: white;
+            border-radius: 20px;
+            width: 380px;
+            max-width: 100%;
+            padding: 20px;
+        }
+
         @media (max-width: 768px) {
             .modal-box {
                 width: calc(100vw - 20px);
@@ -518,7 +542,7 @@
 
                     <div>
                         <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">
-                            Trạng thái
+                            Trạng thái tài khoản
                         </label>
 
                         <select id="edit-status"
@@ -528,6 +552,12 @@
                             <option value="inactive">Đã khóa</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-700 leading-relaxed">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Trạng thái tài khoản ở đây chỉ dùng để khóa/mở đăng nhập. Để đánh dấu học sinh
+                    <b>nghỉ học một khóa cụ thể</b>, vào tab <b>"Khóa học"</b> bên cạnh.
                 </div>
 
                 <!-- SAVE -->
@@ -584,6 +614,45 @@
         </div>
     </div>
 
+    <!-- MINI MODAL: chọn ngày nghỉ học -->
+    <div class="mini-modal-overlay" id="leftDateModal">
+
+        <div class="mini-modal-box">
+
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-user-clock text-amber-500"></i>
+                <div class="font-black text-blue-900 text-sm uppercase">Đánh dấu nghỉ học</div>
+            </div>
+
+            <div class="text-xs text-gray-500 mb-4 leading-relaxed">
+                Học sinh sẽ chỉ còn xem được các bài học được mở
+                <b>trước hoặc trong ngày</b> được chọn bên dưới. Các bài học mở sau ngày này sẽ bị khóa.
+            </div>
+
+            <input type="hidden" id="left-enroll-id">
+
+            <label class="text-[9px] font-black text-gray-400 uppercase block mb-1">
+                Ngày nghỉ học
+            </label>
+
+            <input type="date" id="left-date-input"
+                class="w-full p-3 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-amber-500 mb-4">
+
+            <div class="flex gap-2">
+                <button onclick="closeLeftDateModal()"
+                    class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-[11px] uppercase hover:bg-gray-200 transition-all">
+                    Hủy
+                </button>
+
+                <button onclick="confirmMarkLeft()"
+                    class="flex-1 py-3 bg-amber-500 text-white rounded-xl font-black text-[11px] uppercase hover:bg-amber-600 transition-all">
+                    <i class="fas fa-check mr-1"></i>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -593,13 +662,10 @@
         // SUPABASE
         // =====================
 
-        const SUPABASE_URL = 'https://rznyagxrshwwocsvrabe.supabase.co';
+        const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
+        const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 
-        const SUPABASE_KEY =
-            'sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5';
-
-        const supabaseClient =
-            supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient =supabase.createClient(SB_URL, SB_KEY);
 
         let allUsers = [];
         let allCourses = [];
@@ -985,6 +1051,7 @@
 
         // =====================
         // ENROLLED COURSES
+        // (đã cập nhật: hiển thị + quản lý trạng thái nghỉ học status='left' + left_at)
         // =====================
 
         async function loadEnrolledCourses(userId) {
@@ -1002,7 +1069,7 @@
 
             const { data, error } = await supabaseClient
                 .from('course_enrollments')
-                .select('id, enrolled_at, courses:course_id(id, course_name)')
+                .select('id, enrolled_at, status, left_at, courses:course_id(id, course_name)')
                 .eq('user_id', userId);
 
             if (error || !data || data.length === 0) {
@@ -1025,13 +1092,25 @@
             document.getElementById('course-count')
                 .innerText = data.length;
 
-            container.innerHTML = data.map(enroll => `
+            container.innerHTML = data.map(enroll => {
 
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all">
+                const isLeft = enroll.status === 'left';
 
-                    <div>
+                const statusBadge = isLeft
+                    ? `<span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-100 text-amber-700">
+                            <i class="fas fa-user-clock mr-1"></i>Đã nghỉ học
+                            ${enroll.left_at ? '· ' + new Date(enroll.left_at).toLocaleDateString('vi-VN') : ''}
+                        </span>`
+                    : `<span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-green-100 text-green-700">
+                            <i class="fas fa-circle-check mr-1"></i>Đang học
+                        </span>`;
 
-                        <div class="text-sm font-bold text-blue-900">
+                return `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all gap-2">
+
+                    <div class="min-w-0">
+
+                        <div class="text-sm font-bold text-blue-900 truncate">
 
                             ${enroll.courses?.course_name || 'Không rõ'}
                         </div>
@@ -1040,30 +1119,135 @@
 
                             Đăng ký:
                             ${enroll.enrolled_at
-                    ? new Date(enroll.enrolled_at)
-                        .toLocaleDateString('vi-VN')
-                    : '---'
-                }
+                        ? new Date(enroll.enrolled_at)
+                            .toLocaleDateString('vi-VN')
+                        : '---'
+                    }
                         </div>
+
+                        ${statusBadge}
                     </div>
 
-                    <button
-                        onclick="removeEnrollment('${enroll.id}')"
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
 
-                        class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                        ${isLeft
+                        ? `
+                            <button
+                                onclick="restoreEnrollment('${enroll.id}')"
+                                title="Khôi phục học lại"
+                                class="w-8 h-8 bg-green-50 text-green-600 rounded-lg hover:bg-green-500 hover:text-white transition-all flex items-center justify-center">
+                                <i class="fas fa-rotate-left text-xs"></i>
+                            </button>
+                        `
+                        : `
+                            <button
+                                onclick="openLeftDateModal('${enroll.id}')"
+                                title="Đánh dấu nghỉ học"
+                                class="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center">
+                                <i class="fas fa-user-clock text-xs"></i>
+                            </button>
+                        `
+                    }
 
-                        title="Xóa khỏi khóa học">
-
-                        <i class="fas fa-times text-xs"></i>
-                    </button>
+                        <button
+                            onclick="removeEnrollment('${enroll.id}')"
+                            title="Xóa khỏi khóa học"
+                            class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
                 </div>
-
-            `).join('');
+                `;
+            }).join('');
         }
+
+        // Mở mini modal chọn ngày nghỉ học
+        function openLeftDateModal(enrollId) {
+
+            document.getElementById('left-enroll-id').value = enrollId;
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            document.getElementById('left-date-input').value = todayStr;
+
+            document.getElementById('leftDateModal').classList.add('active');
+        }
+
+        function closeLeftDateModal() {
+
+            document.getElementById('leftDateModal').classList.remove('active');
+
+            document.getElementById('left-enroll-id').value = '';
+        }
+
+        // Xác nhận đánh dấu nghỉ học: status = 'left', left_at = ngày đã chọn (23:59:59 trong ngày đó
+        // để bài học mở TRONG ngày nghỉ vẫn được xem)
+        async function confirmMarkLeft() {
+
+            const enrollId = document.getElementById('left-enroll-id').value;
+
+            const dateVal = document.getElementById('left-date-input').value;
+
+            if (!enrollId || !dateVal) {
+
+                alert('Vui lòng chọn ngày nghỉ học!');
+
+                return;
+            }
+
+            const leftAtIso = new Date(dateVal + 'T23:59:59').toISOString();
+
+            const { error } = await supabaseClient
+                .from('course_enrollments')
+                .update({ status: 'left', left_at: leftAtIso })
+                .eq('id', enrollId);
+
+            if (error) {
+
+                alert('Lỗi: ' + error.message);
+
+                return;
+            }
+
+            closeLeftDateModal();
+
+            await loadEnrolledCourses(currentUserId);
+        }
+
+        // Khôi phục học lại: status = 'active', left_at = null
+        async function restoreEnrollment(enrollId) {
+
+            if (!confirm('Khôi phục cho học sinh học lại bình thường?')) {
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('course_enrollments')
+                .update({ status: 'active', left_at: null })
+                .eq('id', enrollId);
+
+            if (error) {
+
+                alert('Lỗi: ' + error.message);
+
+                return;
+            }
+
+            await loadEnrolledCourses(currentUserId);
+        }
+
+        // Click ra ngoài mini modal thì đóng
+        document.getElementById('leftDateModal')
+            .addEventListener('click', function (e) {
+
+                if (e.target === this) {
+                    closeLeftDateModal();
+                }
+            });
 
         async function removeEnrollment(enrollId) {
 
-            if (!confirm('Xóa học sinh khỏi khóa học này?')) {
+            if (!confirm('Xóa hẳn học sinh khỏi khóa học này? (khác với "nghỉ học" — xóa sẽ mất toàn bộ lịch sử đăng ký)')) {
                 return;
             }
 
@@ -1138,7 +1322,8 @@
                 .insert([
                     {
                         user_id: currentUserId,
-                        course_id: courseId
+                        course_id: courseId,
+                        status: 'active'
                     }
                 ]);
 
