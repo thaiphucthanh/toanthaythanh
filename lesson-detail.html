@@ -1126,28 +1126,54 @@
 
 
   // ══════════════════════════════════════════════
-  // ENROLLMENT
+  // ENROLLMENT  (đã cập nhật: hỗ trợ trạng thái "nghỉ học" + left_at)
   // ══════════════════════════════════════════════
+
+  // Trả về { enrolled: boolean, status: string|null, left_at: string|null }
+  // - enrolled = false  -> chưa từng đăng ký khóa học này (hiện màn "chưa đăng ký")
+  // - status = 'left'   -> đã nghỉ học, chỉ được xem bài học có created_at <= left_at
+  // - status = 'active' -> học bình thường, xem tất cả bài đã mở (Active)
   async function checkEnrollment(courseId) {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) return false;
-    if (user.role === 'admin') return true;
+    if (!user) return { enrolled: false, status: null, left_at: null };
+    if (user.role === 'admin') return { enrolled: true, status: 'active', left_at: null };
     const uid = user.id || user.uid;
     try {
-      const { data, error } = await sb.from('course_enrollments').select('id, status')
+      const { data, error } = await sb.from('course_enrollments').select('id, status, left_at')
         .eq('user_id', uid).eq('course_id', courseId).maybeSingle();
-      if (error) { console.error('checkEnrollment:', error.message); return false; }
-      const ok = !!data && (data.status === 'active' || data.status === null || data.status === undefined);
-      console.log('[checkEnrollment]', { uid, courseId, foundRow: data, result: ok });
-      return ok;
-    } catch(e) { console.error('checkEnrollment ex:', e); return false; }
+      if (error) { console.error('checkEnrollment:', error.message); return { enrolled: false, status: null, left_at: null }; }
+      if (!data) return { enrolled: false, status: null, left_at: null };
+      // 'active', 'left' hoặc chưa set status đều coi là đã đăng ký (đã học/đang học khóa này).
+      // 'left' không bị coi là "chưa đăng ký" — chỉ giới hạn nội dung xem được (xử lý riêng ở nơi gọi).
+      const enrolled = data.status === 'active' || data.status === 'left'
+        || data.status === null || data.status === undefined;
+      console.log('[checkEnrollment]', { uid, courseId, foundRow: data, enrolled });
+      return { enrolled, status: data.status || 'active', left_at: data.left_at || null };
+    } catch(e) { console.error('checkEnrollment ex:', e); return { enrolled: false, status: null, left_at: null }; }
   }
+
   function showNoEnrollment() {
     document.getElementById('lesson-body').classList.add('hidden');
     document.getElementById('locked-box').classList.add('hidden');
     document.getElementById('no-enrollment-box').classList.remove('hidden');
     document.getElementById('homework-section').classList.add('hidden');
     renderVideo(null); renderDocs(null);
+  }
+
+  // Hiển thị khi học sinh đã nghỉ học và bài học này nằm SAU thời điểm nghỉ
+  function showLeftLocked(leftAtIso) {
+    document.getElementById('lesson-body').classList.add('hidden');
+    document.getElementById('no-enrollment-box').classList.add('hidden');
+    document.getElementById('homework-section').classList.add('hidden');
+    renderVideo(null); renderDocs(null);
+    const box = document.getElementById('locked-box');
+    box.classList.remove('hidden');
+    let dateText = '';
+    try { dateText = new Date(leftAtIso).toLocaleDateString('vi-VN'); } catch(e) {}
+    box.innerHTML = `
+      <i class="fas fa-user-clock text-3xl mb-3 block text-yellow-400"></i>
+      <div class="font-black text-base uppercase mb-1">Bài học không khả dụng</div>
+      <div class="text-gray-400 text-sm">Bạn đã nghỉ khóa học này${dateText ? ' từ ngày ' + dateText : ''} và chỉ có thể xem lại các bài học trước đó. Vui lòng liên hệ Thầy Thành nếu cần hỗ trợ!</div>`;
   }
 
   // ══════════════════════════════════════════════
@@ -1632,7 +1658,7 @@
   }
 
   // ══════════════════════════════════════════════
-  // SIDEBAR
+  // SIDEBAR  (đã cập nhật: khóa bài học nằm sau left_at)
   // ══════════════════════════════════════════════
   function toggleTopic(btn) {
     const sub = btn.nextElementSibling, icon = btn.querySelector('.chevron');
@@ -1642,7 +1668,9 @@
     if (opening) { sub.classList.add('open'); icon?.classList.add('rotate-180'); }
   }
 
-  function renderSidebar(topics, lessons, currentTopicId, viewedIds, submittedIds, solutionMap) {
+  // leftAt: nếu học sinh đang ở trạng thái 'left' của khóa học này, truyền vào ISO string thời điểm nghỉ.
+  // Bài học có created_at > leftAt sẽ bị khóa (giống như locked do status Inactive).
+  function renderSidebar(topics, lessons, currentTopicId, viewedIds, submittedIds, solutionMap, leftAt = null) {
     const sidebar = document.getElementById('sidebar-content');
     if (!topics?.length) { sidebar.innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Không có chuyên đề</div>`; return; }
     sidebar.innerHTML = topics.map(topic => {
@@ -1650,17 +1678,21 @@
       const isCurrent = topic.id === currentTopicId;
       const items = tLessons.length
         ? tLessons.map(l => {
-            const active   = String(l.id) === String(currentLessonId) && currentView === 'lesson';
-            const locked   = l.status === 'Inactive';
-            const viewed   = viewedIds.includes(String(l.id));
-            const dotColor = locked ? '#d1d5db' : (viewed ? '#22c55e' : '#ef4444');
+            const active     = String(l.id) === String(currentLessonId) && currentView === 'lesson';
+            const pastLeft   = !!leftAt && l.created_at && new Date(l.created_at) > new Date(leftAt);
+            const locked     = l.status === 'Inactive' || pastLeft;
+            const viewed     = viewedIds.includes(String(l.id));
+            const dotColor   = locked ? '#d1d5db' : (viewed ? '#22c55e' : '#ef4444');
+            const lockMsg    = pastLeft
+              ? 'Bài học này nằm sau thời điểm bạn nghỉ học nên không thể xem.'
+              : 'Thầy chưa mở bài học này. Vui lòng chờ!';
             const mainItem = `<div class="lesson-item px-3 py-2.5 pl-7 text-[11px] rounded-lg mx-1 my-0.5 flex items-center gap-2
                 ${active ? 'active' : 'text-gray-600'} ${locked && !active ? 'locked' : ''}"
-              onclick="${locked ? "Swal.fire({icon:'warning',title:'Bài học chưa mở',text:'Thầy chưa mở bài học này. Vui lòng chờ!',confirmButtonColor:'#1e3a8a'})" : `goLesson('${l.id}')`}">
+              onclick="${locked ? `Swal.fire({icon:'warning',title:'Bài học không khả dụng',text:'${lockMsg}',confirmButtonColor:'#1e3a8a'})` : `goLesson('${l.id}')`}">
               <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
-              <i class="fas ${locked ? 'fa-lock text-gray-300' : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} text-[9px] flex-shrink-0"></i>
+              <i class="fas ${locked ? (pastLeft ? 'fa-user-clock text-gray-300' : 'fa-lock text-gray-300') : (active ? 'fa-play-circle text-blue-500' : 'fa-play-circle text-gray-300')} text-[9px] flex-shrink-0"></i>
               <span class="truncate flex-1">${l.title}</span>
-              ${locked ? '<i class="fas fa-lock text-[8px] text-gray-300 flex-shrink-0"></i>' : ''}
+              ${locked ? `<i class="fas ${pastLeft ? 'fa-user-clock' : 'fa-lock'} text-[8px] text-gray-300 flex-shrink-0"></i>` : ''}
             </div>`;
             const hasReview   = !locked && submittedIds.includes(String(l.id)) && !!solutionMap[String(l.id)];
             const reviewActive = String(l.id) === String(currentLessonId) && currentView === 'review';
@@ -1719,7 +1751,8 @@
     }
   }
 
-  async function loadSidebar(courseId, currentTopicId) {
+  // leftAt: truyền xuống renderSidebar để khóa bài học nằm sau thời điểm nghỉ học
+  async function loadSidebar(courseId, currentTopicId, leftAt = null) {
     try {
       currentCourseIdGlobal = courseId; currentTopicIdGlobal = currentTopicId;
       const { data: topics, error: e1 } = await sb.from('topics')
@@ -1727,7 +1760,8 @@
       if (e1) throw e1;
       if (!topics?.length) { document.getElementById('sidebar-content').innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`; return; }
       const { data: lessons, error: e2 } = await sb.from('lessons')
-        .select('id, title, topic_id, status').in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
+        .select('id, title, topic_id, status, created_at')   // thêm created_at để so sánh với left_at
+        .in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
       if (e2) throw e2;
 
       let viewedIds = [], submittedIds = [], solutionMap = {};
@@ -1746,14 +1780,14 @@
           (configs || []).forEach(c => { if (c.video_solution) solutionMap[String(c.lesson_id)] = c.video_solution; });
         }
       }
-      renderSidebar(topics, lessons || [], currentTopicId, viewedIds, submittedIds, solutionMap);
+      renderSidebar(topics, lessons || [], currentTopicId, viewedIds, submittedIds, solutionMap, leftAt);
     } catch (err) {
       document.getElementById('sidebar-content').innerHTML = `<div class="p-3 text-red-400 text-[10px] font-bold">Lỗi: ${err.message}</div>`;
     }
   }
 
   // ══════════════════════════════════════════════
-  // LOAD LESSON
+  // LOAD LESSON  (đã cập nhật: kiểm tra status 'left' + left_at)
   // ══════════════════════════════════════════════
   async function loadLesson(id) {
     document.getElementById('lesson-title').innerHTML = '<i class="fas fa-spinner animate-spin text-blue-200"></i>';
@@ -1786,12 +1820,25 @@
         topic = t;
       }
 
+      // ── Kiểm tra enrollment + trạng thái nghỉ học ──
+      let enrollLeftAt = null;
       if (topic?.course_id) {
-        const enrolled = await checkEnrollment(topic.course_id);
-        if (!enrolled) {
+        const enr = await checkEnrollment(topic.course_id);
+        if (!enr.enrolled) {
           document.getElementById('lesson-title').textContent = lesson.title || 'Bài học';
           document.getElementById('lesson-topic-name').textContent = topic?.topic_name || '';
           showNoEnrollment(); await loadSidebar(topic.course_id, lesson.topic_id); return;
+        }
+        if (enr.status === 'left' && enr.left_at) {
+          enrollLeftAt = enr.left_at;
+          // Nếu bài học này được tạo/mở SAU thời điểm học sinh nghỉ -> khóa, không cho xem
+          if (lesson.created_at && new Date(lesson.created_at) > new Date(enr.left_at)) {
+            document.getElementById('lesson-title').textContent = lesson.title || '';
+            document.getElementById('lesson-topic-name').textContent = topic?.topic_name || '';
+            showLeftLocked(enr.left_at);
+            await loadSidebar(topic.course_id, lesson.topic_id, enrollLeftAt);
+            return;
+          }
         }
       }
 
@@ -1801,7 +1848,7 @@
         document.getElementById('lesson-body').classList.add('hidden');
         document.getElementById('locked-box').classList.remove('hidden');
         renderVideo(null); renderDocs(null);
-        if (topic) await loadSidebar(topic.course_id, lesson.topic_id); return;
+        if (topic) await loadSidebar(topic.course_id, lesson.topic_id, enrollLeftAt); return;
       }
 
       document.getElementById('lesson-title').textContent = lesson.title || '(Không có tiêu đề)';
@@ -1815,7 +1862,7 @@
       await showWatchBadge(id); await loadHomework(id);
       if (topic) {
         document.getElementById('lesson-topic-name').textContent = topic.topic_name || '';
-        await loadSidebar(topic.course_id, lesson.topic_id);
+        await loadSidebar(topic.course_id, lesson.topic_id, enrollLeftAt);
       }
     } catch (err) { console.error('loadLesson:', err); showError(err.message); }
   }
@@ -1847,9 +1894,19 @@
         topic = t;
       }
 
+      // ── Kiểm tra enrollment + trạng thái nghỉ học (áp dụng cho cả trang chữa bài) ──
+      let enrollLeftAt = null;
       if (topic?.course_id) {
-        const enrolled = await checkEnrollment(topic.course_id);
-        if (!enrolled) { showNoEnrollment(); if (topic) await loadSidebar(topic.course_id, lesson.topic_id); return; }
+        const enr = await checkEnrollment(topic.course_id);
+        if (!enr.enrolled) { showNoEnrollment(); if (topic) await loadSidebar(topic.course_id, lesson.topic_id); return; }
+        if (enr.status === 'left' && enr.left_at) {
+          enrollLeftAt = enr.left_at;
+          if (lesson.created_at && new Date(lesson.created_at) > new Date(enr.left_at)) {
+            showLeftLocked(enr.left_at);
+            await loadSidebar(topic.course_id, lesson.topic_id, enrollLeftAt);
+            return;
+          }
+        }
       }
 
       const { data: config } = await sb.from('lesson_homework_config')
@@ -1884,13 +1941,13 @@
         document.getElementById('lesson-content').innerHTML = resultHtml || `<p class="text-gray-400 italic text-sm">Xem video chữa bài tập ở trên.</p>`;
       }
       renderDocs(lesson.documents);
-      if (topic) await loadSidebar(topic.course_id, lesson.topic_id);
+      if (topic) await loadSidebar(topic.course_id, lesson.topic_id, enrollLeftAt);
     } catch (err) { console.error('loadHomeworkReview:', err); showError(err.message); }
   }
 
   async function loadFromCourse(courseId) {
-    const enrolled = await checkEnrollment(courseId);
-    if (!enrolled) {
+    const enr = await checkEnrollment(courseId);
+    if (!enr.enrolled) {
       document.getElementById('lesson-title').textContent = 'Bạn chưa đăng ký khóa học này';
       showNoEnrollment();
       const { data: t } = await sb.from('topics').select('id').eq('course_id', courseId)
@@ -1901,9 +1958,19 @@
       const { data: t } = await sb.from('topics').select('id').eq('course_id', courseId)
         .order('order_index', { ascending: true }).limit(1).single();
       if (!t) { document.getElementById('lesson-title').textContent = 'Khóa học chưa có chuyên đề'; renderVideo(null); renderDocs(null); return; }
-      const { data: l } = await sb.from('lessons').select('id').eq('topic_id', t.id)
-        .order('id', { ascending: true }).limit(1).single();
-      if (!l) { document.getElementById('lesson-title').textContent = 'Khóa học chưa có bài giảng'; await loadSidebar(courseId, t.id); renderVideo(null); renderDocs(null); return; }
+
+      // Nếu học sinh đã nghỉ học (status='left'), chỉ tìm bài học đầu tiên trong phạm vi được phép xem (created_at <= left_at)
+      let lessonQuery = sb.from('lessons').select('id').eq('topic_id', t.id);
+      if (enr.status === 'left' && enr.left_at) {
+        lessonQuery = lessonQuery.lte('created_at', enr.left_at);
+      }
+      const { data: l } = await lessonQuery.order('id', { ascending: true }).limit(1).maybeSingle();
+
+      if (!l) {
+        document.getElementById('lesson-title').textContent = 'Khóa học chưa có bài giảng';
+        await loadSidebar(courseId, t.id, enr.status === 'left' ? enr.left_at : null);
+        renderVideo(null); renderDocs(null); return;
+      }
       currentLessonId = String(l.id); currentView = 'lesson';
       window.history.replaceState({}, '', `?id=${l.id}`);
       await loadLesson(l.id);
