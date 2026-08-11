@@ -320,6 +320,9 @@
     <div class="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0 flex items-center justify-between">
         <div id="hw-save-info" class="text-xs text-gray-400 italic"></div>
         <div class="flex gap-3">
+            <button onclick="discardDraftAndReload()" class="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 font-bold text-xs hover:bg-red-50 transition-all" title="Bỏ nháp, tải lại dữ liệu gốc từ hệ thống">
+                <i class="fas fa-rotate-left mr-1"></i> Bỏ nháp
+            </button>
             <button onclick="closeHwPanel()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all">
                 Hủy
             </button>
@@ -347,6 +350,7 @@ let homeworkMap = {};
 // State của panel BTVN
 let hwLessonId = null;
 let hwQuestions = []; 
+let hwDraftMap = {};
 
 // =====================
 // INIT
@@ -363,11 +367,6 @@ async function init() {
         return;
     }
 
-    if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
-    await loadTopicHeader();
-    await fetchLessons();
-}
-async function init() {
     if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
     await loadTopicHeader();
     await fetchLessons();
@@ -526,14 +525,28 @@ async function openHwPanel(lessonId) {
 
     const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
     document.getElementById('hw-panel-lesson-title').innerText = lesson ? lesson.title : 'Bài học #' + lessonId;
-    document.getElementById('hw-video').value = '';
-    document.getElementById('hw-type').value = 'mixed';
     document.getElementById('hw-save-info').innerText = '';
     resetAiProgress();
 
     document.getElementById('hw-panel-overlay').classList.add('open');
     document.getElementById('hw-panel').classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Nếu đã có bản nháp dở dang cho bài học này (do lỡ đóng panel trước đó) -> khôi phục lại, KHÔNG tải lại từ DB
+    const draft = hwDraftMap[String(lessonId)];
+    if (draft) {
+        document.getElementById('hw-type').value = draft.type || 'mixed';
+        document.getElementById('hw-video').value = draft.video || '';
+        hwQuestions = JSON.parse(JSON.stringify(draft.questions || []));
+        document.getElementById('hw-save-info').innerHTML =
+            '<span class="text-amber-600"><i class="fas fa-clock-rotate-left mr-1"></i>Đang khôi phục bản nháp chưa lưu — nhớ bấm "Lưu cấu hình" để chốt lại.</span>';
+        onHwTypeChange();
+        renderQuestions();
+        return;
+    }
+
+    document.getElementById('hw-video').value = '';
+    document.getElementById('hw-type').value = 'mixed';
 
     // 1. Tải cấu hình tổng quan (loại, video)
     const { data: config } = await supabaseClient
@@ -562,11 +575,8 @@ async function openHwPanel(lessonId) {
         hwQuestions = dbQuestions.map(q => {
             if (q.question_type === 'essay') {
                 return {
-                    so_cau: q.order_index,
-                    type: 'essay',
-                    noi_dung: q.question,
-                    image_url: q.image_url || null,
-                    input_mode: q.image_url ? 'image' : 'text'
+                    so_cau: q.order_index, type: 'essay', noi_dung: q.question,
+                    image_url: q.image_url || null, input_mode: q.image_url ? 'image' : 'text'
                 };
             } else {
                 let lua_chon = { A: '', B: '', C: '', D: '' };
@@ -577,14 +587,7 @@ async function openHwPanel(lessonId) {
                         if (c.is_correct) dap_an_dung = c.option_label;
                     });
                 }
-                return {
-                    so_cau: q.order_index,
-                    type: 'choice',
-                    noi_dung: q.question,
-                    image_url: q.image_url || null,
-                    lua_chon,
-                    dap_an_dung
-                };
+                return { so_cau: q.order_index, type: 'choice', noi_dung: q.question, image_url: q.image_url || null, lua_chon, dap_an_dung };
             }
         });
     }
@@ -594,6 +597,15 @@ async function openHwPanel(lessonId) {
 }
 
 function closeHwPanel() {
+    // Lưu lại nháp trước khi đóng, để nếu mở lại đúng bài học này thì không bị mất dữ liệu
+    if (hwLessonId) {
+        hwDraftMap[String(hwLessonId)] = {
+            type: document.getElementById('hw-type').value,
+            video: document.getElementById('hw-video').value,
+            questions: JSON.parse(JSON.stringify(hwQuestions))
+        };
+    }
+
     document.getElementById('hw-panel-overlay').classList.remove('open');
     document.getElementById('hw-panel').classList.remove('open');
     document.body.style.overflow = '';
@@ -1271,6 +1283,7 @@ async function saveHomeworkConfig() {
         }
 
         Swal.fire({ icon: 'success', title: 'Lưu cấu hình thành công!', timer: 1200, showConfirmButton: false });
+        delete hwDraftMap[String(hwLessonId)]; // Đã lưu thành công -> xóa nháp, lần sau mở sẽ tải bản mới nhất từ DB
         closeHwPanel();
         await fetchLessons();
 
@@ -1571,6 +1584,19 @@ function slugify(name) {
 function toggleSubmenu(id, element) {
     document.getElementById(id).classList.toggle('show');
     element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
+}
+async function discardDraftAndReload() {
+    const res = await Swal.fire({
+        title: 'Bỏ bản nháp?',
+        text: 'Toàn bộ thay đổi chưa lưu sẽ mất, hệ thống sẽ tải lại dữ liệu gốc.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonText: 'Bỏ nháp', cancelButtonText: 'Không'
+    });
+    if (!res.isConfirmed) return;
+    const lessonId = hwLessonId;
+    delete hwDraftMap[String(lessonId)];
+    closeHwPanel(); // đã xóa draft nên sẽ không lưu lại nháp cũ
+    openHwPanel(lessonId);
 }
 
 init();
