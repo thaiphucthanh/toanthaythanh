@@ -332,7 +332,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Điền thông tin Supabase cá nhân của thầy vào đây
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
@@ -352,6 +351,22 @@ let hwQuestions = [];
 // =====================
 // INIT
 // =====================
+async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Chưa đăng nhập!',
+            text: 'Vui lòng đăng nhập lại để tiếp tục.',
+        });
+        window.location.href = 'login.html';
+        return;
+    }
+
+    if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
+    await loadTopicHeader();
+    await fetchLessons();
+}
 async function init() {
     if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
     await loadTopicHeader();
@@ -842,11 +857,7 @@ function removeEssayImg(idx) {
     renderQuestions();
 }
 
-// =====================================================================
-// AI AUTO-IMPORT TỪ FILE PDF HOẶC WORD (.docx)
-// (Apps Script + Gemini; PDF dùng chế độ vision (tốn token), Word dùng
-//  chế độ trích xuất văn bản thuần trước khi gửi AI -> tốn RẤT ÍT token)
-// =====================================================================
+
 function resetAiProgress() {
     const wrap = document.getElementById('ai-progress-wrap');
     const log = document.getElementById('ai-progress-log');
@@ -884,11 +895,6 @@ function fileToArrayBuffer(file) {
     });
 }
 
-// Gemini đôi khi trả về question_text bị chèn \n (đơn hoặc kép) giữa TỪNG TỪ/công thức
-// (do đọc theo dàn dòng gốc của PDF, không chỉ ở ranh giới ý a/b). Vì vậy không thể tin cậy
-// việc phân biệt "xuống dòng thật" và "xuống dòng rác" dựa vào số lượng \n liên tiếp.
-// Giải pháp an toàn nhất: gộp phẳng TOÀN BỘ khoảng trắng/xuống dòng thành đúng 1 dấu cách,
-// trả về văn xuôi liền mạch một dòng duy nhất.
 function normalizeQuestionText(raw) {
     if (!raw) return '';
     return raw.replace(/\s+/g, ' ').trim();
@@ -1009,12 +1015,6 @@ async function importFromPdfAI(file) {
     }
 }
 
-// ---------------------------------------------------------------------
-// LUỒNG 2: IMPORT TỪ WORD (.docx) — trích xuất VĂN BẢN THUẦN + ảnh nhúng
-// ngay trên trình duyệt bằng mammoth.js, sau đó CHỈ gửi văn bản (không gửi
-// file gốc) cho Gemini => tiết kiệm token rất nhiều so với chế độ vision PDF,
-// giúp dùng được nhiều lượt hơn với cùng quota AI miễn phí.
-// ---------------------------------------------------------------------
 async function importFromDocxAI(file) {
     resetAiProgress();
     const btn = document.getElementById('btn-ai-import');
