@@ -330,6 +330,19 @@
     <div class="p-4 md:p-6 flex-1">
       <div class="max-w-5xl mx-auto space-y-4">
 
+        <div id="course-topbar" class="flex items-center justify-between gap-2 flex-wrap">
+          <button onclick="goBackToCourse()"
+            class="flex items-center gap-2 text-[11px] md:text-xs font-black text-blue-900 hover:text-white hover:bg-blue-900 transition-all bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm flex-shrink-0">
+            <i class="fas fa-arrow-left"></i> Quay lại
+          </button>
+          <div class="flex-1 min-w-0 text-right">
+            <span class="text-[10px] md:text-xs font-black text-blue-900 uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl border border-blue-100 inline-flex items-center gap-1.5 max-w-full">
+              <i class="fas fa-graduation-cap text-blue-400 flex-shrink-0"></i>
+              <span id="course-name-text" class="truncate">Đang tải khóa học...</span>
+            </span>
+          </div>
+        </div>
+
         <div id="video-wrap" class="bg-black rounded-2xl md:rounded-3xl overflow-hidden shadow-xl aspect-video relative border-4 md:border-8 border-white"
              oncontextmenu="return false;" onmousemove="ccOnActivity()" onmouseleave="ccScheduleHide()" ontouchstart="ccOnActivity()">
           <div id="yt-player" class="absolute inset-0 w-full h-full"></div>
@@ -498,6 +511,7 @@
 
   let currentTopicIdGlobal  = null;
   let currentCourseIdGlobal = null;
+  let courseNameCache       = {}; // cache tên khóa học theo course_id, tránh gọi lại DB nhiều lần
   let currentHomeworkConfig   = null;
   let currentHomeworkQuestions = [];
 
@@ -1124,6 +1138,36 @@
     if (!e.target.closest('#user-section')) { document.getElementById('dropdownUser')?.classList.remove('active'); }
   });
 
+  // ══════════════════════════════════════════════
+  // TÊN KHÓA HỌC + NÚT QUAY LẠI
+  // ══════════════════════════════════════════════
+  async function loadCourseName(courseId) {
+    const el = document.getElementById('course-name-text');
+    if (!el) return;
+    if (!courseId) { el.textContent = 'Chưa xác định khóa học'; return; }
+    if (courseNameCache[courseId]) { el.textContent = courseNameCache[courseId]; return; }
+    el.textContent = 'Đang tải khóa học...';
+    try {
+      const { data, error } = await sb.from('courses').select('course_name').eq('id', courseId).single();
+      if (error) throw error;
+      const name = data?.course_name || 'Khóa học';
+      courseNameCache[courseId] = name;
+      el.textContent = name;
+    } catch (e) {
+      console.error('loadCourseName:', e);
+      el.textContent = 'Khóa học';
+    }
+  }
+
+  function goBackToCourse() {
+    // Ưu tiên quay lại đúng trang trước đó nếu có lịch sử duyệt web (ví dụ từ danh sách khóa học bấm vào),
+    // nếu không có lịch sử (mở thẳng link bài học) thì về trang "Khóa học của tôi".
+    if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.origin)) {
+      window.history.back();
+    } else {
+      window.location.href = 'khoa-hoc-cua-toi.html';
+    }
+  }
 
   // ══════════════════════════════════════════════
   // ENROLLMENT  (đã cập nhật: hỗ trợ trạng thái "nghỉ học" + left_at)
@@ -1819,6 +1863,7 @@
         if (e2) throw new Error('Không lấy được chuyên đề: ' + e2.message);
         topic = t;
       }
+      if (topic?.course_id) loadCourseName(topic.course_id);
 
       // ── Kiểm tra enrollment + trạng thái nghỉ học ──
       let enrollLeftAt = null;
@@ -1893,6 +1938,7 @@
         if (e2) throw new Error('Không lấy được chuyên đề: ' + e2.message);
         topic = t;
       }
+      if (topic?.course_id) loadCourseName(topic.course_id);
 
       // ── Kiểm tra enrollment + trạng thái nghỉ học (áp dụng cho cả trang chữa bài) ──
       let enrollLeftAt = null;
@@ -1946,6 +1992,7 @@
   }
 
   async function loadFromCourse(courseId) {
+    loadCourseName(courseId);
     const enr = await checkEnrollment(courseId);
     if (!enr.enrolled) {
       document.getElementById('lesson-title').textContent = 'Bạn chưa đăng ký khóa học này';
