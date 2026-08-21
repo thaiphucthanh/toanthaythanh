@@ -65,16 +65,26 @@
         .q-card:hover { border-color: #93c5fd; }
         .q-card-essay { background: #fffbeb; border-color: #fde68a; }
         .q-card-essay:hover { border-color: #fbbf24; }
-        
+        .q-card-tf { background: #f0fdf4; border-color: #bbf7d0; }
+        .q-card-tf:hover { border-color: #4ade80; }
+
         .q-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .q-num { background: #1e3a8a; color: white; font-size: 10px; font-weight: 900; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; }
         .q-num-essay { background: #d97706; }
-        
+        .q-num-tf { background: #16a34a; }
+
         .ans-option { display: flex; align-items: center; gap: 8px; }
         .ans-option label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.15s; user-select: none; }
         .ans-option input[type="radio"] { display: none; }
         .ans-option input[type="radio"]:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
         input[type="text"], textarea, select { font-family: 'Inter', sans-serif; }
+
+        /* Đúng/Sai: 4 ý con, mỗi ý chọn Đúng hoặc Sai bằng radio ẩn + label (giữ nguyên state qua CSS, không cần render lại) */
+        .tf-option { display: flex; gap: 6px; flex-shrink: 0; }
+        .tf-option input[type="radio"] { display: none; }
+        .tf-option label { cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.15s; user-select: none; color: #9ca3af; }
+        .tf-option input.tf-true:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
+        .tf-option input.tf-false:checked + label { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
 
         /* Essay question: text/LaTeX vs image mode */
         .upload-area { border: 2px dashed #fbbf24; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: #fffdf5; transition: all 0.2s; }
@@ -286,7 +296,7 @@
                 <input type="file" id="ai-file-input" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleAiFileSelect(event)">
             </div>
             <div class="ai-source-tabs">
-                <span class="text-[10px] text-indigo-400 italic self-center mr-1">Mẹo: file Word (.docx) tốn ít token AI hơn nhiều so với PDF ảnh, nên dùng Word khi có thể.</span>
+                <span class="text-[10px] text-indigo-400 italic self-center mr-1">Mẹo: file Word (.docx) tốn ít token AI hơn nhiều so với PDF ảnh, nên dùng Word khi có thể. Lưu ý: AI hiện tự tách câu Đúng/Sai (4 ý) vào nhóm Trắc nghiệm — thầy vẫn cần soát và chuyển tay nếu cần đúng định dạng 4 ý a,b,c,d.</span>
             </div>
             <div id="ai-progress-wrap" class="hidden">
                 <div id="ai-progress-log" class="ai-progress-log"></div>
@@ -302,6 +312,9 @@
             <div class="flex gap-2" id="hw-add-buttons">
                 <button onclick="addQuestion('choice')" id="btn-add-choice" class="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-blue-200 transition-all border border-blue-200">
                     <i class="fas fa-plus"></i> Trắc nghiệm
+                </button>
+                <button onclick="addQuestion('true_false')" id="btn-add-tf" class="flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-green-200 transition-all border border-green-200">
+                    <i class="fas fa-check-double"></i> Đúng/Sai
                 </button>
                 <button onclick="addQuestion('essay')" id="btn-add-essay" class="flex items-center gap-2 bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-amber-200 transition-all border border-amber-200">
                     <i class="fas fa-pen"></i> Tự luận
@@ -578,6 +591,22 @@ async function openHwPanel(lessonId) {
                     so_cau: q.order_index, type: 'essay', noi_dung: q.question,
                     image_url: q.image_url || null, input_mode: q.image_url ? 'image' : 'text'
                 };
+            } else if (q.question_type === 'true_false') {
+                // 4 ý a,b,c,d — sắp theo option_label để hiển thị đúng thứ tự
+                const sorted = (q.homework_choices || []).slice().sort((a, b) => {
+                    return String(a.option_label).localeCompare(String(b.option_label));
+                });
+                let y_dung_sai = sorted.map(c => ({
+                    label: c.option_label, text: c.option_text, is_correct: !!c.is_correct
+                }));
+                // Đảm bảo luôn đủ 4 ý ngay cả khi dữ liệu cũ bị thiếu (an toàn khi render)
+                while (y_dung_sai.length < 4) {
+                    y_dung_sai.push({ label: String.fromCharCode(97 + y_dung_sai.length), text: '', is_correct: true });
+                }
+                return {
+                    so_cau: q.order_index, type: 'true_false', noi_dung: q.question,
+                    image_url: q.image_url || null, y_dung_sai
+                };
             } else {
                 let lua_chon = { A: '', B: '', C: '', D: '' };
                 let dap_an_dung = '';
@@ -616,16 +645,20 @@ function closeHwPanel() {
 function onHwTypeChange() {
     const type = document.getElementById('hw-type').value;
     const btnChoice = document.getElementById('btn-add-choice');
+    const btnTf = document.getElementById('btn-add-tf');
     const btnEssay = document.getElementById('btn-add-essay');
-    
+
     if (type === 'quiz') {
         btnChoice.classList.remove('hidden');
+        btnTf.classList.remove('hidden');
         btnEssay.classList.add('hidden');
     } else if (type === 'essay') {
         btnChoice.classList.add('hidden');
+        btnTf.classList.add('hidden');
         btnEssay.classList.remove('hidden');
     } else {
         btnChoice.classList.remove('hidden');
+        btnTf.classList.remove('hidden');
         btnEssay.classList.remove('hidden');
     }
 }
@@ -643,6 +676,20 @@ function addQuestion(qType) {
             image_url: null,
             lua_chon: { A: '', B: '', C: '', D: '' },
             dap_an_dung: ''
+        });
+    } else if (qType === 'true_false') {
+        hwQuestions.push({
+            so_cau,
+            type: 'true_false',
+            noi_dung: '',
+            image_url: null,
+            // Mặc định 4 ý a,b,c,d — thầy nhập nội dung và chọn Đúng/Sai cho từng ý
+            y_dung_sai: [
+                { label: 'a', text: '', is_correct: true },
+                { label: 'b', text: '', is_correct: true },
+                { label: 'c', text: '', is_correct: true },
+                { label: 'd', text: '', is_correct: true }
+            ]
         });
     } else {
         hwQuestions.push({
@@ -680,21 +727,26 @@ function renderQuestions() {
 
     empty.classList.add('hidden');
     const cCount = hwQuestions.filter(q => q.type === 'choice').length;
+    const tfCount = hwQuestions.filter(q => q.type === 'true_false').length;
     const eCount = hwQuestions.filter(q => q.type === 'essay').length;
-    countEl.innerText = `Tổng số: ${hwQuestions.length} câu (${cCount} Trắc nghiệm, ${eCount} Tự luận)`;
+    countEl.innerText = `Tổng số: ${hwQuestions.length} câu (${cCount} Trắc nghiệm, ${tfCount} Đúng/Sai, ${eCount} Tự luận)`;
 
     list.innerHTML = hwQuestions.map((q, idx) => {
         const isEssay = q.type === 'essay';
+        const isTF = q.type === 'true_false';
+        const cardClass = isEssay ? 'q-card-essay' : (isTF ? 'q-card-tf' : '');
+        const numClass = isEssay ? 'q-num-essay' : (isTF ? 'q-num-tf' : '');
+        const typeLabel = isEssay ? '(Tự luận)' : (isTF ? '(Đúng/Sai)' : '(Trắc nghiệm)');
         return `
-        <div class="q-card ${isEssay ? 'q-card-essay' : ''}">
+        <div class="q-card ${cardClass}">
             <div class="q-card-header">
-                <span class="q-num ${isEssay ? 'q-num-essay' : ''}">Câu ${q.so_cau} ${isEssay ? '(Tự luận)' : '(Trắc nghiệm)'}</span>
+                <span class="q-num ${numClass}">Câu ${q.so_cau} ${typeLabel}</span>
                 <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors font-bold">
                     <i class="fas fa-trash-alt mr-1"></i> Xóa
                 </button>
             </div>
 
-            ${!isEssay ? `
+            ${!isEssay && !isTF ? `
                 ${q.image_url ? `
                     <div class="mb-2">
                         <img src="${q.image_url}" class="q-mini-img">
@@ -729,7 +781,46 @@ function renderQuestions() {
                         `).join('')}
                     </div>
                 </div>
-            ` : `
+            ` : ''}
+
+            ${isTF ? `
+                ${q.image_url ? `
+                    <div class="mb-2">
+                        <img src="${q.image_url}" class="q-mini-img">
+                        <button type="button" onclick="removeQuestionImg(${idx})" class="block text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh minh họa</button>
+                    </div>` : ''}
+                <textarea
+                    placeholder="Nhập câu dẫn chung (đề bài cho cả 4 ý a, b, c, d)..."
+                    onchange="hwQuestions[${idx}].noi_dung = this.value"
+                    class="w-full p-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm resize-none mb-3 bg-white"
+                    rows="2">${q.noi_dung || ''}</textarea>
+                <div class="space-y-2">
+                    ${q.y_dung_sai.map((y, yIdx) => `
+                        <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-green-400 transition-colors">
+                            <span class="text-[11px] font-black text-green-800 bg-green-50 rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0">${y.label})</span>
+                            <input
+                                type="text"
+                                placeholder="Nội dung ý ${y.label}..."
+                                value="${y.text || ''}"
+                                onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].text = this.value"
+                                class="flex-1 text-xs outline-none bg-transparent font-medium">
+                            <div class="tf-option">
+                                <input type="radio" class="tf-true" name="tf-${idx}-${yIdx}" id="tf-${idx}-${yIdx}-t"
+                                    ${y.is_correct ? 'checked' : ''}
+                                    onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].is_correct = true">
+                                <label for="tf-${idx}-${yIdx}-t">Đúng</label>
+                                <input type="radio" class="tf-false" name="tf-${idx}-${yIdx}" id="tf-${idx}-${yIdx}-f"
+                                    ${!y.is_correct ? 'checked' : ''}
+                                    onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].is_correct = false">
+                                <label for="tf-${idx}-${yIdx}-f">Sai</label>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <p class="text-[10px] text-gray-400 italic mt-2">Chấm điểm tự động phía học sinh: đúng 1 ý = 0,1đ · 2 ý = 0,25đ · 3 ý = 0,5đ · cả 4 ý = 1đ.</p>
+            ` : ''}
+
+            ${isEssay ? `
                 <div class="flex gap-2 mb-3">
                     <button type="button" onclick="setEssayInputMode(${idx}, 'text')" class="essay-mode-btn ${q.input_mode !== 'image' ? 'active' : ''}">
                         <i class="fas fa-square-root-alt mr-1"></i>Văn bản / LaTeX
@@ -762,7 +853,7 @@ function renderQuestions() {
                         rows="3">${q.noi_dung || ''}</textarea>
                     <div class="math-preview" id="essay-preview-${idx}"></div>
                 `}
-            `}
+            ` : ''}
         </div>`;
     }).join('');
 
@@ -1121,6 +1212,9 @@ async function importFromDocxAI(file) {
 }
 
 // Chuyển 1 câu hỏi trả về từ AI (định dạng chung cho cả 2 luồng PDF/Word) thành entry cho hwQuestions
+// Lưu ý: hiện AI luôn trả câu "true_false" (nếu có) dưới dạng 1 phát biểu 2 lựa chọn — được gộp chung
+// vào nhóm Trắc nghiệm (choice) ở đây, KHÁC với dạng "Đúng/Sai 4 ý a,b,c,d" thêm thủ công bên dưới.
+// Nếu cần đúng định dạng 4 ý, thầy dùng nút "Đúng/Sai" để thêm tay.
 function buildEntryFromAiQuestion(q) {
     if (q.type === 'true_false' || q.type === 'mcq' || q.type === 'choice') {
         const lua_chon = { A: '', B: '', C: '', D: '' };
@@ -1204,6 +1298,18 @@ async function saveHomeworkConfig() {
         return;
     }
 
+    // Kiểm tra câu Đúng/Sai: câu dẫn + cả 4 ý đều phải có nội dung
+    const invalidTF = hwQuestions.filter(q => q.type === 'true_false' && (
+        !(q.noi_dung && q.noi_dung.trim()) ||
+        !Array.isArray(q.y_dung_sai) || q.y_dung_sai.length < 4 ||
+        q.y_dung_sai.some(y => !y.text || !y.text.trim())
+    ));
+    if (invalidTF.length > 0) {
+        const listErr = invalidTF.map(q => `Câu ${q.so_cau}`).join(', ');
+        Swal.fire('Thiếu nội dung Đúng/Sai!', `${listErr} chưa nhập đủ câu dẫn hoặc nội dung cho cả 4 ý a, b, c, d.`, 'warning');
+        return;
+    }
+
     // Kiểm tra câu tự luận: phải có nội dung văn bản HOẶC ảnh đề bài
     const emptyEssays = hwQuestions.filter(q => q.type === 'essay' && !(q.noi_dung && q.noi_dung.trim()) && !q.image_url);
     if (emptyEssays.length > 0) {
@@ -1260,7 +1366,9 @@ async function saveHomeworkConfig() {
 
             if (insQErr) throw insQErr;
 
-            // Bước 4: Đẩy chi tiết 4 đáp án A-B-C-D cho các câu trắc nghiệm lên bảng `homework_choices`
+            // Bước 4: Đẩy chi tiết đáp án lên bảng `homework_choices`
+            // - Trắc nghiệm: 4 phương án A/B/C/D, chỉ 1 phương án is_correct = true
+            // - Đúng/Sai: 4 ý a/b/c/d, MỖI ý có is_correct riêng (đại diện cho "ý đó đúng hay sai")
             const choicesPayload = [];
             insertedQs.forEach(insertedQ => {
                 const origQ = hwQuestions.find(q => q.so_cau === insertedQ.order_index);
@@ -1271,6 +1379,15 @@ async function saveHomeworkConfig() {
                             option_label: label,
                             option_text: origQ.lua_chon[label] || '',
                             is_correct: origQ.dap_an_dung === label
+                        });
+                    });
+                } else if (origQ && origQ.type === 'true_false') {
+                    (origQ.y_dung_sai || []).forEach(y => {
+                        choicesPayload.push({
+                            question_id: insertedQ.id,
+                            option_label: y.label,
+                            option_text: y.text || '',
+                            is_correct: !!y.is_correct
                         });
                     });
                 }
