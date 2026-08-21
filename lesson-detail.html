@@ -126,6 +126,20 @@
       border: 2px solid white; font-weight: 900;
     }
 
+    /* ── Đúng/Sai (4 ý a,b,c,d) ── */
+    .tf-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; margin-bottom:8px; }
+    .tf-row-label { flex:1; font-size:13px; color:#374151; display:flex; gap:8px; }
+    .tf-row-letter { font-weight:900; color:#1e3a8a; flex-shrink:0; }
+    .tf-toggle-group { display:flex; gap:6px; flex-shrink:0; }
+    .tf-toggle-input { position:absolute; opacity:0; width:0; height:0; }
+    .tf-toggle-label {
+      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em;
+      padding:6px 14px; border-radius:8px; border:1px solid #e5e7eb; color:#9ca3af;
+      cursor:pointer; transition: all .15s; display:inline-block;
+    }
+    .tf-toggle-input:checked + .tf-toggle-label.tf-true { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .tf-toggle-input:checked + .tf-toggle-label.tf-false { background:#ef4444; border-color:#ef4444; color:#fff; }
+
     /* ══════════════════════════════════════════════
        CHỐNG CHIA SẺ VIDEO — CONTROL RIÊNG (không dùng UI YouTube)
        ══════════════════════════════════════════════ */
@@ -522,6 +536,16 @@
   // ── BTVN: đồng hồ đếm giờ làm bài ──
   let homeworkStartTime     = null; // Date.now() lúc bấm "Làm bài"
   let homeworkTimerInterval = null;
+
+  // ── Thang điểm Đúng/Sai (mỗi câu 4 ý, tối đa 1 điểm) ──
+  // Đúng 1 ý = 0.1đ · Đúng 2 ý = 0.25đ · Đúng 3 ý = 0.5đ · Đúng cả 4 ý = 1đ
+  function tfScoreFromCount(correctCount) {
+    if (correctCount >= 4) return 1;
+    if (correctCount === 3) return 0.5;
+    if (correctCount === 2) return 0.25;
+    if (correctCount === 1) return 0.1;
+    return 0;
+  }
 
   // ══════════════════════════════════════════════
   // WATCH TRACKER
@@ -1445,6 +1469,27 @@
         });
         html += `</div>`;
 
+      } else if (q.question_type === 'true_false') {
+        // Dạng "Đúng/Sai" chuẩn thi mới: mỗi câu có 4 ý a,b,c,d, học sinh chọn Đúng/Sai riêng cho từng ý.
+        // Chấm điểm theo số ý đúng: 1 ý=0.1đ · 2 ý=0.25đ · 3 ý=0.5đ · 4 ý=1đ (xem tfScoreFromCount()).
+        html += `<div class="mt-2 space-y-2">`;
+        q.homework_choices.forEach(choice => {
+          html += `<div class="tf-row">
+            <div class="tf-row-label"><span class="tf-row-letter">${choice.option_label})</span><span>${choice.option_text}</span></div>
+            <div class="tf-toggle-group">
+              <label>
+                <input type="radio" class="tf-toggle-input" name="tf_${q.id}_${choice.id}" value="true" onchange="updateQuestionStatus('${q.id}')">
+                <span class="tf-toggle-label tf-true">Đúng</span>
+              </label>
+              <label>
+                <input type="radio" class="tf-toggle-input" name="tf_${q.id}_${choice.id}" value="false" onchange="updateQuestionStatus('${q.id}')">
+                <span class="tf-toggle-label tf-false">Sai</span>
+              </label>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+
       } else if (q.question_type === 'essay') {
         // Upload ảnh riêng cho từng câu tự luận
         html += `<div class="mt-2">
@@ -1514,6 +1559,9 @@
     if (q.question_type === 'choice') {
       return !!document.querySelector(`input[name="question_${qId}"]:checked`);
     }
+    if (q.question_type === 'true_false') {
+      return (q.homework_choices || []).every(c => document.querySelector(`input[name="tf_${qId}_${c.id}"]:checked`));
+    }
     return (essayFilesPerQ[qId] || []).length > 0;
   }
   function updateQuestionStatus(qId) {
@@ -1566,6 +1614,38 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${choicesHtml}</div>
         </div>`;
       }
+
+      if (q.question_type === 'true_false') {
+        const ans = answersMap[String(q.id)];
+        let answerObj = {};
+        try { answerObj = ans?.answer_text ? JSON.parse(ans.answer_text) : {}; } catch(e) { answerObj = {}; }
+        let tfCorrectCount = 0;
+        const itemsHtml = (q.homework_choices || []).map(c => {
+          const studentVal = answerObj[String(c.id)];
+          const answered = studentVal === true || studentVal === false;
+          const isRight = answered && studentVal === !!c.is_correct;
+          if (isRight) tfCorrectCount++;
+          let cls = 'bg-gray-50 border-gray-200';
+          let tag = '<span class="text-[9px] font-black text-gray-300 uppercase ml-auto">Chưa chọn</span>';
+          if (answered) {
+            cls = isRight ? 'bg-green-50 border-green-400' : 'bg-red-50 border-red-400';
+            tag = `<span class="text-[9px] font-black uppercase ml-auto ${isRight ? 'text-green-600' : 'text-red-500'}">Bạn chọn: ${studentVal ? 'Đúng' : 'Sai'}</span>`;
+          }
+          return `<div class="p-2 rounded-lg border text-xs ${cls} flex items-center gap-2">
+            <span class="font-black flex-shrink-0">${c.option_label})</span><span class="flex-1">${c.option_text}</span>${tag}
+          </div>`;
+        }).join('');
+        const tfScore = tfScoreFromCount(tfCorrectCount);
+        return `<div class="p-3 rounded-xl border mb-2 ${tfCorrectCount === 4 ? 'border-green-200 bg-green-50/30' : 'border-blue-100 bg-blue-50/20'}">
+          <div class="text-xs font-bold mb-2 flex items-center gap-2 flex-wrap">
+            <span class="flex-1">Câu ${idx + 1} (Đúng/Sai): ${q.question}</span>
+            <span class="text-[9px] font-black uppercase text-blue-600">Đúng ${tfCorrectCount}/4 ý — ${tfScore}đ</span>
+          </div>
+          ${q.image_url ? `<img src="${q.image_url}" class="max-w-full h-auto rounded-lg mb-2 max-h-48 object-contain border">` : ''}
+          <div class="space-y-1.5">${itemsHtml}</div>
+        </div>`;
+      }
+
       // essay
       const ans = answersMap[String(q.id)];
       let imgs = [];
@@ -1590,7 +1670,7 @@
         <p class="text-xs text-gray-500">Thời gian nộp: ${new Date(submission.created_at).toLocaleString('vi-VN')}</p>
         <div class="mt-3 flex flex-wrap gap-3">
           ${totalChoice > 0 ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Số câu đúng:</span> <span class="text-green-600 font-black">${correctCount}/${totalChoice}</span></div>` : ''}
-          ${submission.choice_score !== null ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Điểm trắc nghiệm:</span> <span class="text-green-600 font-black">${submission.choice_score}đ</span></div>` : ''}
+          ${submission.choice_score !== null ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><span class="text-gray-500">Điểm trắc nghiệm / Đúng-Sai:</span> <span class="text-green-600 font-black">${submission.choice_score}đ</span></div>` : ''}
           ${durationText ? `<div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs"><i class="fas fa-stopwatch text-blue-400 mr-1"></i><span class="text-gray-500">Thời gian làm bài:</span> <span class="text-blue-700 font-black">${durationText}</span></div>` : ''}
           <div class="bg-white px-3 py-2 rounded-lg shadow-sm text-xs">
             <span class="text-gray-500">Trạng thái:</span>
@@ -1636,7 +1716,7 @@
       // Map: questionId -> array of uploaded URLs
       const essayImagesByQ = {};
 
-      // 1. Xử lý câu trắc nghiệm
+      // 1. Xử lý câu trắc nghiệm + câu Đúng/Sai
       currentHomeworkQuestions.forEach(q => {
         if (q.question_type === 'choice') {
           hasChoice = true;
@@ -1648,6 +1728,19 @@
           } else {
             studentAnswers.push({ question_id: q.id, selected_choice_id: null, answer_text: null });
           }
+        } else if (q.question_type === 'true_false') {
+          hasChoice = true;
+          let correctCount = 0;
+          const answerObj = {};
+          (q.homework_choices || []).forEach(c => {
+            const sel = document.querySelector(`input[name="tf_${q.id}_${c.id}"]:checked`);
+            const studentVal = sel ? (sel.value === 'true') : null;
+            answerObj[c.id] = studentVal;
+            if (studentVal !== null && studentVal === !!c.is_correct) correctCount++;
+          });
+          const tfScore = tfScoreFromCount(correctCount);
+          choiceScore += tfScore;
+          studentAnswers.push({ question_id: q.id, selected_choice_id: null, answer_text: JSON.stringify(answerObj) });
         } else if (q.question_type === 'essay') {
           studentAnswers.push({ question_id: q.id, selected_choice_id: null, answer_text: 'Nộp kèm ảnh đính kèm' });
           essayImagesByQ[q.id] = [];
