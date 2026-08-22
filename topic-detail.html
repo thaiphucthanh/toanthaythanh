@@ -721,51 +721,42 @@ function removeQuestion(index) {
 }
 
 // Chuyển nhanh 1 câu hỏi giữa 2 dạng "Trắc nghiệm" (choice) và "Đúng/Sai" (true_false)
-// ngay trong câu đó, không cần xóa rồi thêm lại. Giữ nguyên câu dẫn (noi_dung) và ảnh minh họa,
-// chỉ khởi tạo lại phần phương án/đáp án theo dạng mới.
-async function convertQuestionType(idx, newType) {
+// ngay trong câu đó, không cần xóa rồi thêm lại. Giữ nguyên câu dẫn (noi_dung), ảnh minh họa,
+// và ÁNH XẠ nội dung từng phương án theo đúng vị trí: A<->a, B<->b, C<->c, D<->d (không mất dữ liệu đã nhập).
+// Lưu ý về đáp án: Trắc nghiệm chỉ có DUY NHẤT 1 đáp án đúng, còn Đúng/Sai thì MỖI ý có đúng/sai riêng,
+// nên khi chuyển đổi phần đáp án chỉ ánh xạ ở mức tốt nhất có thể, thầy nên kiểm tra lại đáp án sau khi chuyển.
+function convertQuestionType(idx, newType) {
     const q = hwQuestions[idx];
     if (!q) return;
     if (newType !== 'choice' && newType !== 'true_false') return;
     if (q.type === newType) return; // đang ở đúng dạng rồi, không cần làm gì
 
-    const hasChoiceData = q.type === 'choice' && (
-        !!q.dap_an_dung || Object.values(q.lua_chon || {}).some(v => v && v.trim())
-    );
-    const hasTfData = q.type === 'true_false' && Array.isArray(q.y_dung_sai) &&
-        q.y_dung_sai.some(y => y.text && y.text.trim());
-
-    if (hasChoiceData || hasTfData) {
-        const res = await Swal.fire({
-            title: 'Chuyển loại câu hỏi?',
-            text: 'Các phương án / đáp án đã nhập cho câu này sẽ bị xóa để nhập lại theo dạng mới (câu dẫn và ảnh minh họa vẫn được giữ nguyên).',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonText: 'Đồng ý chuyển', cancelButtonText: 'Hủy',
-            confirmButtonColor: '#1e3a8a'
-        });
-        if (!res.isConfirmed) return;
-    }
-
+    const CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+    const TF_LABELS = ['a', 'b', 'c', 'd'];
     const common = { so_cau: q.so_cau, noi_dung: q.noi_dung || '', image_url: q.image_url || null };
 
-    if (newType === 'choice') {
-        hwQuestions[idx] = {
-            ...common,
-            type: 'choice',
-            lua_chon: { A: '', B: '', C: '', D: '' },
-            dap_an_dung: ''
-        };
+    if (newType === 'true_false') {
+        // choice -> true_false: A->a, B->b, C->c, D->d, giữ nguyên nội dung từng ý
+        const y_dung_sai = CHOICE_LABELS.map((L, i) => ({
+            label: TF_LABELS[i],
+            text: (q.lua_chon && q.lua_chon[L]) || '',
+            // Ý tương ứng với đáp án đúng cũ (nếu có) sẽ được đánh dấu Đúng, còn lại mặc định Đúng luôn
+            // để thầy tự xem lại (vì bản chất 2 dạng chấm điểm khác nhau).
+            is_correct: q.dap_an_dung ? (q.dap_an_dung === L) : true
+        }));
+        hwQuestions[idx] = { ...common, type: 'true_false', y_dung_sai };
     } else {
-        hwQuestions[idx] = {
-            ...common,
-            type: 'true_false',
-            y_dung_sai: [
-                { label: 'a', text: '', is_correct: true },
-                { label: 'b', text: '', is_correct: true },
-                { label: 'c', text: '', is_correct: true },
-                { label: 'd', text: '', is_correct: true }
-            ]
-        };
+        // true_false -> choice: a->A, b->B, c->C, d->D, giữ nguyên nội dung từng phương án
+        const lua_chon = { A: '', B: '', C: '', D: '' };
+        let dap_an_dung = '';
+        (q.y_dung_sai || []).forEach((y, i) => {
+            const L = CHOICE_LABELS[i];
+            if (!L) return;
+            lua_chon[L] = y.text || '';
+            // Trắc nghiệm chỉ chọn được 1 đáp án đúng -> lấy ý "Đúng" đầu tiên tìm thấy
+            if (y.is_correct && !dap_an_dung) dap_an_dung = L;
+        });
+        hwQuestions[idx] = { ...common, type: 'choice', lua_chon, dap_an_dung };
     }
     renderQuestions();
 }
