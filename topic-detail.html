@@ -103,6 +103,13 @@
         .ai-source-tabs { display: flex; gap: 6px; margin-top: 10px; }
         .ai-source-tab { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; cursor: pointer; border: 1.5px solid #c7d2fe; background: white; color: #4338ca; transition: all 0.15s; }
         .ai-source-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+
+        /* Quick type switch on question card */
+        .q-type-switch { display: flex; gap: 3px; background: #e2e8f0; padding: 3px; border-radius: 999px; }
+        .q-type-switch-btn { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 999px; border: none; cursor: pointer; color: #64748b; background: transparent; transition: all 0.15s; }
+        .q-type-switch-btn:hover:not(.active) { color: #1e3a8a; }
+        .q-type-switch-btn.active-choice { background: #1e3a8a; color: white; }
+        .q-type-switch-btn.active-tf { background: #16a34a; color: white; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -713,6 +720,56 @@ function removeQuestion(index) {
     renderQuestions();
 }
 
+// Chuyển nhanh 1 câu hỏi giữa 2 dạng "Trắc nghiệm" (choice) và "Đúng/Sai" (true_false)
+// ngay trong câu đó, không cần xóa rồi thêm lại. Giữ nguyên câu dẫn (noi_dung) và ảnh minh họa,
+// chỉ khởi tạo lại phần phương án/đáp án theo dạng mới.
+async function convertQuestionType(idx, newType) {
+    const q = hwQuestions[idx];
+    if (!q) return;
+    if (newType !== 'choice' && newType !== 'true_false') return;
+    if (q.type === newType) return; // đang ở đúng dạng rồi, không cần làm gì
+
+    const hasChoiceData = q.type === 'choice' && (
+        !!q.dap_an_dung || Object.values(q.lua_chon || {}).some(v => v && v.trim())
+    );
+    const hasTfData = q.type === 'true_false' && Array.isArray(q.y_dung_sai) &&
+        q.y_dung_sai.some(y => y.text && y.text.trim());
+
+    if (hasChoiceData || hasTfData) {
+        const res = await Swal.fire({
+            title: 'Chuyển loại câu hỏi?',
+            text: 'Các phương án / đáp án đã nhập cho câu này sẽ bị xóa để nhập lại theo dạng mới (câu dẫn và ảnh minh họa vẫn được giữ nguyên).',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: 'Đồng ý chuyển', cancelButtonText: 'Hủy',
+            confirmButtonColor: '#1e3a8a'
+        });
+        if (!res.isConfirmed) return;
+    }
+
+    const common = { so_cau: q.so_cau, noi_dung: q.noi_dung || '', image_url: q.image_url || null };
+
+    if (newType === 'choice') {
+        hwQuestions[idx] = {
+            ...common,
+            type: 'choice',
+            lua_chon: { A: '', B: '', C: '', D: '' },
+            dap_an_dung: ''
+        };
+    } else {
+        hwQuestions[idx] = {
+            ...common,
+            type: 'true_false',
+            y_dung_sai: [
+                { label: 'a', text: '', is_correct: true },
+                { label: 'b', text: '', is_correct: true },
+                { label: 'c', text: '', is_correct: true },
+                { label: 'd', text: '', is_correct: true }
+            ]
+        };
+    }
+    renderQuestions();
+}
+
 function renderQuestions() {
     const list = document.getElementById('hw-questions-list');
     const empty = document.getElementById('hw-empty');
@@ -737,10 +794,20 @@ function renderQuestions() {
         const cardClass = isEssay ? 'q-card-essay' : (isTF ? 'q-card-tf' : '');
         const numClass = isEssay ? 'q-num-essay' : (isTF ? 'q-num-tf' : '');
         const typeLabel = isEssay ? '(Tự luận)' : (isTF ? '(Đúng/Sai)' : '(Trắc nghiệm)');
+
+        const typeSwitchHtml = !isEssay ? `
+            <div class="q-type-switch" title="Chuyển nhanh dạng câu hỏi">
+                <button type="button" onclick="convertQuestionType(${idx}, 'choice')" class="q-type-switch-btn ${!isTF ? 'active-choice' : ''}">Trắc nghiệm</button>
+                <button type="button" onclick="convertQuestionType(${idx}, 'true_false')" class="q-type-switch-btn ${isTF ? 'active-tf' : ''}">Đúng/Sai</button>
+            </div>` : '';
+
         return `
         <div class="q-card ${cardClass}">
             <div class="q-card-header">
-                <span class="q-num ${numClass}">Câu ${q.so_cau} ${typeLabel}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="q-num ${numClass}">Câu ${q.so_cau} ${typeLabel}</span>
+                    ${typeSwitchHtml}
+                </div>
                 <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors font-bold">
                     <i class="fas fa-trash-alt mr-1"></i> Xóa
                 </button>
