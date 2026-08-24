@@ -247,10 +247,86 @@
     #doc-viewer-header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background:#f8fafc; flex: none; }
     #doc-viewer-body { flex: 1; overflow: auto; background: #e5e7eb; }
     #doc-viewer-body iframe { width: 100%; height: 100%; border: 0; display: block; }
+    /* ═══ CHẾ ĐỘ TẬP TRUNG (FOCUS MODE) ═══ */
+#focus-modal-overlay {
+  position: fixed; inset: 0; z-index: 5000; background: rgba(15,23,42,0.75);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+#focus-modal-overlay.hidden { display: none; }
+#focus-modal-box {
+  background: white; border-radius: 24px; padding: 28px 24px; max-width: 420px; width: 100%;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.4); text-align: center;
+}
+.focus-time-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 18px 0 12px; }
+.focus-time-btn {
+  padding: 14px 8px; border-radius: 14px; border: 2px solid #e5e7eb; background: #f9fafb;
+  font-weight: 900; color: #1e3a8a; cursor: pointer; transition: all .15s; font-size: 15px;
+}
+.focus-time-btn:hover { border-color: #1e3a8a; background: #eff6ff; }
+.focus-time-btn.selected { background: #1e3a8a; border-color: #1e3a8a; color: white; }
+#focus-custom-input {
+  width: 100%; padding: 10px 14px; border-radius: 12px; border: 2px solid #e5e7eb;
+  font-weight: 800; text-align: center; margin-top: 4px; outline: none;
+}
+#focus-custom-input:focus { border-color: #1e3a8a; }
+#focus-start-btn {
+  width: 100%; margin-top: 18px; padding: 14px; border-radius: 16px; border: none;
+  background: #1e3a8a; color: white; font-weight: 900; text-transform: uppercase;
+  font-size: 13px; letter-spacing: .05em; cursor: pointer; transition: background .15s;
+}
+#focus-start-btn:hover { background: #1e40af; }
+#focus-start-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+#focus-status-bar {
+  position: fixed; top: 12px; right: 12px; z-index: 3000; display: none;
+  align-items: center; gap: 10px; background: #1e293b; color: white;
+  padding: 8px 14px; border-radius: 14px; font-size: 12px; font-weight: 800;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+#focus-status-bar.show { display: flex; }
+#focus-status-time { font-variant-numeric: tabular-nums; }
+#focus-status-violation {
+  background: rgba(239,68,68,0.2); color: #fca5a5; padding: 3px 8px; border-radius: 8px; font-size: 10px;
+}
+#focus-status-violation.hidden { display: none; }
   </style>
 </head>
 <body>
+<!-- ═══ CHẾ ĐỘ TẬP TRUNG: chọn thời gian học ═══ -->
+<div id="focus-modal-overlay">
+  <div id="focus-modal-box">
+    <i class="fas fa-bullseye text-3xl text-blue-900 mb-2 block"></i>
+    <div class="font-black text-blue-900 text-base uppercase mb-1">Chọn thời gian học tập</div>
+    <div class="text-gray-500 text-xs leading-relaxed mb-1">
+      Em muốn tập trung học trong bao lâu? Trang học sẽ chuyển sang chế độ toàn màn hình để em không bị phân tâm.
+    </div>
+    <div class="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2 text-left">
+      <i class="fas fa-info-circle mr-1"></i>
+      Lưu ý: nếu em chuyển sang tab/ứng dụng khác hoặc thoát toàn màn hình, hệ thống sẽ ghi nhận lại số lần vi phạm.
+    </div>
+    <div class="focus-time-grid">
+      <button type="button" class="focus-time-btn" onclick="selectFocusMinutes(45, this)">45 phút</button>
+      <button type="button" class="focus-time-btn" onclick="selectFocusMinutes(60, this)">60 phút</button>
+      <button type="button" class="focus-time-btn" onclick="selectFocusMinutes(90, this)">90 phút</button>
+      <button type="button" class="focus-time-btn" onclick="selectFocusMinutes(120, this)">120 phút</button>
+    </div>
+    <input type="number" id="focus-custom-input" min="1" max="600" placeholder="Hoặc nhập số phút tuỳ ý..."
+      oninput="onFocusCustomInput(this.value)">
+    <button type="button" id="focus-start-btn" disabled onclick="startFocusMode()">
+      <i class="fas fa-play mr-2"></i>Bắt đầu học tập trung
+    </button>
+  </div>
+</div>
 
+<!-- Thanh trạng thái chế độ tập trung -->
+<div id="focus-status-bar">
+  <i class="fas fa-bullseye text-blue-300"></i>
+  <span id="focus-status-time">--:--</span>
+  <span id="focus-status-violation" class="hidden">
+    <i class="fas fa-exclamation-triangle mr-1"></i><span id="focus-violation-count">0</span> lần thoát
+  </span>
+  <i class="fas fa-expand cc-btn text-[11px]" style="opacity:.85" title="Vào lại toàn màn hình" onclick="reEnterFullscreen()"></i>
+</div>
 <!-- MOBILE DRAWER -->
 <div id="mob-menu">
     <div id="mob-overlay" onclick="closeMob()"></div>
@@ -504,7 +580,103 @@
   const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
   const sb = supabase.createClient(SB_URL, SB_KEY);
   const HOMEWORK_BUCKET = "homework";
+  // ══════════════════════════════════════════════
+// CHẾ ĐỘ TẬP TRUNG (FOCUS MODE)
+// ══════════════════════════════════════════════
+let focusSelectedMinutes    = null;
+let focusRemainingSeconds   = 0;
+let focusCountdownInterval  = null;
+let focusViolationCount     = 0;
+let focusModeActive         = false;
 
+function selectFocusMinutes(mins, btnEl) {
+  focusSelectedMinutes = mins;
+  document.querySelectorAll('.focus-time-btn').forEach(b => b.classList.remove('selected'));
+  btnEl.classList.add('selected');
+  document.getElementById('focus-custom-input').value = '';
+  document.getElementById('focus-start-btn').disabled = false;
+}
+
+function onFocusCustomInput(val) {
+  const n = parseInt(val, 10);
+  document.querySelectorAll('.focus-time-btn').forEach(b => b.classList.remove('selected'));
+  if (n && n > 0) { focusSelectedMinutes = n; document.getElementById('focus-start-btn').disabled = false; }
+  else { focusSelectedMinutes = null; document.getElementById('focus-start-btn').disabled = true; }
+}
+
+function startFocusMode() {
+  if (!focusSelectedMinutes || focusSelectedMinutes <= 0) return;
+  document.getElementById('focus-modal-overlay').classList.add('hidden');
+
+  focusRemainingSeconds = focusSelectedMinutes * 60;
+  focusViolationCount = 0;
+  focusModeActive = true;
+  updateFocusStatusDisplay();
+  document.getElementById('focus-status-bar').classList.add('show');
+  document.getElementById('focus-status-violation').classList.add('hidden');
+
+  requestFocusFullscreen();
+
+  clearInterval(focusCountdownInterval);
+  focusCountdownInterval = setInterval(() => {
+    focusRemainingSeconds--;
+    updateFocusStatusDisplay();
+    if (focusRemainingSeconds <= 0) { clearInterval(focusCountdownInterval); endFocusMode(); }
+  }, 1000);
+
+  document.addEventListener('visibilitychange', onFocusVisibilityChange);
+  document.addEventListener('fullscreenchange', onFocusFullscreenChange);
+}
+
+function requestFocusFullscreen() {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if (req) req.call(el).catch(() => {});
+}
+
+function reEnterFullscreen() { if (!document.fullscreenElement) requestFocusFullscreen(); }
+
+function updateFocusStatusDisplay() {
+  const m = Math.max(0, Math.floor(focusRemainingSeconds / 60));
+  const s = Math.max(0, focusRemainingSeconds % 60);
+  document.getElementById('focus-status-time').textContent = `${m}:${String(s).padStart(2,'0')} còn lại`;
+}
+
+function registerFocusViolation(reason) {
+  if (!focusModeActive) return;
+  focusViolationCount++;
+  document.getElementById('focus-violation-count').textContent = focusViolationCount;
+  document.getElementById('focus-status-violation').classList.remove('hidden');
+  Swal.fire({
+    icon: 'warning',
+    title: 'Em đã rời khỏi chế độ tập trung!',
+    text: reason + ` (Lần thứ ${focusViolationCount})`,
+    confirmButtonText: 'Quay lại học',
+    confirmButtonColor: '#1e3a8a'
+  }).then(() => { reEnterFullscreen(); });
+}
+
+function onFocusVisibilityChange() {
+  if (document.hidden && focusModeActive) registerFocusViolation('Em vừa chuyển sang tab/ứng dụng khác.');
+}
+function onFocusFullscreenChange() {
+  if (!document.fullscreenElement && focusModeActive) registerFocusViolation('Em vừa thoát khỏi chế độ toàn màn hình.');
+}
+
+function endFocusMode() {
+  focusModeActive = false;
+  clearInterval(focusCountdownInterval);
+  document.removeEventListener('visibilitychange', onFocusVisibilityChange);
+  document.removeEventListener('fullscreenchange', onFocusFullscreenChange);
+  document.getElementById('focus-status-bar').classList.remove('show');
+  if (document.fullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen)?.call(document);
+  Swal.fire({
+    icon: 'success',
+    title: 'Hết giờ học tập trung! 🎉',
+    text: `Em đã hoàn thành ${focusSelectedMinutes} phút, với ${focusViolationCount} lần thoát ra ngoài.`,
+    confirmButtonColor: '#1e3a8a'
+  });
+}
   function typesetMath(el) {
     if (!el) return;
     if (window.MathJax && window.MathJax.typesetPromise) {
