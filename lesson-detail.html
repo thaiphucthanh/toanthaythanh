@@ -199,6 +199,18 @@
     }
     #cc-center-play.show { opacity: 1; }
 
+    /* Icon tua nhanh / tua lùi hiện chớp khi bấm phím mũi tên */
+    .cc-seek-flash {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 56px; height: 56px; border-radius: 50%; z-index: 26;
+      background: rgba(17,24,39,0.55); color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; gap: 2px; flex-direction: column;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .cc-seek-flash.show { opacity: 1; }
+    #cc-seek-back  { left: 18%; }
+    #cc-seek-fwd   { right: 18%; }
+
     /* Menu cài đặt: tốc độ phát + chất lượng */
     #cc-settings-menu {
       position: absolute; bottom: 44px; right: 8px; z-index: 60;
@@ -442,6 +454,10 @@
 
           <!-- Icon play/pause hiện giữa màn hình khi bấm -->
           <div id="cc-center-play"><i class="fas fa-play"></i></div>
+
+          <!-- Icon tua lùi / tua nhanh khi bấm phím mũi tên -->
+          <div id="cc-seek-back" class="cc-seek-flash"><i class="fas fa-backward"></i><span>5s</span></div>
+          <div id="cc-seek-fwd" class="cc-seek-flash"><i class="fas fa-forward"></i><span>5s</span></div>
 
           <!-- Chắn màn hình gợi ý video liên quan khi video kết thúc -->
           <div id="shield-endscreen" oncontextmenu="return false;" onclick="ccReplay()">
@@ -996,6 +1012,62 @@ function endFocusMode() {
   }
 
   // ══════════════════════════════════════════════
+  // PHÍM TẮT: mũi tên trái/phải để tua, Space để play/pause
+  // ══════════════════════════════════════════════
+  document.addEventListener('keydown', handleVideoKeydown);
+
+  function handleVideoKeydown(e) {
+    if (!ytPlayer) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    // Không can thiệp khi học sinh đang gõ vào ô nhập liệu (ví dụ ô nộp bài, ô tìm kiếm...)
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      seekRelative(5);
+      ccFlashSeek('fwd');
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      seekRelative(-5);
+      ccFlashSeek('back');
+    } else if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      ccTogglePlayPause();
+      ccOnActivity();
+    }
+  }
+
+  function seekRelative(deltaSeconds) {
+    if (!ytPlayer) return;
+    try {
+      const cur = ytPlayer.getCurrentTime() || 0;
+      const dur = ytPlayer.getDuration() || ccDuration || 0;
+      let target = cur + deltaSeconds;
+      if (target < 0) target = 0;
+      if (dur > 0 && target > dur) target = dur;
+      ytPlayer.seekTo(target, true);
+      ccOnActivity();
+      ccUpdateProgress();
+    } catch(e) {}
+  }
+
+  // Hiệu ứng icon tua nhanh/tua lùi chớp lên khi bấm phím mũi tên
+  let ccSeekFlashTimerFwd  = null;
+  let ccSeekFlashTimerBack = null;
+  function ccFlashSeek(direction) {
+    const el = document.getElementById(direction === 'fwd' ? 'cc-seek-fwd' : 'cc-seek-back');
+    if (!el) return;
+    el.classList.add('show');
+    if (direction === 'fwd') {
+      clearTimeout(ccSeekFlashTimerFwd);
+      ccSeekFlashTimerFwd = setTimeout(() => el.classList.remove('show'), 450);
+    } else {
+      clearTimeout(ccSeekFlashTimerBack);
+      ccSeekFlashTimerBack = setTimeout(() => el.classList.remove('show'), 450);
+    }
+  }
+
+  // ══════════════════════════════════════════════
   // CÀI ĐẶT: TỐC ĐỘ PHÁT + CHẤT LƯỢNG
   // ══════════════════════════════════════════════
   const QUALITY_LABELS = {
@@ -1024,23 +1096,17 @@ function endFocusMode() {
         <div class="cc-speed-btn ${Math.abs(r - curRate) < 0.01 ? 'cc-active' : ''}" onclick="ccSetSpeed(${r})">${r}x</div>
       `).join('');
     }
-    // Chất lượng
-    let qualities = [];
+    // Chất lượng — LƯU Ý: từ ~2018, YouTube IFrame API bỏ qua yêu cầu ép chất lượng phát
+    // (setPlaybackQuality không còn tác dụng thực tế, YouTube tự chọn theo băng thông/kích thước player).
+    // Vì vậy phần này chỉ hiển thị CHẤT LƯỢNG HIỆN TẠI để thông tin, không cho chọn thủ công
+    // để tránh học sinh tưởng nhầm là bấm được mà không thấy đổi.
     let curQuality = 'auto';
-    try {
-      qualities = ytPlayer.getAvailableQualityLevels() || [];
-      curQuality = ytPlayer.getPlaybackQuality() || 'auto';
-    } catch(e) {}
+    try { curQuality = ytPlayer.getPlaybackQuality() || 'auto'; } catch(e) {}
     const qualityList = document.getElementById('cc-quality-list');
     if (qualityList) {
-      if (!qualities.length) {
-        qualityList.innerHTML = `<div class="text-[10px] opacity-50 italic px-1">Tự động theo mạng</div>`;
-      } else {
-        const opts = qualities.includes('auto') ? qualities : [...qualities, 'auto'];
-        qualityList.innerHTML = opts.map(q => `
-          <div class="cc-quality-btn ${q === curQuality ? 'cc-active' : ''}" onclick="ccSetQuality('${q}')">${QUALITY_LABELS[q] || q}</div>
-        `).join('');
-      }
+      qualityList.innerHTML = `
+        <div class="cc-quality-btn cc-active" style="cursor:default;">${QUALITY_LABELS[curQuality] || curQuality}</div>
+        <div class="text-[9px] opacity-50 italic px-1 mt-1 leading-snug">YouTube tự động điều chỉnh chất lượng theo băng thông, không thể chọn thủ công.</div>`;
     }
   }
 
@@ -1048,12 +1114,6 @@ function endFocusMode() {
     if (!ytPlayer) return;
     try { ytPlayer.setPlaybackRate(rate); } catch(e) {}
     ccPopulateSettingsMenu();
-  }
-  function ccSetQuality(q) {
-    if (!ytPlayer) return;
-    try { ytPlayer.setPlaybackQuality(q); } catch(e) {}
-    // YouTube có thể mất một chút để áp dụng chất lượng mới
-    setTimeout(ccPopulateSettingsMenu, 400);
   }
 
   window.addEventListener('click', (e) => {
