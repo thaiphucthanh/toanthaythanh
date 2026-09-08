@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
         window.MathJax = {
@@ -42,14 +43,16 @@
         .badge-hw-yes { background: #fef3c7; color: #92400e; }
         .badge-hw-no { background: #f1f5f9; color: #94a3b8; }
 
-        /* ===== ORDER (SẮP XẾP THỨ TỰ) COLUMN ===== */
-        .order-btn {
-            width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
-            border-radius: 8px; color: #94a3b8; transition: all 0.15s; cursor: pointer;
+        /* ===== ORDER (KÉO THẢ SẮP XẾP) COLUMN ===== */
+        .drag-handle {
+            width: 28px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 8px; color: #cbd5e1; transition: all 0.15s; cursor: grab; user-select: none;
         }
-        .order-btn:hover { background: #eff6ff; color: #1e3a8a; }
-        .order-btn:disabled, .order-btn.disabled { opacity: 0.2; pointer-events: none; cursor: default; }
-        tr.row-reordering { opacity: 0.5; }
+        .drag-handle:hover { background: #eff6ff; color: #1e3a8a; }
+        .drag-handle:active { cursor: grabbing; }
+        tr.sortable-ghost { opacity: 0.35; background: #eff6ff; }
+        tr.sortable-chosen { background: #f8fafc; }
+        tr.sortable-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
 
         /* ===== HOMEWORK PANEL ===== */
         #hw-panel-overlay {
@@ -214,7 +217,7 @@
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
-                    <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do, BTVN và sắp xếp thứ tự hiển thị cho học sinh</p>
+                    <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do, BTVN và <b>kéo thả</b> để sắp xếp thứ tự hiển thị cho học sinh</p>
                 </div>
                 <button onclick="addNewLesson()" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
                     <i class="fas fa-plus"></i><span>Thêm bài học mới</span>
@@ -244,7 +247,7 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
-                            <th class="p-5 text-center" title="Sắp xếp thứ tự hiển thị bài học cho học sinh">Thứ tự</th>
+                            <th class="p-5 text-center" title="Kéo thả để sắp xếp thứ tự hiển thị bài học cho học sinh">Thứ tự</th>
                             <th class="p-5">Tiêu đề bài học</th>
                             <th class="p-5">Insight</th>
                             <th class="p-5 text-center">Video</th>
@@ -382,6 +385,10 @@ let hwLessonId = null;
 let hwQuestions = []; 
 let hwDraftMap = {};
 
+// State kéo thả sắp xếp bài học
+let sortableInstance = null;
+let _reorderSaving = false;
+
 // =====================
 // INIT
 // =====================
@@ -465,6 +472,7 @@ function renderLessonTable() {
     const tbody = document.getElementById('lesson-table-body');
     if (currentLessons.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
+        if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
         return;
     }
     tbody.innerHTML = currentLessons.map((l, idx) => {
@@ -493,21 +501,15 @@ function renderLessonTable() {
             hwBadge = `<button onclick="openHwPanel('${l.id}')" class="badge-hw-no text-[9px] font-black uppercase px-2 py-1 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"><i class="fas fa-plus mr-1"></i>Thêm BTVN</button>`;
         }
 
-        // Cột "Thứ tự" — mũi tên lên/xuống để đổi vị trí hiển thị bài học cho học sinh.
-        // Bị vô hiệu hóa (mờ đi) ở đầu/cuối danh sách vì không còn chỗ để di chuyển tiếp.
+        // Cột "Thứ tự" — tay cầm kéo thả để đổi vị trí hiển thị bài học cho học sinh.
         const orderCell = `
-            <div class="flex flex-col items-center gap-0.5">
-                <button type="button" onclick="moveLessonOrder('${l.id}', -1)" class="order-btn ${idx === 0 ? 'disabled' : ''}" title="Đưa lên trên" ${idx === 0 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-up text-[11px]"></i>
-                </button>
-                <span class="text-[10px] font-black text-gray-300 w-5 text-center">${idx + 1}</span>
-                <button type="button" onclick="moveLessonOrder('${l.id}', 1)" class="order-btn ${idx === currentLessons.length - 1 ? 'disabled' : ''}" title="Đưa xuống dưới" ${idx === currentLessons.length - 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-down text-[11px]"></i>
-                </button>
+            <div class="drag-handle" title="Kéo để sắp xếp">
+                <i class="fas fa-grip-vertical"></i>
+                <span class="text-[10px] font-black text-gray-300 mt-0.5">${idx + 1}</span>
             </div>`;
 
         return `
-        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}" id="lesson-row-${l.id}">
+        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}" id="lesson-row-${l.id}" data-id="${l.id}">
             <td class="p-5 text-center">${orderCell}</td>
             <td class="p-5">
                 <div class="flex items-center gap-3">
@@ -563,41 +565,56 @@ function renderLessonTable() {
             </td>
         </tr>`;
     }).join('');
+
+    initSortable();
 }
 
 // =====================
-// SẮP XẾP THỨ TỰ BÀI HỌC (order_index)
+// SẮP XẾP THỨ TỰ BÀI HỌC (order_index) — KÉO THẢ VỚI SORTABLEJS
 // =====================
-// Thầy bấm mũi tên lên/xuống ở cột "Thứ tự" để đổi vị trí 1 bài học trong danh sách.
-// Cách làm: hoán đổi vị trí trong mảng currentLessons đang hiển thị (đã đúng thứ tự hiện tại),
-// render lại giao diện ngay cho mượt, rồi chuẩn hóa order_index 0..n-1 theo thứ tự mới và lưu
-// TOÀN BỘ bài học trong chuyên đề xuống Supabase. Nếu lưu thất bại sẽ tự tải lại dữ liệu gốc.
-let _reorderBusy = false;
-async function moveLessonOrder(lessonId, direction) {
-    if (_reorderBusy) return;
-    const idx = currentLessons.findIndex(l => String(l.id) === String(lessonId));
-    const newIdx = idx + direction;
-    if (idx === -1 || newIdx < 0 || newIdx >= currentLessons.length) return;
+// Thầy kéo hàng bằng tay cầm (icon ⋮⋮) ở cột "Thứ tự" để đổi vị trí bài học trong danh sách.
+// Cách làm: khi thả (onEnd), hoán đổi vị trí trong mảng currentLessons theo đúng vị trí mới trên
+// giao diện (evt.oldIndex / evt.newIndex do SortableJS cung cấp), render lại để số thứ tự đúng ngay,
+// rồi chuẩn hóa order_index 0..n-1 theo thứ tự mới và lưu TOÀN BỘ bài học trong chuyên đề xuống Supabase.
+// Nếu lưu thất bại sẽ tự tải lại dữ liệu gốc để tránh lệch giữa UI và DB.
+function initSortable() {
+    const tbody = document.getElementById('lesson-table-body');
+    if (!tbody) return;
+    if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
 
-    _reorderBusy = true;
-    [currentLessons[idx], currentLessons[newIdx]] = [currentLessons[newIdx], currentLessons[idx]];
-    renderLessonTable(); // cập nhật giao diện ngay, không cần chờ mạng
+    sortableInstance = new Sortable(tbody, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        onEnd: async (evt) => {
+            const { oldIndex, newIndex } = evt;
+            if (oldIndex === newIndex || oldIndex == null || newIndex == null) return;
+            if (_reorderSaving) return;
 
-    try {
-        const updates = currentLessons.map((l, i) => {
-            l.order_index = i;
-            return supabaseClient.from('lessons').update({ order_index: i }).eq('id', l.id);
-        });
-        const results = await Promise.all(updates);
-        const failed = results.find(r => r.error);
-        if (failed && failed.error) throw failed.error;
-    } catch (err) {
-        console.error('moveLessonOrder:', err);
-        Swal.fire('Lỗi sắp xếp', 'Không thể lưu thứ tự bài học: ' + (err.message || 'Có thể cột order_index chưa tồn tại trong bảng lessons.'), 'error');
-        await fetchLessons(); // lưu thất bại -> tải lại dữ liệu gốc để tránh lệch giữa UI và DB
-    } finally {
-        _reorderBusy = false;
-    }
+            const moved = currentLessons.splice(oldIndex, 1)[0];
+            currentLessons.splice(newIndex, 0, moved);
+            renderLessonTable(); // cập nhật số thứ tự + re-init Sortable ngay, không cần chờ mạng
+
+            _reorderSaving = true;
+            try {
+                const updates = currentLessons.map((l, i) => {
+                    l.order_index = i;
+                    return supabaseClient.from('lessons').update({ order_index: i }).eq('id', l.id);
+                });
+                const results = await Promise.all(updates);
+                const failed = results.find(r => r.error);
+                if (failed && failed.error) throw failed.error;
+            } catch (err) {
+                console.error('reorder lessons:', err);
+                Swal.fire('Lỗi sắp xếp', 'Không thể lưu thứ tự bài học: ' + (err.message || 'Có thể cột order_index chưa tồn tại trong bảng lessons.'), 'error');
+                await fetchLessons(); // lưu thất bại -> tải lại dữ liệu gốc để tránh lệch giữa UI và DB
+            } finally {
+                _reorderSaving = false;
+            }
+        }
+    });
 }
 
 // =====================
