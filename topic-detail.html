@@ -42,6 +42,15 @@
         .badge-hw-yes { background: #fef3c7; color: #92400e; }
         .badge-hw-no { background: #f1f5f9; color: #94a3b8; }
 
+        /* ===== ORDER (SẮP XẾP THỨ TỰ) COLUMN ===== */
+        .order-btn {
+            width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; color: #94a3b8; transition: all 0.15s; cursor: pointer;
+        }
+        .order-btn:hover { background: #eff6ff; color: #1e3a8a; }
+        .order-btn:disabled, .order-btn.disabled { opacity: 0.2; pointer-events: none; cursor: default; }
+        tr.row-reordering { opacity: 0.5; }
+
         /* ===== HOMEWORK PANEL ===== */
         #hw-panel-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.4);
@@ -205,7 +214,7 @@
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h3 class="text-lg font-black text-blue-900 uppercase">Danh sách bài học chi tiết</h3>
-                    <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do và BTVN cho học sinh</p>
+                    <p class="text-sm text-gray-500 italic">Bật/tắt trạng thái hiển thị, cấu hình quyền xem tự do, BTVN và sắp xếp thứ tự hiển thị cho học sinh</p>
                 </div>
                 <button onclick="addNewLesson()" class="bg-blue-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
                     <i class="fas fa-plus"></i><span>Thêm bài học mới</span>
@@ -235,7 +244,8 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-blue-900 uppercase tracking-widest">
-                            <th class="p-5 pl-8">Tiêu đề bài học</th>
+                            <th class="p-5 text-center" title="Sắp xếp thứ tự hiển thị bài học cho học sinh">Thứ tự</th>
+                            <th class="p-5">Tiêu đề bài học</th>
                             <th class="p-5">Insight</th>
                             <th class="p-5 text-center">Video</th>
                             <th class="p-5 text-center">BTVN</th>
@@ -404,10 +414,15 @@ async function loadTopicHeader() {
 // =====================
 // FETCH LESSONS & HOMEWORK STATS
 // =====================
+// Sắp xếp theo order_index (thứ tự thầy đã kéo sắp xếp thủ công) trước, id sau (bài chưa có
+// order_index sẽ rơi xuống cuối danh sách). Yêu cầu bảng "lessons" có cột order_index (integer, có thể NULL):
+//   ALTER TABLE lessons ADD COLUMN IF NOT EXISTS order_index integer;
 async function fetchLessons() {
     document.getElementById('loading').classList.remove('hidden');
     const { data: lessons, error } = await supabaseClient
-        .from('lessons').select('*').eq('topic_id', topicId).order('id', { ascending: true });
+        .from('lessons').select('*').eq('topic_id', topicId)
+        .order('order_index', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true });
     document.getElementById('loading').classList.add('hidden');
     if (error) { alert(error.message); return; }
 
@@ -449,10 +464,10 @@ async function fetchLessons() {
 function renderLessonTable() {
     const tbody = document.getElementById('lesson-table-body');
     if (currentLessons.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
         return;
     }
-    tbody.innerHTML = currentLessons.map(l => {
+    tbody.innerHTML = currentLessons.map((l, idx) => {
         const isActive = l.status === 'Active';
         const isFree = l.is_free === true;
         const hw = homeworkMap[String(l.id)];
@@ -478,9 +493,23 @@ function renderLessonTable() {
             hwBadge = `<button onclick="openHwPanel('${l.id}')" class="badge-hw-no text-[9px] font-black uppercase px-2 py-1 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"><i class="fas fa-plus mr-1"></i>Thêm BTVN</button>`;
         }
 
+        // Cột "Thứ tự" — mũi tên lên/xuống để đổi vị trí hiển thị bài học cho học sinh.
+        // Bị vô hiệu hóa (mờ đi) ở đầu/cuối danh sách vì không còn chỗ để di chuyển tiếp.
+        const orderCell = `
+            <div class="flex flex-col items-center gap-0.5">
+                <button type="button" onclick="moveLessonOrder('${l.id}', -1)" class="order-btn ${idx === 0 ? 'disabled' : ''}" title="Đưa lên trên" ${idx === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-up text-[11px]"></i>
+                </button>
+                <span class="text-[10px] font-black text-gray-300 w-5 text-center">${idx + 1}</span>
+                <button type="button" onclick="moveLessonOrder('${l.id}', 1)" class="order-btn ${idx === currentLessons.length - 1 ? 'disabled' : ''}" title="Đưa xuống dưới" ${idx === currentLessons.length - 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-down text-[11px]"></i>
+                </button>
+            </div>`;
+
         return `
-        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}">
-            <td class="p-5 pl-8">
+        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}" id="lesson-row-${l.id}">
+            <td class="p-5 text-center">${orderCell}</td>
+            <td class="p-5">
                 <div class="flex items-center gap-3">
                     <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
                         ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
@@ -534,6 +563,41 @@ function renderLessonTable() {
             </td>
         </tr>`;
     }).join('');
+}
+
+// =====================
+// SẮP XẾP THỨ TỰ BÀI HỌC (order_index)
+// =====================
+// Thầy bấm mũi tên lên/xuống ở cột "Thứ tự" để đổi vị trí 1 bài học trong danh sách.
+// Cách làm: hoán đổi vị trí trong mảng currentLessons đang hiển thị (đã đúng thứ tự hiện tại),
+// render lại giao diện ngay cho mượt, rồi chuẩn hóa order_index 0..n-1 theo thứ tự mới và lưu
+// TOÀN BỘ bài học trong chuyên đề xuống Supabase. Nếu lưu thất bại sẽ tự tải lại dữ liệu gốc.
+let _reorderBusy = false;
+async function moveLessonOrder(lessonId, direction) {
+    if (_reorderBusy) return;
+    const idx = currentLessons.findIndex(l => String(l.id) === String(lessonId));
+    const newIdx = idx + direction;
+    if (idx === -1 || newIdx < 0 || newIdx >= currentLessons.length) return;
+
+    _reorderBusy = true;
+    [currentLessons[idx], currentLessons[newIdx]] = [currentLessons[newIdx], currentLessons[idx]];
+    renderLessonTable(); // cập nhật giao diện ngay, không cần chờ mạng
+
+    try {
+        const updates = currentLessons.map((l, i) => {
+            l.order_index = i;
+            return supabaseClient.from('lessons').update({ order_index: i }).eq('id', l.id);
+        });
+        const results = await Promise.all(updates);
+        const failed = results.find(r => r.error);
+        if (failed && failed.error) throw failed.error;
+    } catch (err) {
+        console.error('moveLessonOrder:', err);
+        Swal.fire('Lỗi sắp xếp', 'Không thể lưu thứ tự bài học: ' + (err.message || 'Có thể cột order_index chưa tồn tại trong bảng lessons.'), 'error');
+        await fetchLessons(); // lưu thất bại -> tải lại dữ liệu gốc để tránh lệch giữa UI và DB
+    } finally {
+        _reorderBusy = false;
+    }
 }
 
 // =====================
@@ -1615,9 +1679,17 @@ async function addNewLesson() {
         }
     }
 
+    // Bài học mới luôn được thêm vào CUỐI danh sách hiện tại (order_index lớn nhất + 1)
+    // để không xáo trộn thứ tự các bài đã sắp xếp trước đó.
+    const maxOrder = currentLessons.reduce((max, l) => {
+        const v = (typeof l.order_index === 'number') ? l.order_index : -1;
+        return v > max ? v : max;
+    }, -1);
+
     const { error } = await supabaseClient.from('lessons').insert([{
         topic_id: topicId, title: formValues.title, video_url: formValues.video || null,
-        insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree, documents: finalDocs
+        insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree,
+        documents: finalDocs, order_index: maxOrder + 1
     }]);
 
     if (error) Swal.fire('Lỗi!', error.message, 'error');
