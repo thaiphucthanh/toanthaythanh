@@ -2130,8 +2130,10 @@ function endFocusMode() {
       if (e1) throw e1;
       if (!topics?.length) { document.getElementById('sidebar-content').innerHTML = `<div class="text-center py-8 text-gray-300 text-xs italic">Chưa có chuyên đề</div>`; return; }
       const { data: lessons, error: e2 } = await sb.from('lessons')
-        .select('id, title, topic_id, status, created_at')   // thêm created_at để so sánh với left_at
-        .in('topic_id', topics.map(t => t.id)).order('id', { ascending: true });
+      .select('id, title, topic_id, status, created_at, order_index')   // thêm order_index để sắp đúng thứ tự thầy đã kéo thả
+      .in('topic_id', topics.map(t => t.id))
+      .order('order_index', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true });
       if (e2) throw e2;
 
       let viewedIds = [], submittedIds = [], solutionMap = {};
