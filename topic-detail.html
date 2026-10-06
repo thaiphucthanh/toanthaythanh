@@ -363,6 +363,9 @@
             <button onclick="openAssignDialog()" class="px-5 py-2.5 rounded-xl bg-yellow-400 text-blue-900 font-black text-sm hover:bg-yellow-300 transition-all flex items-center gap-2" title="Giao BTVN này cho các lớp (cần lưu cấu hình trước)">
                 <i class="fas fa-paper-plane"></i> Giao cho lớp
             </button>
+            <button onclick="manageHomeworkAssignments()" class="px-5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 font-black text-sm hover:bg-blue-100 transition-all flex items-center gap-2" title="Xem và sửa các đợt BTVN đã giao">
+                <i class="fas fa-calendar-alt"></i> Quản lý hạn nộp
+            </button>
             <button onclick="saveHomeworkConfig()" class="px-6 py-2.5 rounded-xl bg-blue-900 text-white font-black text-sm hover:bg-blue-800 transition-all flex items-center gap-2">
                 <i class="fas fa-save"></i> Lưu cấu hình
             </button>
@@ -372,7 +375,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ====== ĐIỀN LẠI URL + KEY SUPABASE (giống các trang admin khác) ======
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
@@ -1677,6 +1679,287 @@ async function openAssignDialog() {
 
     Swal.fire({ icon: 'success', title: `Đã giao cho ${rows.length} lớp`, timer: 1300, showConfirmButton: false });
     fetchLessons();
+}
+
+
+// =====================
+// QUẢN LÝ CÁC ĐỢT BTVN ĐÃ GIAO
+// =====================
+// Chức năng này bổ sung cho openAssignDialog():
+// - openAssignDialog() dùng khi TẠO đợt giao BTVN mới.
+// - manageHomeworkAssignments() dùng để XEM các đợt đã giao.
+// - editHomeworkDeadline() dùng để SỬA hạn nộp của đợt đã tồn tại.
+//
+// Không cần xóa/recreate BTVN. Chỉ cập nhật trực tiếp
+// homework_assignments.deadline.
+
+function formatDeadlineForDisplay(iso) {
+    if (!iso) return '<span class="text-gray-400 italic">Không đặt hạn</span>';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '<span class="text-red-500">Ngày không hợp lệ</span>';
+
+    return d.toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function toDatetimeLocalValue(iso) {
+    if (!iso) return '';
+
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+
+    const pad = n => String(n).padStart(2, '0');
+
+    // datetime-local không dùng timezone suffix.
+    // Dùng giờ local của trình duyệt để thầy sửa đúng giờ đang nhìn thấy.
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function manageHomeworkAssignments() {
+    const lessonId = hwLessonId;
+    if (!lessonId) {
+        Swal.fire('Thiếu thông tin', 'Không xác định được bài học đang mở.', 'error');
+        return;
+    }
+
+    // Lấy toàn bộ đợt BTVN đã giao của bài học này.
+    const { data: assignments, error: assignmentError } = await supabaseClient
+        .from('homework_assignments')
+        .select('id, class_id, title, deadline, status, created_at')
+        .eq('lesson_id', lessonId)
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false });
+
+    if (assignmentError) {
+        Swal.fire('Lỗi tải BTVN', assignmentError.message, 'error');
+        return;
+    }
+
+    if (!assignments || assignments.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Chưa có đợt BTVN nào',
+            text: 'Bài học này chưa được giao cho lớp nào.'
+        });
+        return;
+    }
+
+    // Lấy tên lớp tương ứng.
+    const classIds = [...new Set(assignments.map(a => a.class_id).filter(Boolean))];
+    let classes = [];
+
+    if (classIds.length) {
+        const { data, error } = await supabaseClient
+            .from('course_classes')
+            .select('id, class_name')
+            .in('id', classIds);
+
+        if (error) {
+            Swal.fire('Lỗi tải lớp', error.message, 'error');
+            return;
+        }
+
+        classes = data || [];
+    }
+
+    const classMap = Object.fromEntries(
+        classes.map(c => [String(c.id), c.class_name])
+    );
+
+    const statusLabel = {
+        active: '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-black">Đang giao</span>',
+        closed: '<span class="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-black">Đã đóng</span>'
+    };
+
+    const rowsHtml = assignments.map(a => `
+        <div class="border border-gray-200 rounded-2xl p-4 bg-white hover:border-blue-200 transition-all">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <div class="font-black text-blue-900 text-sm">
+                        ${esc(a.title || 'BTVN')}
+                    </div>
+
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px]">
+                        <div>
+                            <span class="text-gray-400 font-bold">Lớp:</span>
+                            <span class="font-bold text-gray-700">
+                                ${esc(classMap[String(a.class_id)] || 'Không xác định')}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-400 font-bold">Hạn nộp:</span>
+                            <span class="font-bold text-blue-700">
+                                ${formatDeadlineForDisplay(a.deadline)}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-400 font-bold">Trạng thái:</span>
+                            ${statusLabel[a.status] || esc(a.status || '---')}
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    onclick="editHomeworkDeadline('${a.id}')"
+                    class="flex-shrink-0 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-black hover:bg-blue-100 transition-all"
+                    title="Sửa hạn nộp"
+                >
+                    <i class="fas fa-calendar-pen mr-1"></i> Sửa hạn
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    await Swal.fire({
+        title: 'Quản lý BTVN đã giao',
+        html: `
+            <div class="text-left">
+                <div class="mb-3 text-[11px] text-gray-500">
+                    Bài học: <b class="text-blue-900">${esc(
+                        currentLessons.find(l => String(l.id) === String(lessonId))?.title || '---'
+                    )}</b>
+                </div>
+
+                <div class="max-h-[55vh] overflow-y-auto space-y-3 pr-1">
+                    ${rowsHtml}
+                </div>
+            </div>
+        `,
+        width: 850,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+async function editHomeworkDeadline(assignmentId) {
+    if (!assignmentId) return;
+
+    const { data: assignment, error } = await supabaseClient
+        .from('homework_assignments')
+        .select('id, title, deadline, status, class_id')
+        .eq('id', assignmentId)
+        .single();
+
+    if (error || !assignment) {
+        Swal.fire('Lỗi', error?.message || 'Không tìm thấy đợt BTVN.', 'error');
+        return;
+    }
+
+    // Không cho sửa các đợt đã hủy.
+    if (assignment.status === 'cancelled') {
+        Swal.fire('Không thể sửa', 'Đợt BTVN này đã bị hủy.', 'warning');
+        return;
+    }
+
+    const classResult = await supabaseClient
+        .from('course_classes')
+        .select('class_name')
+        .eq('id', assignment.class_id)
+        .maybeSingle();
+
+    const className = classResult.data?.class_name || 'Không xác định';
+
+    const { value } = await Swal.fire({
+        title: 'Chỉnh sửa hạn nộp BTVN',
+        html: `
+            <div class="text-left space-y-3">
+                <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">Lớp</div>
+                    <div class="font-bold text-blue-900">${esc(className)}</div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">
+                        Tên đợt bài tập
+                    </label>
+                    <input
+                        id="edit-hw-title"
+                        type="text"
+                        class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
+                        value="${esc(assignment.title || '')}"
+                    >
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">
+                        Hạn nộp
+                    </label>
+                    <input
+                        id="edit-hw-deadline"
+                        type="datetime-local"
+                        class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
+                        value="${toDatetimeLocalValue(assignment.deadline)}"
+                    >
+                    <p class="text-[10px] text-gray-400 mt-1">
+                        Có thể để trống nếu không muốn đặt hạn nộp.
+                    </p>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Lưu thay đổi',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1e3a8a',
+        preConfirm: () => {
+            const title = document.getElementById('edit-hw-title').value.trim();
+            const deadlineInput = document.getElementById('edit-hw-deadline').value;
+
+            let deadline = null;
+
+            if (deadlineInput) {
+                const d = new Date(deadlineInput);
+
+                if (Number.isNaN(d.getTime())) {
+                    Swal.showValidationMessage('Ngày giờ không hợp lệ.');
+                    return false;
+                }
+
+                deadline = d.toISOString();
+            }
+
+            return {
+                title: title || null,
+                deadline
+            };
+        }
+    });
+
+    if (!value) return;
+
+    const { error: updateError } = await supabaseClient
+        .from('homework_assignments')
+        .update({
+            title: value.title,
+            deadline: value.deadline
+        })
+        .eq('id', assignmentId);
+
+    if (updateError) {
+        Swal.fire('Lỗi cập nhật', updateError.message, 'error');
+        return;
+    }
+
+    await Swal.fire({
+        icon: 'success',
+        title: 'Đã cập nhật BTVN',
+        text: 'Hạn nộp đã được thay đổi thành công.',
+        timer: 1200,
+        showConfirmButton: false
+    });
+
+    // Tải lại số lớp đã giao và dữ liệu liên quan.
+    await fetchLessons();
+
+    // Mở lại danh sách đợt giao để kiểm tra ngay kết quả.
+    await manageHomeworkAssignments();
 }
 
 async function toggleLessonFree(lessonId, isChecked) {
