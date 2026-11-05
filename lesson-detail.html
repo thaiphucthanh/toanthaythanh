@@ -188,6 +188,16 @@
     #focus-status-time { font-variant-numeric: tabular-nums; }
     #focus-status-violation { background: rgba(239,68,68,0.2); color: #fca5a5; padding: 3px 8px; border-radius: 8px; font-size: 10px; }
     #focus-status-violation.hidden { display: none; }
+    /* Sửa lỗi Tailwind + MathJax: công thức $...$ bị xuống dòng */
+    mjx-container[jax="SVG"] > svg { display: inline-block !important; }
+
+    /* Công thức $$...$$ vẫn là khối riêng, quá rộng thì cuộn ngang */
+    mjx-container[jax="SVG"][display="true"] {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    }
   </style>
 </head>
 <body>
