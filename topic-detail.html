@@ -21,6 +21,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        input[type="text"], textarea, select { font-family: 'Inter', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
         .sidebar-item { cursor: pointer; transition: all 0.3s; border-radius: 15px; margin: 0 10px; }
@@ -28,14 +29,17 @@
         .submenu { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background: rgba(0,0,0,0.2); }
         .submenu.show { max-height: 500px; margin-top: 5px; }
         .rotate-180 { transform: rotate(180deg); }
+
+        /* Toggle */
         .toggle-switch { position: relative; display: inline-flex; align-items: center; width: 48px; height: 26px; cursor: pointer; }
         .toggle-switch input { display: none; }
         .toggle-track { width: 100%; height: 100%; border-radius: 999px; background: #e2e8f0; transition: background 0.25s; }
         .toggle-switch input:checked + .toggle-track { background: #1e3a8a; }
-        .toggle-switch .toggle-track.free-mode { background: #e2e8f0; }
         .toggle-switch input:checked + .toggle-track.free-mode { background: #d97706; }
         .toggle-thumb { position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: left 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
         .toggle-switch input:checked ~ .toggle-thumb { left: 25px; }
+
+        /* Badge */
         .badge-Active { background: #dcfce7; color: #166534; }
         .badge-Inactive { background: #f1f5f9; color: #64748b; }
         .badge-Free { background: #fef3c7; color: #92400e; }
@@ -43,62 +47,43 @@
         .badge-hw-yes { background: #fef3c7; color: #92400e; }
         .badge-hw-no { background: #f1f5f9; color: #94a3b8; }
 
-        /* ===== ORDER (KÉO THẢ SẮP XẾP) COLUMN ===== */
-        .drag-handle {
-            width: 28px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 8px; color: #cbd5e1; transition: all 0.15s; cursor: grab; user-select: none;
-        }
+        /* Kéo thả */
+        .drag-handle { width: 28px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; color: #cbd5e1; transition: all 0.15s; cursor: grab; user-select: none; }
         .drag-handle:hover { background: #eff6ff; color: #1e3a8a; }
         .drag-handle:active { cursor: grabbing; }
         tr.sortable-ghost { opacity: 0.35; background: #eff6ff; }
         tr.sortable-chosen { background: #f8fafc; }
         tr.sortable-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
 
-        /* ===== HOMEWORK PANEL ===== */
-        #hw-panel-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            z-index: 100; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+        /* Panel BTVN */
+        #hw-panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         #hw-panel-overlay.open { opacity: 1; pointer-events: all; }
-        #hw-panel {
-            position: fixed; top: 0; right: 0; bottom: 0;
-            width: 680px; max-width: 95vw;
-            background: white; z-index: 101;
-            transform: translateX(100%);
-            transition: transform 0.35s cubic-bezier(.4,0,.2,1);
-            display: flex; flex-direction: column;
-            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
-        }
+        #hw-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 680px; max-width: 95vw; background: white; z-index: 101; transform: translateX(100%); transition: transform 0.35s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(0,0,0,0.15); }
         #hw-panel.open { transform: translateX(0); }
 
-        /* Question card */
         .q-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
         .q-card:hover { border-color: #93c5fd; }
         .q-card-essay { background: #fffbeb; border-color: #fde68a; }
         .q-card-essay:hover { border-color: #fbbf24; }
         .q-card-tf { background: #f0fdf4; border-color: #bbf7d0; }
         .q-card-tf:hover { border-color: #4ade80; }
-
         .q-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .q-num { background: #1e3a8a; color: white; font-size: 10px; font-weight: 900; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; }
         .q-num-essay { background: #d97706; }
         .q-num-tf { background: #16a34a; }
+        .q-mini-img { max-height: 90px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
 
         .ans-option { display: flex; align-items: center; gap: 8px; }
         .ans-option label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.15s; user-select: none; }
         .ans-option input[type="radio"] { display: none; }
         .ans-option input[type="radio"]:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
-        input[type="text"], textarea, select { font-family: 'Inter', sans-serif; }
 
-        /* Đúng/Sai: 4 ý con, mỗi ý chọn Đúng hoặc Sai bằng radio ẩn + label (giữ nguyên state qua CSS, không cần render lại) */
         .tf-option { display: flex; gap: 6px; flex-shrink: 0; }
         .tf-option input[type="radio"] { display: none; }
         .tf-option label { cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.15s; user-select: none; color: #9ca3af; }
         .tf-option input.tf-true:checked + label { background: #dcfce7; border-color: #16a34a; color: #166534; }
         .tf-option input.tf-false:checked + label { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
 
-        /* Essay question: text/LaTeX vs image mode */
         .upload-area { border: 2px dashed #fbbf24; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: #fffdf5; transition: all 0.2s; }
         .upload-area:hover { border-color: #d97706; background: #fef3c7; }
         .upload-area.done { border-style: solid; border-color: #16a34a; background: #f0fdf4; }
@@ -108,20 +93,14 @@
         .math-preview { background: white; border: 1.5px dashed #fde68a; border-radius: 12px; padding: 10px 12px; min-height: 38px; font-size: 13px; color: #374151; }
         .math-preview:empty::before { content: 'Xem trước LaTeX sẽ hiện ở đây...'; color: #d1d5db; font-style: italic; font-size: 12px; }
 
-        /* AI import */
-        .ai-import-box { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1.5px dashed #818cf8; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
-        .ai-progress-log { background: #0f172a; color: #a5f3fc; font-family: monospace; font-size: 11px; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
-        .q-mini-img { max-height: 90px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
-        .ai-source-tabs { display: flex; gap: 6px; margin-top: 10px; }
-        .ai-source-tab { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; cursor: pointer; border: 1.5px solid #c7d2fe; background: white; color: #4338ca; transition: all 0.15s; }
-        .ai-source-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-
-        /* Quick type switch on question card */
         .q-type-switch { display: flex; gap: 3px; background: #e2e8f0; padding: 3px; border-radius: 999px; }
         .q-type-switch-btn { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 999px; border: none; cursor: pointer; color: #64748b; background: transparent; transition: all 0.15s; }
-        .q-type-switch-btn:hover:not(.active) { color: #1e3a8a; }
+        .q-type-switch-btn:hover:not(.active-choice):not(.active-tf) { color: #1e3a8a; }
         .q-type-switch-btn.active-choice { background: #1e3a8a; color: white; }
         .q-type-switch-btn.active-tf { background: #16a34a; color: white; }
+
+        .ai-import-box { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1.5px dashed #818cf8; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+        .ai-progress-log { background: #0f172a; color: #a5f3fc; font-family: monospace; font-size: 11px; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -138,15 +117,11 @@
     </div>
     <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar">
         <a href="admin.html" class="sidebar-item p-4 flex items-center gap-3 mb-1">
-            <i class="fas fa-home w-5 text-blue-300"></i>
-            <span class="font-bold">Trang Welcome</span>
+            <i class="fas fa-home w-5 text-blue-300"></i><span class="font-bold">Trang Welcome</span>
         </a>
         <div class="menu-parent">
             <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('user-menu', this)">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-users w-5 text-blue-300"></i>
-                    <span class="font-bold">Quản lý người dùng</span>
-                </div>
+                <div class="flex items-center gap-3"><i class="fas fa-users w-5 text-blue-300"></i><span class="font-bold">Quản lý người dùng</span></div>
                 <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
             </div>
             <div id="user-menu" class="submenu">
@@ -156,27 +131,19 @@
         </div>
         <div class="menu-parent">
             <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('course-menu', this)">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-book w-5 text-blue-300"></i>
-                    <span class="font-bold text-yellow-400">Quản lý khóa học</span>
-                </div>
+                <div class="flex items-center gap-3"><i class="fas fa-book w-5 text-blue-300"></i><span class="font-bold text-yellow-400">Quản lý khóa học</span></div>
                 <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform rotate-180"></i>
             </div>
             <div id="course-menu" class="submenu show">
                 <a href="course-list.html" class="block py-3 pl-12 text-sm text-yellow-400 font-bold border-l-4 border-yellow-400 bg-blue-800/50"><i class="fas fa-list-ul mr-2"></i>Danh sách khóa học</a>
                 <a href="add-course.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-plus-circle mr-2 opacity-70"></i>Thêm khóa học mới</a>
                 <a href="course-class.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-chalkboard-teacher mr-2 opacity-70"></i>Quản lý Gen & Lớp</a>
-                <a href="cham-btvn.html" class="block py-3 pl-12 text-sm hover:text-yellow-400">
-                  <i class="fas fa-marker mr-2 opacity-70"></i>Chấm bài tập về nhà
-                </a>
+                <a href="cham-btvn.html" class="block py-3 pl-12 text-sm hover:text-yellow-400"><i class="fas fa-marker mr-2 opacity-70"></i>Chấm bài tập về nhà</a>
             </div>
         </div>
         <div class="menu-parent">
             <div class="sidebar-item p-4 flex items-center justify-between" onclick="toggleSubmenu('exam-menu', this)">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-graduation-cap w-5 text-blue-300"></i>
-                    <span class="font-bold">Quản lý thi Online</span>
-                </div>
+                <div class="flex items-center gap-3"><i class="fas fa-graduation-cap w-5 text-blue-300"></i><span class="font-bold">Quản lý thi Online</span></div>
                 <i class="fas fa-chevron-down text-[10px] arrow-icon transition-transform"></i>
             </div>
             <div id="exam-menu" class="submenu">
@@ -188,8 +155,7 @@
     </nav>
     <div class="p-4 border-t border-blue-800">
         <a href="trangchu.html" class="flex items-center gap-3 text-blue-300 hover:text-white transition-all p-3 rounded-xl hover:bg-white/5">
-            <i class="fas fa-arrow-left"></i>
-            <span class="text-sm font-bold">Quay lại trang chủ</span>
+            <i class="fas fa-arrow-left"></i><span class="text-sm font-bold">Quay lại trang chủ</span>
         </a>
     </div>
 </aside>
@@ -201,15 +167,9 @@
             <h2 id="topic-title" class="text-xl font-black text-blue-900 uppercase">Đang tải chuyên đề...</h2>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="toggleAll('Active')" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
-                <i class="fas fa-lock-open mr-1"></i> Mở tất cả
-            </button>
-            <button onclick="toggleAll('Inactive')" class="px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">
-                <i class="fas fa-lock mr-1"></i> Khóa tất cả
-            </button>
-            <button onclick="history.back()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200">
-                <i class="fas fa-chevron-left mr-2"></i>Quay lại
-            </button>
+            <button onclick="toggleAll('Active')" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold text-xs hover:bg-green-100 transition-all"><i class="fas fa-lock-open mr-1"></i> Mở tất cả</button>
+            <button onclick="toggleAll('Inactive')" class="px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all"><i class="fas fa-lock mr-1"></i> Khóa tất cả</button>
+            <button onclick="history.back()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200"><i class="fas fa-chevron-left mr-2"></i>Quay lại</button>
         </div>
     </header>
 
@@ -226,22 +186,10 @@
             </div>
 
             <div class="grid grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-                    <div class="text-2xl font-black text-blue-900" id="stat-total">--</div>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase">Tổng bài học</div>
-                </div>
-                <div class="bg-white rounded-2xl p-4 border border-green-100 text-center">
-                    <div class="text-2xl font-black text-green-600" id="stat-Active">--</div>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div>
-                </div>
-                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
-                    <div class="text-2xl font-black text-gray-400" id="stat-Inactive">--</div>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase">Đang khóa</div>
-                </div>
-                <div class="bg-white rounded-2xl p-4 border border-amber-100 text-center">
-                    <div class="text-2xl font-black text-amber-500" id="stat-hw">--</div>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase">Có BTVN</div>
-                </div>
+                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center"><div class="text-2xl font-black text-blue-900" id="stat-total">--</div><div class="text-[10px] font-bold text-gray-400 uppercase">Tổng bài học</div></div>
+                <div class="bg-white rounded-2xl p-4 border border-green-100 text-center"><div class="text-2xl font-black text-green-600" id="stat-Active">--</div><div class="text-[10px] font-bold text-gray-400 uppercase">Đang mở</div></div>
+                <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center"><div class="text-2xl font-black text-gray-400" id="stat-Inactive">--</div><div class="text-[10px] font-bold text-gray-400 uppercase">Đang khóa</div></div>
+                <div class="bg-white rounded-2xl p-4 border border-amber-100 text-center"><div class="text-2xl font-black text-amber-500" id="stat-hw">--</div><div class="text-[10px] font-bold text-gray-400 uppercase">Có BTVN</div></div>
             </div>
 
             <div class="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden">
@@ -260,9 +208,7 @@
                     </thead>
                     <tbody id="lesson-table-body" class="divide-y divide-gray-50"></tbody>
                 </table>
-                <div id="loading" class="p-20 text-center">
-                    <i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i>
-                </div>
+                <div id="loading" class="p-20 text-center"><i class="fas fa-circle-notch animate-spin text-3xl text-blue-900"></i></div>
             </div>
         </div>
     </div>
@@ -276,9 +222,7 @@
             <div class="text-[10px] text-blue-300 uppercase tracking-widest font-bold mb-0.5" id="hw-panel-lesson-title">---</div>
             <h3 class="text-lg font-black uppercase">Cấu hình Bài Tập Về Nhà</h3>
         </div>
-        <button onclick="closeHwPanel()" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center transition-all">
-            <i class="fas fa-times"></i>
-        </button>
+        <button onclick="closeHwPanel()" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
     </div>
 
     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
@@ -298,30 +242,19 @@
         </div>
     </div>
 
-    <div id="hw-questions-section" class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
-
-        <!-- ===== AI AUTO IMPORT FROM PDF / WORD ===== -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
         <div class="ai-import-box">
             <div class="flex items-center justify-between gap-3">
                 <div>
-                    <h4 class="font-black text-indigo-900 text-sm flex items-center gap-2">
-                        <i class="fas fa-robot"></i> Thêm tự động bằng AI
-                    </h4>
-                    <p class="text-[11px] text-indigo-500 mt-0.5" id="ai-import-desc">Tải đề PDF hoặc Word (.docx) lên, AI sẽ tự tách câu trắc nghiệm (A/B/C/D), câu tự luận và cắt ảnh minh họa (nếu có) — giữ nguyên chất lượng gốc.</p>
+                    <h4 class="font-black text-indigo-900 text-sm flex items-center gap-2"><i class="fas fa-robot"></i> Thêm tự động bằng AI</h4>
+                    <p class="text-[11px] text-indigo-500 mt-0.5">Tải đề PDF hoặc Word (.docx), AI sẽ tự tách câu trắc nghiệm (A/B/C/D), câu tự luận và cắt ảnh minh họa. Mẹo: file Word tốn ít token hơn PDF ảnh. Lưu ý: AI chưa tách được dạng Đúng/Sai 4 ý a,b,c,d — câu dạng này sẽ vào nhóm Trắc nghiệm, thầy dùng nút chuyển dạng trên từng câu để sửa.</p>
                 </div>
-                <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
-                    <button onclick="document.getElementById('ai-file-input').click()" id="btn-ai-import" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20">
-                        <i class="fas fa-file-import"></i> Chọn file PDF / Word
-                    </button>
-                </div>
+                <button onclick="document.getElementById('ai-file-input').click()" id="btn-ai-import" class="flex-shrink-0 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20">
+                    <i class="fas fa-file-import"></i> Chọn file PDF / Word
+                </button>
                 <input type="file" id="ai-file-input" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleAiFileSelect(event)">
             </div>
-            <div class="ai-source-tabs">
-                <span class="text-[10px] text-indigo-400 italic self-center mr-1">Mẹo: file Word (.docx) tốn ít token AI hơn nhiều so với PDF ảnh, nên dùng Word khi có thể. Lưu ý: AI hiện tự tách câu Đúng/Sai (4 ý) vào nhóm Trắc nghiệm — thầy vẫn cần soát và chuyển tay nếu cần đúng định dạng 4 ý a,b,c,d.</span>
-            </div>
-            <div id="ai-progress-wrap" class="hidden">
-                <div id="ai-progress-log" class="ai-progress-log"></div>
-            </div>
+            <div id="ai-progress-wrap" class="hidden"><div id="ai-progress-log" class="ai-progress-log"></div></div>
         </div>
 
         <div class="flex items-center justify-between mb-4">
@@ -329,22 +262,14 @@
                 <h4 class="font-black text-blue-900 uppercase text-sm">Danh sách câu hỏi</h4>
                 <p class="text-[10px] text-gray-400 italic mt-0.5" id="hw-q-count">Chưa có câu hỏi nào</p>
             </div>
-            
-            <div class="flex gap-2" id="hw-add-buttons">
-                <button onclick="addQuestion('choice')" id="btn-add-choice" class="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-blue-200 transition-all border border-blue-200">
-                    <i class="fas fa-plus"></i> Trắc nghiệm
-                </button>
-                <button onclick="addQuestion('true_false')" id="btn-add-tf" class="flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-green-200 transition-all border border-green-200">
-                    <i class="fas fa-check-double"></i> Đúng/Sai
-                </button>
-                <button onclick="addQuestion('essay')" id="btn-add-essay" class="flex items-center gap-2 bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-amber-200 transition-all border border-amber-200">
-                    <i class="fas fa-pen"></i> Tự luận
-                </button>
+            <div class="flex gap-2">
+                <button onclick="addQuestion('choice')" id="btn-add-choice" class="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-blue-200 transition-all border border-blue-200"><i class="fas fa-plus"></i> Trắc nghiệm</button>
+                <button onclick="addQuestion('true_false')" id="btn-add-tf" class="flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-green-200 transition-all border border-green-200"><i class="fas fa-check-double"></i> Đúng/Sai</button>
+                <button onclick="addQuestion('essay')" id="btn-add-essay" class="flex items-center gap-2 bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-amber-200 transition-all border border-amber-200"><i class="fas fa-pen"></i> Tự luận</button>
             </div>
         </div>
 
         <div id="hw-questions-list"></div>
-
         <div id="hw-empty" class="text-center py-12 text-gray-300">
             <i class="fas fa-clipboard-list text-5xl mb-3 block"></i>
             <p class="text-sm font-bold">Thêm câu hỏi để bắt đầu cấu hình</p>
@@ -354,21 +279,11 @@
     <div class="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0 flex items-center justify-between">
         <div id="hw-save-info" class="text-xs text-gray-400 italic"></div>
         <div class="flex gap-3">
-            <button onclick="discardDraftAndReload()" class="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 font-bold text-xs hover:bg-red-50 transition-all" title="Bỏ nháp, tải lại dữ liệu gốc từ hệ thống">
-                <i class="fas fa-rotate-left mr-1"></i> Bỏ nháp
-            </button>
-            <button onclick="closeHwPanel()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all">
-                Hủy
-            </button>
-            <button onclick="openAssignDialog()" class="px-5 py-2.5 rounded-xl bg-yellow-400 text-blue-900 font-black text-sm hover:bg-yellow-300 transition-all flex items-center gap-2" title="Giao BTVN này cho các lớp (cần lưu cấu hình trước)">
-                <i class="fas fa-paper-plane"></i> Giao cho lớp
-            </button>
-            <button onclick="manageHomeworkAssignments()" class="px-5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 font-black text-sm hover:bg-blue-100 transition-all flex items-center gap-2" title="Xem và sửa các đợt BTVN đã giao">
-                <i class="fas fa-calendar-alt"></i> Quản lý hạn nộp
-            </button>
-            <button onclick="saveHomeworkConfig()" class="px-6 py-2.5 rounded-xl bg-blue-900 text-white font-black text-sm hover:bg-blue-800 transition-all flex items-center gap-2">
-                <i class="fas fa-save"></i> Lưu cấu hình
-            </button>
+            <button onclick="discardDraftAndReload()" class="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 font-bold text-xs hover:bg-red-50 transition-all" title="Bỏ nháp, tải lại dữ liệu gốc từ hệ thống"><i class="fas fa-rotate-left mr-1"></i> Bỏ nháp</button>
+            <button onclick="closeHwPanel()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all">Hủy</button>
+            <button onclick="openAssignDialog()" class="px-5 py-2.5 rounded-xl bg-yellow-400 text-blue-900 font-black text-sm hover:bg-yellow-300 transition-all flex items-center gap-2" title="Giao BTVN này cho các lớp (cần lưu cấu hình trước)"><i class="fas fa-paper-plane"></i> Giao cho lớp</button>
+            <button onclick="manageHomeworkAssignments()" class="px-5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 font-black text-sm hover:bg-blue-100 transition-all flex items-center gap-2" title="Xem và sửa các đợt BTVN đã giao"><i class="fas fa-calendar-alt"></i> Quản lý hạn nộp</button>
+            <button onclick="saveHomeworkConfig()" class="px-6 py-2.5 rounded-xl bg-blue-900 text-white font-black text-sm hover:bg-blue-800 transition-all flex items-center gap-2"><i class="fas fa-save"></i> Lưu cấu hình</button>
         </div>
     </div>
 </div>
@@ -377,120 +292,135 @@
 <script>
 const SB_URL = "https://rznyagxrshwwocsvrabe.supabase.co";
 const SB_KEY = "sb_publishable_nIlU5_ViUwLqJr91B-bGDg_hFgRPuW5";
-const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// ĐIỀN URL Web App của Google Apps Script sau khi Deploy (xem file Code.gs đi kèm)
+// URL Web App của Google Apps Script (Code.gs)
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuwORtLCIvz_SRHTfslyW3d5Bp9rOVC_cKGp-QxJPR_3_I0Col_o7115ixDdM87qMX/exec";
 
-const urlParams = new URLSearchParams(window.location.search);
-const topicId = urlParams.get('topic_id');
-let topicCourseId = null; // course_id của chuyên đề, dùng khi giao BTVN cho lớp
+const topicId = new URLSearchParams(window.location.search).get('topic_id');
+let topicCourseId = null;
 let currentLessons = [];
 let homeworkMap = {};
 
-// State của panel BTVN
+// State panel BTVN
 let hwLessonId = null;
-let hwQuestions = []; 
+let hwQuestions = [];
 let hwDraftMap = {};
 
-// State kéo thả sắp xếp bài học
+// State kéo thả
 let sortableInstance = null;
-let _reorderSaving = false;
+let reorderSaving = false;
 
-// Escape HTML để chèn an toàn vào template
+// ===================== TIỆN ÍCH =====================
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const findLesson = id => currentLessons.find(l => String(l.id) === String(id));
+const parseDocs = d => { try { const v = typeof d === 'string' ? JSON.parse(d) : d; return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+const RLS_MSG = 'Không có dòng nào được cập nhật trong cơ sở dữ liệu. Nhiều khả năng Policy (RLS) UPDATE của bảng "lessons" đang chặn tài khoản này — thay đổi sẽ MẤT khi tải lại trang.';
 
-// =====================
-// INIT
-// =====================
+function slugify(name) {
+    return String(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd')
+        .toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+function toggleSubmenu(id, element) {
+    $(id).classList.toggle('show');
+    element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
+}
+// Chặn thao tác thất bại âm thầm: update PHẢI trả về ít nhất 1 dòng
+async function updateLesson(id, patch) {
+    const { data, error } = await sb.from('lessons').update(patch).eq('id', id).select('id');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error(RLS_MSG);
+}
+
+// ===================== INIT =====================
 async function init() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } } = await sb.auth.getSession();
     if (!session) {
-        await Swal.fire({
-            icon: 'warning',
-            title: 'Chưa đăng nhập!',
-            text: 'Vui lòng đăng nhập lại để tiếp tục.',
-        });
+        await Swal.fire({ icon: 'warning', title: 'Chưa đăng nhập!', text: 'Vui lòng đăng nhập lại để tiếp tục.' });
         window.location.href = 'login.html';
         return;
     }
-
-    if (!topicId) { alert("Thiếu ID chuyên đề!"); return; }
+    if (!topicId) { Swal.fire('Thiếu thông tin', 'Thiếu ID chuyên đề!', 'error'); return; }
     await loadTopicHeader();
     await fetchLessons();
 }
 
 async function loadTopicHeader() {
-    const { data: topic } = await supabaseClient.from('topics').select('topic_name, course_id').eq('id', topicId).single();
-    if (topic) {
-        topicCourseId = topic.course_id;
-        document.getElementById('topic-title').innerText = topic.topic_name;
-        const { data: course } = await supabaseClient.from('courses').select('course_name').eq('id', topic.course_id).single();
-        if (course) document.getElementById('course-breadcrumb').innerText = 'Khóa học: ' + course.course_name;
-    }
+    const { data: topic } = await sb.from('topics').select('topic_name, course_id').eq('id', topicId).single();
+    if (!topic) return;
+    topicCourseId = topic.course_id;
+    $('topic-title').innerText = topic.topic_name;
+    const { data: course } = await sb.from('courses').select('course_name').eq('id', topic.course_id).single();
+    if (course) $('course-breadcrumb').innerText = 'Khóa học: ' + course.course_name;
 }
 
-// =====================
-// FETCH LESSONS & HOMEWORK STATS
-// =====================
-// Sắp xếp theo order_index (thứ tự thầy đã kéo sắp xếp thủ công) trước, id sau (bài chưa có
-// order_index sẽ rơi xuống cuối danh sách). Yêu cầu bảng "lessons" có cột order_index (integer, có thể NULL):
-//   ALTER TABLE lessons ADD COLUMN IF NOT EXISTS order_index integer;
+// ===================== DANH SÁCH BÀI HỌC =====================
+// Cần cột lessons.order_index (integer, cho phép NULL): ALTER TABLE lessons ADD COLUMN IF NOT EXISTS order_index integer;
 async function fetchLessons() {
-    document.getElementById('loading').classList.remove('hidden');
-    const { data: lessons, error } = await supabaseClient
-        .from('lessons').select('*').eq('topic_id', topicId)
-        .order('order_index', { ascending: true, nullsFirst: false })
-        .order('id', { ascending: true });
-    document.getElementById('loading').classList.add('hidden');
-    if (error) { alert(error.message); return; }
+    $('loading').classList.remove('hidden');
+    const { data: lessons, error } = await sb.from('lessons').select('*').eq('topic_id', topicId)
+        .order('order_index', { ascending: true, nullsFirst: false }).order('id', { ascending: true });
+    $('loading').classList.add('hidden');
+    if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
 
     currentLessons = lessons || [];
     homeworkMap = {};
 
-    if (currentLessons.length > 0) {
-        const lessonIds = currentLessons.map(l => l.id);
-        
-        // Lấy cấu hình tổng quan bài tập
-        const { data: configs } = await supabaseClient
-            .from('lesson_homework_config')
-            .select('lesson_id, homework_type, video_solution')
-            .in('lesson_id', lessonIds);
-
-        // Đếm tổng số câu hỏi thuộc về từng bài học để hiển thị lên Badge ngoài bảng
-        const { data: qCounts } = await supabaseClient
-            .from('homework_questions')
-            .select('lesson_id')
-            .in('lesson_id', lessonIds);
-
-        // Số lớp đã được giao BTVN của từng bài học (bỏ qua các đợt đã hủy)
-        const { data: assigns } = await supabaseClient
-            .from('homework_assignments')
-            .select('lesson_id, class_id')
-            .in('lesson_id', lessonIds)
-            .neq('status', 'cancelled');
-
-        if (configs) {
-            configs.forEach(c => {
-                const totalQ = qCounts ? qCounts.filter(q => q.lesson_id === c.lesson_id).length : 0;
-                homeworkMap[String(c.lesson_id)] = {
-                    homework_type: c.homework_type,
-                    total_questions: totalQ,
-                    has_video: !!c.video_solution,
-                    has_config: true,
-                    assigned_classes: assigns ? assigns.filter(a => a.lesson_id === c.lesson_id).length : 0
-                };
-            });
-        }
+    if (currentLessons.length) {
+        const ids = currentLessons.map(l => l.id);
+        const [{ data: configs }, { data: qs }, { data: assigns }] = await Promise.all([
+            sb.from('lesson_homework_config').select('lesson_id, homework_type, video_solution').in('lesson_id', ids),
+            sb.from('homework_questions').select('lesson_id').in('lesson_id', ids),
+            sb.from('homework_assignments').select('lesson_id, class_id').in('lesson_id', ids).neq('status', 'cancelled')
+        ]);
+        (configs || []).forEach(c => {
+            homeworkMap[String(c.lesson_id)] = {
+                homework_type: c.homework_type,
+                total_questions: (qs || []).filter(q => q.lesson_id === c.lesson_id).length,
+                has_video: !!c.video_solution,
+                assigned_classes: (assigns || []).filter(a => a.lesson_id === c.lesson_id).length
+            };
+        });
     }
-
-    updateStats(currentLessons);
+    updateStats();
     renderLessonTable();
 }
 
+function updateStats() {
+    $('stat-total').innerText = currentLessons.length;
+    $('stat-Active').innerText = currentLessons.filter(l => l.status === 'Active').length;
+    $('stat-Inactive').innerText = currentLessons.filter(l => l.status !== 'Active').length;
+    $('stat-hw').innerText = Object.keys(homeworkMap).length;
+}
+
+function hwBadgeHtml(l) {
+    const hw = homeworkMap[String(l.id)];
+    if (!hw) return `<button onclick="openHwPanel('${l.id}')" class="badge-hw-no text-[9px] font-black uppercase px-2 py-1 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"><i class="fas fa-plus mr-1"></i>Thêm BTVN</button>`;
+    const typeLabel = { quiz: 'Trắc nghiệm', essay: 'Tự luận', mixed: 'TN + TL' }[hw.homework_type] || hw.homework_type;
+    return `<div class="flex flex-col items-center gap-1">
+        <button onclick="openHwPanel('${l.id}')" class="badge-hw-yes text-[9px] font-black uppercase px-2 py-1 rounded-full hover:opacity-80 transition-all flex items-center gap-1">
+            <i class="fas fa-check-circle"></i> ${esc(typeLabel)}
+            ${hw.total_questions > 0 ? `<span class="ml-1 bg-amber-200 rounded-full px-1.5">${hw.total_questions} câu</span>` : ''}
+        </button>
+        ${hw.has_video ? '<span class="text-[9px] text-green-600"><i class="fas fa-video mr-1"></i>Có video chữa</span>' : ''}
+        <span class="text-[9px] ${hw.assigned_classes ? 'text-blue-600' : 'text-gray-400'}"><i class="fas fa-paper-plane mr-1"></i>${hw.assigned_classes ? 'Đã giao ' + hw.assigned_classes + ' lớp' : 'Chưa giao lớp nào'}</span>
+    </div>`;
+}
+
+function toggleCellHtml(checked, onchange, label, badgeClass, freeMode) {
+    return `<div class="flex flex-col items-center gap-1">
+        <label class="toggle-switch">
+            <input type="checkbox" ${checked ? 'checked' : ''} onchange="${onchange}">
+            <div class="toggle-track ${freeMode ? 'free-mode' : ''}"></div><div class="toggle-thumb"></div>
+        </label>
+        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${badgeClass}">${label}</span>
+    </div>`;
+}
+
 function renderLessonTable() {
-    const tbody = document.getElementById('lesson-table-body');
-    if (currentLessons.length === 0) {
+    const tbody = $('lesson-table-body');
+    if (!currentLessons.length) {
         tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-400 italic">Chưa có bài học nào trong chuyên đề này.</td></tr>`;
         if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
         return;
@@ -498,324 +428,193 @@ function renderLessonTable() {
     tbody.innerHTML = currentLessons.map((l, idx) => {
         const isActive = l.status === 'Active';
         const isFree = l.is_free === true;
-        const hw = homeworkMap[String(l.id)];
-        const docCount = (() => {
-            try {
-                const d = typeof l.documents === 'string' ? JSON.parse(l.documents) : l.documents;
-                return Array.isArray(d) ? d.length : 0;
-            } catch(e) { return 0; }
-        })();
-
-        let hwBadge = '';
-        if (hw) {
-            const typeLabel = { quiz: 'Trắc nghiệm', essay: 'Tự luận', mixed: 'TN + TL' }[hw.homework_type] || hw.homework_type;
-            hwBadge = `
-                <div class="flex flex-col items-center gap-1">
-                    <button onclick="openHwPanel('${l.id}')" class="badge-hw-yes text-[9px] font-black uppercase px-2 py-1 rounded-full hover:opacity-80 transition-all flex items-center gap-1">
-                        <i class="fas fa-check-circle"></i> ${typeLabel}
-                        ${hw.total_questions > 0 ? `<span class="ml-1 bg-amber-200 rounded-full px-1.5">${hw.total_questions} câu</span>` : ''}
-                    </button>
-                    ${hw.has_video ? '<span class="text-[9px] text-green-600"><i class="fas fa-video mr-1"></i>Có video chữa</span>' : ''}
-                    <span class="text-[9px] ${hw.assigned_classes ? 'text-blue-600' : 'text-gray-400'}">
-                        <i class="fas fa-paper-plane mr-1"></i>${hw.assigned_classes ? 'Đã giao ' + hw.assigned_classes + ' lớp' : 'Chưa giao lớp nào'}
-                    </span>
-                </div>`;
-        } else {
-            hwBadge = `<button onclick="openHwPanel('${l.id}')" class="badge-hw-no text-[9px] font-black uppercase px-2 py-1 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"><i class="fas fa-plus mr-1"></i>Thêm BTVN</button>`;
-        }
-
-        // Cột "Thứ tự" — tay cầm kéo thả để đổi vị trí hiển thị bài học cho học sinh.
-        const orderCell = `
-            <div class="drag-handle" title="Kéo để sắp xếp">
-                <i class="fas fa-grip-vertical"></i>
-                <span class="text-[10px] font-black text-gray-300 mt-0.5">${idx + 1}</span>
-            </div>`;
-
+        const docCount = parseDocs(l.documents).length;
         return `
-        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}" id="lesson-row-${l.id}" data-id="${l.id}">
-            <td class="p-5 text-center">${orderCell}</td>
+        <tr class="hover:bg-blue-50/20 transition-all ${isActive ? '' : 'opacity-70'}" data-id="${l.id}">
+            <td class="p-5 text-center">
+                <div class="drag-handle" title="Kéo để sắp xếp"><i class="fas fa-grip-vertical"></i><span class="text-[10px] font-black text-gray-300 mt-0.5">${idx + 1}</span></div>
+            </td>
             <td class="p-5">
                 <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0">
-                        ${isActive ? '<i class="fas fa-play"></i>' : '<i class="fas fa-lock"></i>'}
-                    </div>
+                    <div class="w-7 h-7 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} flex items-center justify-center text-[10px] font-black flex-shrink-0"><i class="fas ${isActive ? 'fa-play' : 'fa-lock'}"></i></div>
                     <div>
-                        <div class="font-bold text-blue-900">${l.title}</div>
-                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id} ${docCount > 0 ? `· <i class="fas fa-paperclip"></i> ${docCount} tài liệu` : ''}</div>
+                        <div class="font-bold text-blue-900">${esc(l.title)}</div>
+                        <div class="text-[10px] text-gray-400 italic">ID: ${l.id} ${docCount ? `· <i class="fas fa-paperclip"></i> ${docCount} tài liệu` : ''}</div>
                     </div>
                 </div>
             </td>
-            <td class="p-5">
-                <div class="text-xs text-gray-600 line-clamp-1 max-w-xs">${l.insight || '---'}</div>
-            </td>
-            <td class="p-5 text-center">
-                ${l.video_url ? '<i class="fab fa-youtube text-red-500 text-lg"></i>' : '<i class="fas fa-video-slash text-gray-300"></i>'}
-            </td>
-            <td class="p-5 text-center">${hwBadge}</td>
-            <td class="p-5">
-                <div class="flex flex-col items-center gap-1">
-                    <label class="toggle-switch">
-                        <input type="checkbox" ${isFree ? 'checked' : ''} onchange="toggleLessonFree('${l.id}', this.checked)">
-                        <div class="toggle-track free-mode"></div>
-                        <div class="toggle-thumb"></div>
-                    </label>
-                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isFree ? 'badge-Free' : 'badge-Premium'}">
-                        ${isFree ? 'Miễn phí' : 'Trong khóa'}
-                    </span>
-                </div>
-            </td>
-            <td class="p-5">
-                <div class="flex flex-col items-center gap-1">
-                    <label class="toggle-switch">
-                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleLessonStatus('${l.id}', this.checked)">
-                        <div class="toggle-track"></div>
-                        <div class="toggle-thumb"></div>
-                    </label>
-                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isActive ? 'badge-Active' : 'badge-Inactive'}">
-                        ${isActive ? 'Đang mở' : 'Đang khóa'}
-                    </span>
-                </div>
-            </td>
+            <td class="p-5"><div class="text-xs text-gray-600 line-clamp-1 max-w-xs">${esc(l.insight) || '---'}</div></td>
+            <td class="p-5 text-center">${l.video_url ? '<i class="fab fa-youtube text-red-500 text-lg"></i>' : '<i class="fas fa-video-slash text-gray-300"></i>'}</td>
+            <td class="p-5 text-center">${hwBadgeHtml(l)}</td>
+            <td class="p-5">${toggleCellHtml(isFree, `toggleLessonFree('${l.id}', this.checked)`, isFree ? 'Miễn phí' : 'Trong khóa', isFree ? 'badge-Free' : 'badge-Premium', true)}</td>
+            <td class="p-5">${toggleCellHtml(isActive, `toggleLessonStatus('${l.id}', this.checked)`, isActive ? 'Đang mở' : 'Đang khóa', isActive ? 'badge-Active' : 'badge-Inactive', false)}</td>
             <td class="p-5">
                 <div class="flex justify-center gap-2">
-                    <button onclick="editLesson('${l.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg" title="Xóa bài học">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <button onclick="editLesson('${l.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteLesson('${l.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg" title="Xóa bài học"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </td>
         </tr>`;
     }).join('');
-
     initSortable();
 }
 
-// =====================
-// SẮP XẾP THỨ TỰ BÀI HỌC (order_index) — KÉO THẢ VỚI SORTABLEJS
-// =====================
-// Thầy kéo hàng bằng tay cầm (icon ⋮⋮) ở cột "Thứ tự" để đổi vị trí bài học trong danh sách.
-// Cách làm: khi thả (onEnd), hoán đổi vị trí trong mảng currentLessons theo đúng vị trí mới trên
-// giao diện (evt.oldIndex / evt.newIndex do SortableJS cung cấp), render lại để số thứ tự đúng ngay,
-// rồi chuẩn hóa order_index 0..n-1 theo thứ tự mới và lưu TOÀN BỘ bài học trong chuyên đề xuống Supabase.
-// Nếu lưu thất bại sẽ tự tải lại dữ liệu gốc để tránh lệch giữa UI và DB.
+// ===================== BẬT/TẮT TRẠNG THÁI & MIỄN PHÍ =====================
+// Cập nhật xong PHẢI xác nhận DB đã ghi (updateLesson); nếu không thì tải lại để UI khớp DB, tránh
+// tình trạng giao diện hiện "Miễn phí" nhưng DB không đổi -> vài hôm sau bị mất.
+async function setLessonField(id, patch, errTitle) {
+    try {
+        await updateLesson(id, patch);
+        Object.assign(findLesson(id) || {}, patch);
+        updateStats();
+        renderLessonTable();
+    } catch (err) {
+        console.error(errTitle, err);
+        await Swal.fire(errTitle, err.message, 'error');
+        fetchLessons();
+    }
+}
+const toggleLessonFree = (id, checked) => setLessonField(id, { is_free: checked }, 'Không lưu được chế độ miễn phí');
+const toggleLessonStatus = (id, checked) => setLessonField(id, { status: checked ? 'Active' : 'Inactive' }, 'Không lưu được trạng thái');
+
+async function toggleAll(status) {
+    const result = await Swal.fire({
+        title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
+        text: `Thầy có chắc muốn ${status === 'Active' ? 'mở' : 'khóa'} toàn bộ bài học không?`,
+        icon: 'question', showCancelButton: true, confirmButtonText: 'Xác nhận', cancelButtonText: 'Hủy',
+        confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a'
+    });
+    if (!result.isConfirmed) return;
+    try {
+        const ids = currentLessons.map(l => l.id);
+        const { data, error } = await sb.from('lessons').update({ status }).in('id', ids).select('id');
+        if (error) throw error;
+        if ((data || []).length !== ids.length) throw new Error(RLS_MSG);
+    } catch (err) { Swal.fire('Lỗi', err.message, 'error'); }
+    fetchLessons();
+}
+
+// ===================== KÉO THẢ SẮP XẾP (order_index) =====================
 function initSortable() {
-    const tbody = document.getElementById('lesson-table-body');
-    if (!tbody) return;
     if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
-
-    sortableInstance = new Sortable(tbody, {
-        handle: '.drag-handle',
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        onEnd: async (evt) => {
-            const { oldIndex, newIndex } = evt;
-            if (oldIndex === newIndex || oldIndex == null || newIndex == null) return;
-            if (_reorderSaving) return;
-
-            const moved = currentLessons.splice(oldIndex, 1)[0];
+    sortableInstance = new Sortable($('lesson-table-body'), {
+        handle: '.drag-handle', animation: 150,
+        ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', dragClass: 'sortable-drag',
+        onEnd: async ({ oldIndex, newIndex }) => {
+            if (oldIndex === newIndex || oldIndex == null || newIndex == null || reorderSaving) return;
+            const [moved] = currentLessons.splice(oldIndex, 1);
             currentLessons.splice(newIndex, 0, moved);
-            renderLessonTable(); // cập nhật số thứ tự + re-init Sortable ngay, không cần chờ mạng
+            renderLessonTable();
 
-            _reorderSaving = true;
+            reorderSaving = true;
             try {
-                const updates = currentLessons.map((l, i) => {
+                const results = await Promise.all(currentLessons.map((l, i) => {
                     l.order_index = i;
-                    return supabaseClient.from('lessons').update({ order_index: i }).eq('id', l.id);
-                });
-                const results = await Promise.all(updates);
-                const failed = results.find(r => r.error);
-                if (failed && failed.error) throw failed.error;
+                    return sb.from('lessons').update({ order_index: i }).eq('id', l.id).select('id');
+                }));
+                const bad = results.find(r => r.error || !r.data?.length);
+                if (bad) throw bad.error || new Error(RLS_MSG);
             } catch (err) {
                 console.error('reorder lessons:', err);
-                Swal.fire('Lỗi sắp xếp', 'Không thể lưu thứ tự bài học: ' + (err.message || 'Có thể cột order_index chưa tồn tại trong bảng lessons.'), 'error');
-                await fetchLessons(); // lưu thất bại -> tải lại dữ liệu gốc để tránh lệch giữa UI và DB
-            } finally {
-                _reorderSaving = false;
-            }
+                Swal.fire('Lỗi sắp xếp', 'Không thể lưu thứ tự bài học: ' + err.message, 'error');
+                await fetchLessons();
+            } finally { reorderSaving = false; }
         }
     });
 }
 
-// =====================
-// HOMEWORK PANEL INTERACTION
-// =====================
+// ===================== PANEL BTVN =====================
 async function openHwPanel(lessonId) {
     hwLessonId = lessonId;
     hwQuestions = [];
-
-    const lesson = currentLessons.find(l => String(l.id) === String(lessonId));
-    document.getElementById('hw-panel-lesson-title').innerText = lesson ? lesson.title : 'Bài học #' + lessonId;
-    document.getElementById('hw-save-info').innerText = '';
+    $('hw-panel-lesson-title').innerText = findLesson(lessonId)?.title || 'Bài học #' + lessonId;
+    $('hw-save-info').innerText = '';
     resetAiProgress();
-
-    document.getElementById('hw-panel-overlay').classList.add('open');
-    document.getElementById('hw-panel').classList.add('open');
+    $('hw-panel-overlay').classList.add('open');
+    $('hw-panel').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Nếu đã có bản nháp dở dang cho bài học này (do lỡ đóng panel trước đó) -> khôi phục lại, KHÔNG tải lại từ DB
+    // Khôi phục bản nháp chưa lưu (nếu có)
     const draft = hwDraftMap[String(lessonId)];
     if (draft) {
-        document.getElementById('hw-type').value = draft.type || 'mixed';
-        document.getElementById('hw-video').value = draft.video || '';
+        $('hw-type').value = draft.type || 'mixed';
+        $('hw-video').value = draft.video || '';
         hwQuestions = JSON.parse(JSON.stringify(draft.questions || []));
-        document.getElementById('hw-save-info').innerHTML =
-            '<span class="text-amber-600"><i class="fas fa-clock-rotate-left mr-1"></i>Đang khôi phục bản nháp chưa lưu — nhớ bấm "Lưu cấu hình" để chốt lại.</span>';
-        onHwTypeChange();
-        renderQuestions();
+        $('hw-save-info').innerHTML = '<span class="text-amber-600"><i class="fas fa-clock-rotate-left mr-1"></i>Đang khôi phục bản nháp chưa lưu — nhớ bấm "Lưu cấu hình" để chốt lại.</span>';
+        onHwTypeChange(); renderQuestions();
         return;
     }
 
-    document.getElementById('hw-video').value = '';
-    document.getElementById('hw-type').value = 'mixed';
+    $('hw-video').value = '';
+    $('hw-type').value = 'mixed';
 
-    // 1. Tải cấu hình tổng quan (loại, video)
-    const { data: config } = await supabaseClient
-        .from('lesson_homework_config')
-        .select('*')
-        .eq('lesson_id', lessonId)
-        .maybeSingle();
-
+    const { data: config } = await sb.from('lesson_homework_config').select('*').eq('lesson_id', lessonId).maybeSingle();
     if (config) {
-        document.getElementById('hw-type').value = config.homework_type || 'mixed';
-        document.getElementById('hw-video').value = config.video_solution || '';
-        if (config.created_at) {
-            const d = new Date(config.updated_at || config.created_at);
-            document.getElementById('hw-save-info').innerText = 'Đã cập nhật: ' + d.toLocaleString('vi-VN');
-        }
+        $('hw-type').value = config.homework_type || 'mixed';
+        $('hw-video').value = config.video_solution || '';
+        if (config.created_at) $('hw-save-info').innerText = 'Tạo lúc: ' + new Date(config.created_at).toLocaleString('vi-VN');
     }
 
-    // 2. Sử dụng Resource Embedding kéo toàn bộ Questions và Choices của bài học
-    const { data: dbQuestions } = await supabaseClient
-        .from('homework_questions')
-        .select('*, homework_choices(*)')
-        .eq('lesson_id', lessonId)
-        .order('order_index', { ascending: true });
-
-    if (dbQuestions && dbQuestions.length > 0) {
-        hwQuestions = dbQuestions.map(q => {
-            if (q.question_type === 'essay') {
-                return {
-                    so_cau: q.order_index, type: 'essay', noi_dung: q.question,
-                    image_url: q.image_url || null, input_mode: q.image_url ? 'image' : 'text'
-                };
-            } else if (q.question_type === 'true_false') {
-                // 4 ý a,b,c,d — sắp theo option_label để hiển thị đúng thứ tự
-                const sorted = (q.homework_choices || []).slice().sort((a, b) => {
-                    return String(a.option_label).localeCompare(String(b.option_label));
-                });
-                let y_dung_sai = sorted.map(c => ({
-                    label: c.option_label, text: c.option_text, is_correct: !!c.is_correct
-                }));
-                // Đảm bảo luôn đủ 4 ý ngay cả khi dữ liệu cũ bị thiếu (an toàn khi render)
-                while (y_dung_sai.length < 4) {
-                    y_dung_sai.push({ label: String.fromCharCode(97 + y_dung_sai.length), text: '', is_correct: true });
-                }
-                return {
-                    so_cau: q.order_index, type: 'true_false', noi_dung: q.question,
-                    image_url: q.image_url || null, y_dung_sai
-                };
-            } else {
-                let lua_chon = { A: '', B: '', C: '', D: '' };
-                let dap_an_dung = '';
-                if (q.homework_choices) {
-                    q.homework_choices.forEach(c => {
-                        lua_chon[c.option_label] = c.option_text;
-                        if (c.is_correct) dap_an_dung = c.option_label;
-                    });
-                }
-                return { so_cau: q.order_index, type: 'choice', noi_dung: q.question, image_url: q.image_url || null, lua_chon, dap_an_dung };
-            }
-        });
-    }
-
-    onHwTypeChange();
-    renderQuestions();
+    const { data: dbQuestions } = await sb.from('homework_questions').select('*, homework_choices(*)').eq('lesson_id', lessonId).order('order_index', { ascending: true });
+    hwQuestions = (dbQuestions || []).map(dbQuestionToState);
+    onHwTypeChange(); renderQuestions();
 }
 
-function closeHwPanel() {
-    // Lưu lại nháp trước khi đóng, để nếu mở lại đúng bài học này thì không bị mất dữ liệu
-    if (hwLessonId) {
+function dbQuestionToState(q) {
+    const base = { so_cau: q.order_index, noi_dung: q.question, image_url: q.image_url || null };
+    const choices = (q.homework_choices || []).slice().sort((a, b) => String(a.option_label).localeCompare(String(b.option_label)));
+    if (q.question_type === 'essay') return { ...base, type: 'essay', input_mode: q.image_url ? 'image' : 'text' };
+    if (q.question_type === 'true_false') {
+        const y_dung_sai = choices.map(c => ({ label: c.option_label, text: c.option_text, is_correct: !!c.is_correct }));
+        while (y_dung_sai.length < 4) y_dung_sai.push({ label: String.fromCharCode(97 + y_dung_sai.length), text: '', is_correct: true });
+        return { ...base, type: 'true_false', y_dung_sai };
+    }
+    const lua_chon = { A: '', B: '', C: '', D: '' };
+    let dap_an_dung = '';
+    choices.forEach(c => { lua_chon[c.option_label] = c.option_text; if (c.is_correct) dap_an_dung = c.option_label; });
+    return { ...base, type: 'choice', lua_chon, dap_an_dung };
+}
+
+// keepDraft=false khi vừa lưu thành công / bỏ nháp: KHÔNG ghi lại bản nháp cũ
+function closeHwPanel(keepDraft = true) {
+    if (keepDraft && hwLessonId) {
         hwDraftMap[String(hwLessonId)] = {
-            type: document.getElementById('hw-type').value,
-            video: document.getElementById('hw-video').value,
+            type: $('hw-type').value, video: $('hw-video').value,
             questions: JSON.parse(JSON.stringify(hwQuestions))
         };
     }
-
-    document.getElementById('hw-panel-overlay').classList.remove('open');
-    document.getElementById('hw-panel').classList.remove('open');
+    $('hw-panel-overlay').classList.remove('open');
+    $('hw-panel').classList.remove('open');
     document.body.style.overflow = '';
     hwLessonId = null;
     hwQuestions = [];
 }
 
 function onHwTypeChange() {
-    const type = document.getElementById('hw-type').value;
-    const btnChoice = document.getElementById('btn-add-choice');
-    const btnTf = document.getElementById('btn-add-tf');
-    const btnEssay = document.getElementById('btn-add-essay');
-
-    if (type === 'quiz') {
-        btnChoice.classList.remove('hidden');
-        btnTf.classList.remove('hidden');
-        btnEssay.classList.add('hidden');
-    } else if (type === 'essay') {
-        btnChoice.classList.add('hidden');
-        btnTf.classList.add('hidden');
-        btnEssay.classList.remove('hidden');
-    } else {
-        btnChoice.classList.remove('hidden');
-        btnTf.classList.remove('hidden');
-        btnEssay.classList.remove('hidden');
-    }
+    const type = $('hw-type').value;
+    $('btn-add-choice').classList.toggle('hidden', type === 'essay');
+    $('btn-add-tf').classList.toggle('hidden', type === 'essay');
+    $('btn-add-essay').classList.toggle('hidden', type === 'quiz');
 }
 
-// =====================
-// RENDER & MANAGE QUESTIONS STATE
-// =====================
+async function discardDraftAndReload() {
+    const res = await Swal.fire({ title: 'Bỏ bản nháp?', text: 'Toàn bộ thay đổi chưa lưu sẽ mất, hệ thống sẽ tải lại dữ liệu gốc.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Bỏ nháp', cancelButtonText: 'Không' });
+    if (!res.isConfirmed) return;
+    const lessonId = hwLessonId;
+    delete hwDraftMap[String(lessonId)];
+    closeHwPanel(false);
+    openHwPanel(lessonId);
+}
+
+// ===================== QUẢN LÝ CÂU HỎI =====================
 function addQuestion(qType) {
     const so_cau = hwQuestions.length + 1;
-    if (qType === 'choice') {
-        hwQuestions.push({
-            so_cau,
-            type: 'choice',
-            noi_dung: '',
-            image_url: null,
-            lua_chon: { A: '', B: '', C: '', D: '' },
-            dap_an_dung: ''
-        });
-    } else if (qType === 'true_false') {
-        hwQuestions.push({
-            so_cau,
-            type: 'true_false',
-            noi_dung: '',
-            image_url: null,
-            // Mặc định 4 ý a,b,c,d — thầy nhập nội dung và chọn Đúng/Sai cho từng ý
-            y_dung_sai: [
-                { label: 'a', text: '', is_correct: true },
-                { label: 'b', text: '', is_correct: true },
-                { label: 'c', text: '', is_correct: true },
-                { label: 'd', text: '', is_correct: true }
-            ]
-        });
-    } else {
-        hwQuestions.push({
-            so_cau,
-            type: 'essay',
-            noi_dung: '',
-            image_url: null,
-            input_mode: 'text' // 'text' (LaTeX/văn bản) hoặc 'image' (ảnh minh họa)
-        });
-    }
+    const base = { so_cau, type: qType, noi_dung: '', image_url: null };
+    if (qType === 'choice') hwQuestions.push({ ...base, lua_chon: { A: '', B: '', C: '', D: '' }, dap_an_dung: '' });
+    else if (qType === 'true_false') hwQuestions.push({ ...base, y_dung_sai: ['a', 'b', 'c', 'd'].map(label => ({ label, text: '', is_correct: true })) });
+    else hwQuestions.push({ ...base, input_mode: 'text' });
     renderQuestions();
-    setTimeout(() => {
-        const list = document.getElementById('hw-questions-list');
-        list.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    setTimeout(() => $('hw-questions-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
 }
 
 function removeQuestion(index) {
@@ -823,791 +622,437 @@ function removeQuestion(index) {
     hwQuestions.forEach((q, i) => q.so_cau = i + 1);
     renderQuestions();
 }
+function removeQuestionImg(idx) { hwQuestions[idx].image_url = null; renderQuestions(); }
+function setEssayInputMode(idx, mode) { hwQuestions[idx].input_mode = mode; renderQuestions(); }
 
-// Chuyển nhanh 1 câu hỏi giữa 2 dạng "Trắc nghiệm" (choice) và "Đúng/Sai" (true_false)
-// ngay trong câu đó, không cần xóa rồi thêm lại. Giữ nguyên câu dẫn (noi_dung), ảnh minh họa,
-// và ÁNH XẠ nội dung từng phương án theo đúng vị trí: A<->a, B<->b, C<->c, D<->d (không mất dữ liệu đã nhập).
-// Lưu ý về đáp án: Trắc nghiệm chỉ có DUY NHẤT 1 đáp án đúng, còn Đúng/Sai thì MỖI ý có đúng/sai riêng,
-// nên khi chuyển đổi phần đáp án chỉ ánh xạ ở mức tốt nhất có thể, thầy nên kiểm tra lại đáp án sau khi chuyển.
+// Chuyển nhanh Trắc nghiệm <-> Đúng/Sai, ánh xạ A<->a, B<->b, C<->c, D<->d (thầy nên soát lại đáp án sau khi chuyển)
 function convertQuestionType(idx, newType) {
     const q = hwQuestions[idx];
-    if (!q) return;
-    if (newType !== 'choice' && newType !== 'true_false') return;
-    if (q.type === newType) return; // đang ở đúng dạng rồi, không cần làm gì
-
-    const CHOICE_LABELS = ['A', 'B', 'C', 'D'];
-    const TF_LABELS = ['a', 'b', 'c', 'd'];
+    if (!q || q.type === newType || !['choice', 'true_false'].includes(newType)) return;
+    const C = ['A', 'B', 'C', 'D'], T = ['a', 'b', 'c', 'd'];
     const common = { so_cau: q.so_cau, noi_dung: q.noi_dung || '', image_url: q.image_url || null };
-
     if (newType === 'true_false') {
-        // choice -> true_false: A->a, B->b, C->c, D->d, giữ nguyên nội dung từng ý
-        const y_dung_sai = CHOICE_LABELS.map((L, i) => ({
-            label: TF_LABELS[i],
-            text: (q.lua_chon && q.lua_chon[L]) || '',
-            // Ý tương ứng với đáp án đúng cũ (nếu có) sẽ được đánh dấu Đúng, còn lại mặc định Đúng luôn
-            // để thầy tự xem lại (vì bản chất 2 dạng chấm điểm khác nhau).
-            is_correct: q.dap_an_dung ? (q.dap_an_dung === L) : true
-        }));
-        hwQuestions[idx] = { ...common, type: 'true_false', y_dung_sai };
+        hwQuestions[idx] = { ...common, type: 'true_false', y_dung_sai: C.map((L, i) => ({
+            label: T[i], text: q.lua_chon?.[L] || '', is_correct: q.dap_an_dung ? q.dap_an_dung === L : true
+        })) };
     } else {
-        // true_false -> choice: a->A, b->B, c->C, d->D, giữ nguyên nội dung từng phương án
         const lua_chon = { A: '', B: '', C: '', D: '' };
         let dap_an_dung = '';
         (q.y_dung_sai || []).forEach((y, i) => {
-            const L = CHOICE_LABELS[i];
-            if (!L) return;
-            lua_chon[L] = y.text || '';
-            // Trắc nghiệm chỉ chọn được 1 đáp án đúng -> lấy ý "Đúng" đầu tiên tìm thấy
-            if (y.is_correct && !dap_an_dung) dap_an_dung = L;
+            if (!C[i]) return;
+            lua_chon[C[i]] = y.text || '';
+            if (y.is_correct && !dap_an_dung) dap_an_dung = C[i];
         });
         hwQuestions[idx] = { ...common, type: 'choice', lua_chon, dap_an_dung };
     }
     renderQuestions();
 }
 
-function renderQuestions() {
-    const list = document.getElementById('hw-questions-list');
-    const empty = document.getElementById('hw-empty');
-    const countEl = document.getElementById('hw-q-count');
+const imageBlockHtml = (q, idx) => q.image_url ? `
+    <div class="mb-2">
+        <img src="${esc(q.image_url)}" class="q-mini-img">
+        <button type="button" onclick="removeQuestionImg(${idx})" class="block text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh minh họa</button>
+    </div>` : '';
 
-    if (hwQuestions.length === 0) {
+function choiceBodyHtml(q, idx) {
+    return `${imageBlockHtml(q, idx)}
+        <textarea placeholder="Nhập yêu cầu đề bài..." onchange="hwQuestions[${idx}].noi_dung = this.value" class="w-full p-2.5 rounded-xl border border-gray-200 outline-none text-sm resize-none focus:ring-2 focus:ring-blue-500 mb-3 bg-white" rows="2">${esc(q.noi_dung)}</textarea>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            ${['A', 'B', 'C', 'D'].map(opt => `
+                <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-blue-400 transition-colors">
+                    <span class="text-[11px] font-black text-blue-900 bg-blue-50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0">${opt}</span>
+                    <input type="text" placeholder="Phương án ${opt}..." value="${esc(q.lua_chon[opt])}" onchange="hwQuestions[${idx}].lua_chon['${opt}'] = this.value" class="flex-1 text-xs outline-none bg-transparent font-medium">
+                </div>`).join('')}
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-gray-400 uppercase">Đáp án đúng:</span>
+            <div class="ans-option flex gap-2">
+                ${['A', 'B', 'C', 'D'].map(opt => `
+                    <input type="radio" name="correct-${idx}" id="r-${idx}-${opt}" value="${opt}" ${q.dap_an_dung === opt ? 'checked' : ''} onchange="hwQuestions[${idx}].dap_an_dung = this.value">
+                    <label for="r-${idx}-${opt}">${opt}</label>`).join('')}
+            </div>
+        </div>`;
+}
+
+function tfBodyHtml(q, idx) {
+    return `${imageBlockHtml(q, idx)}
+        <textarea placeholder="Nhập câu dẫn chung (đề bài cho cả 4 ý a, b, c, d)..." onchange="hwQuestions[${idx}].noi_dung = this.value" class="w-full p-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm resize-none mb-3 bg-white" rows="2">${esc(q.noi_dung)}</textarea>
+        <div class="space-y-2">
+            ${q.y_dung_sai.map((y, yi) => `
+                <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-green-400 transition-colors">
+                    <span class="text-[11px] font-black text-green-800 bg-green-50 rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0">${esc(y.label)})</span>
+                    <input type="text" placeholder="Nội dung ý ${esc(y.label)}..." value="${esc(y.text)}" onchange="hwQuestions[${idx}].y_dung_sai[${yi}].text = this.value" class="flex-1 text-xs outline-none bg-transparent font-medium">
+                    <div class="tf-option">
+                        <input type="radio" class="tf-true" name="tf-${idx}-${yi}" id="tf-${idx}-${yi}-t" ${y.is_correct ? 'checked' : ''} onchange="hwQuestions[${idx}].y_dung_sai[${yi}].is_correct = true">
+                        <label for="tf-${idx}-${yi}-t">Đúng</label>
+                        <input type="radio" class="tf-false" name="tf-${idx}-${yi}" id="tf-${idx}-${yi}-f" ${!y.is_correct ? 'checked' : ''} onchange="hwQuestions[${idx}].y_dung_sai[${yi}].is_correct = false">
+                        <label for="tf-${idx}-${yi}-f">Sai</label>
+                    </div>
+                </div>`).join('')}
+        </div>
+        <p class="text-[10px] text-gray-400 italic mt-2">Chấm điểm tự động phía học sinh: đúng 1 ý = 0,1đ · 2 ý = 0,25đ · 3 ý = 0,5đ · cả 4 ý = 1đ.</p>`;
+}
+
+function essayBodyHtml(q, idx) {
+    const isImg = q.input_mode === 'image';
+    const modeBtns = `<div class="flex gap-2 mb-3">
+        <button type="button" onclick="setEssayInputMode(${idx}, 'text')" class="essay-mode-btn ${!isImg ? 'active' : ''}"><i class="fas fa-square-root-alt mr-1"></i>Văn bản / LaTeX</button>
+        <button type="button" onclick="setEssayInputMode(${idx}, 'image')" class="essay-mode-btn ${isImg ? 'active' : ''}"><i class="fas fa-image mr-1"></i>Ảnh đề bài</button>
+    </div>`;
+    if (!isImg) {
+        return modeBtns + `
+            <textarea placeholder="Nhập yêu cầu đề bài, có thể dùng LaTeX. Ví dụ: Giải phương trình $x^2 - 3x + 2 = 0$" oninput="hwQuestions[${idx}].noi_dung = this.value; renderMathPreview(${idx})" class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mb-2 bg-white" rows="3">${esc(q.noi_dung)}</textarea>
+            <div class="math-preview" id="essay-preview-${idx}"></div>`;
+    }
+    return modeBtns + `
+        <input type="file" id="essay-img-input-${idx}" accept="image/*" style="display:none" onchange="handleEssayImgSelect(${idx}, event)">
+        <div class="upload-area ${q.image_url ? 'done' : ''}" onclick="$('essay-img-input-${idx}').click()">
+            <i class="fas fa-cloud-upload-alt text-amber-400 text-xl mb-1 block"></i>
+            <span id="essay-upload-status-${idx}" class="text-xs text-gray-500 font-bold">${q.image_url ? '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh' : 'Nhấn để chọn ảnh đề bài từ máy'}</span>
+            ${q.image_url ? `<img src="${esc(q.image_url)}" style="max-height:120px; border-radius:8px; margin:8px auto 0;">` : ''}
+        </div>
+        ${q.image_url ? `<button type="button" onclick="removeQuestionImg(${idx})" class="text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh</button>` : ''}
+        <textarea placeholder="Ghi chú thêm cho câu hỏi (tuỳ chọn)..." onchange="hwQuestions[${idx}].noi_dung = this.value" class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mt-3 bg-white" rows="2">${esc(q.noi_dung)}</textarea>`;
+}
+
+function renderQuestions() {
+    const list = $('hw-questions-list');
+    if (!hwQuestions.length) {
         list.innerHTML = '';
-        empty.classList.remove('hidden');
-        countEl.innerText = 'Chưa có câu hỏi nào';
+        $('hw-empty').classList.remove('hidden');
+        $('hw-q-count').innerText = 'Chưa có câu hỏi nào';
         return;
     }
-
-    empty.classList.add('hidden');
-    const cCount = hwQuestions.filter(q => q.type === 'choice').length;
-    const tfCount = hwQuestions.filter(q => q.type === 'true_false').length;
-    const eCount = hwQuestions.filter(q => q.type === 'essay').length;
-    countEl.innerText = `Tổng số: ${hwQuestions.length} câu (${cCount} Trắc nghiệm, ${tfCount} Đúng/Sai, ${eCount} Tự luận)`;
+    $('hw-empty').classList.add('hidden');
+    const count = t => hwQuestions.filter(q => q.type === t).length;
+    $('hw-q-count').innerText = `Tổng số: ${hwQuestions.length} câu (${count('choice')} Trắc nghiệm, ${count('true_false')} Đúng/Sai, ${count('essay')} Tự luận)`;
 
     list.innerHTML = hwQuestions.map((q, idx) => {
-        const isEssay = q.type === 'essay';
-        const isTF = q.type === 'true_false';
-        const cardClass = isEssay ? 'q-card-essay' : (isTF ? 'q-card-tf' : '');
-        const numClass = isEssay ? 'q-num-essay' : (isTF ? 'q-num-tf' : '');
-        const typeLabel = isEssay ? '(Tự luận)' : (isTF ? '(Đúng/Sai)' : '(Trắc nghiệm)');
-
-        const typeSwitchHtml = !isEssay ? `
+        const isEssay = q.type === 'essay', isTF = q.type === 'true_false';
+        const typeLabel = isEssay ? '(Tự luận)' : isTF ? '(Đúng/Sai)' : '(Trắc nghiệm)';
+        const typeSwitch = isEssay ? '' : `
             <div class="q-type-switch" title="Chuyển nhanh dạng câu hỏi">
                 <button type="button" onclick="convertQuestionType(${idx}, 'choice')" class="q-type-switch-btn ${!isTF ? 'active-choice' : ''}">Trắc nghiệm</button>
                 <button type="button" onclick="convertQuestionType(${idx}, 'true_false')" class="q-type-switch-btn ${isTF ? 'active-tf' : ''}">Đúng/Sai</button>
-            </div>` : '';
-
+            </div>`;
+        const body = isEssay ? essayBodyHtml(q, idx) : isTF ? tfBodyHtml(q, idx) : choiceBodyHtml(q, idx);
         return `
-        <div class="q-card ${cardClass}">
+        <div class="q-card ${isEssay ? 'q-card-essay' : isTF ? 'q-card-tf' : ''}">
             <div class="q-card-header">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="q-num ${numClass}">Câu ${q.so_cau} ${typeLabel}</span>
-                    ${typeSwitchHtml}
+                    <span class="q-num ${isEssay ? 'q-num-essay' : isTF ? 'q-num-tf' : ''}">Câu ${q.so_cau} ${typeLabel}</span>
+                    ${typeSwitch}
                 </div>
-                <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors font-bold">
-                    <i class="fas fa-trash-alt mr-1"></i> Xóa
-                </button>
+                <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm transition-colors font-bold"><i class="fas fa-trash-alt mr-1"></i> Xóa</button>
             </div>
-
-            ${!isEssay && !isTF ? `
-                ${q.image_url ? `
-                    <div class="mb-2">
-                        <img src="${q.image_url}" class="q-mini-img">
-                        <button type="button" onclick="removeQuestionImg(${idx})" class="block text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh minh họa</button>
-                    </div>` : ''}
-                <textarea
-                    placeholder="Nhập yêu cầu đề bài..."
-                    onchange="hwQuestions[${idx}].noi_dung = this.value"
-                    class="w-full p-2.5 rounded-xl border border-gray-200 focus:ring-blue-500 outline-none text-sm resize-none focus:ring-2 mb-3 bg-white"
-                    rows="2">${q.noi_dung || ''}</textarea>
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    ${['A','B','C','D'].map(opt => `
-                        <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-blue-400 transition-colors">
-                            <span class="text-[11px] font-black text-blue-900 bg-blue-50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0">${opt}</span>
-                            <input
-                                type="text"
-                                placeholder="Phương án ${opt}..."
-                                value="${q.lua_chon[opt] || ''}"
-                                onchange="hwQuestions[${idx}].lua_chon['${opt}'] = this.value"
-                                class="flex-1 text-xs outline-none bg-transparent font-medium">
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-black text-gray-400 uppercase">Đáp án đúng:</span>
-                    <div class="ans-option flex gap-2">
-                        ${['A','B','C','D'].map(opt => `
-                            <input type="radio" name="correct-${idx}" id="r-${idx}-${opt}" value="${opt}"
-                                ${q.dap_an_dung === opt ? 'checked' : ''}
-                                onchange="hwQuestions[${idx}].dap_an_dung = this.value">
-                            <label for="r-${idx}-${opt}">${opt}</label>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
-            ${isTF ? `
-                ${q.image_url ? `
-                    <div class="mb-2">
-                        <img src="${q.image_url}" class="q-mini-img">
-                        <button type="button" onclick="removeQuestionImg(${idx})" class="block text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh minh họa</button>
-                    </div>` : ''}
-                <textarea
-                    placeholder="Nhập câu dẫn chung (đề bài cho cả 4 ý a, b, c, d)..."
-                    onchange="hwQuestions[${idx}].noi_dung = this.value"
-                    class="w-full p-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm resize-none mb-3 bg-white"
-                    rows="2">${q.noi_dung || ''}</textarea>
-                <div class="space-y-2">
-                    ${q.y_dung_sai.map((y, yIdx) => `
-                        <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 focus-within:border-green-400 transition-colors">
-                            <span class="text-[11px] font-black text-green-800 bg-green-50 rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0">${y.label})</span>
-                            <input
-                                type="text"
-                                placeholder="Nội dung ý ${y.label}..."
-                                value="${y.text || ''}"
-                                onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].text = this.value"
-                                class="flex-1 text-xs outline-none bg-transparent font-medium">
-                            <div class="tf-option">
-                                <input type="radio" class="tf-true" name="tf-${idx}-${yIdx}" id="tf-${idx}-${yIdx}-t"
-                                    ${y.is_correct ? 'checked' : ''}
-                                    onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].is_correct = true">
-                                <label for="tf-${idx}-${yIdx}-t">Đúng</label>
-                                <input type="radio" class="tf-false" name="tf-${idx}-${yIdx}" id="tf-${idx}-${yIdx}-f"
-                                    ${!y.is_correct ? 'checked' : ''}
-                                    onchange="hwQuestions[${idx}].y_dung_sai[${yIdx}].is_correct = false">
-                                <label for="tf-${idx}-${yIdx}-f">Sai</label>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <p class="text-[10px] text-gray-400 italic mt-2">Chấm điểm tự động phía học sinh: đúng 1 ý = 0,1đ · 2 ý = 0,25đ · 3 ý = 0,5đ · cả 4 ý = 1đ.</p>
-            ` : ''}
-
-            ${isEssay ? `
-                <div class="flex gap-2 mb-3">
-                    <button type="button" onclick="setEssayInputMode(${idx}, 'text')" class="essay-mode-btn ${q.input_mode !== 'image' ? 'active' : ''}">
-                        <i class="fas fa-square-root-alt mr-1"></i>Văn bản / LaTeX
-                    </button>
-                    <button type="button" onclick="setEssayInputMode(${idx}, 'image')" class="essay-mode-btn ${q.input_mode === 'image' ? 'active' : ''}">
-                        <i class="fas fa-image mr-1"></i>Ảnh đề bài
-                    </button>
-                </div>
-
-                ${q.input_mode === 'image' ? `
-                    <input type="file" id="essay-img-input-${idx}" accept="image/*" style="display:none" onchange="handleEssayImgSelect(${idx}, event)">
-                    <div class="upload-area ${q.image_url ? 'done' : ''}" id="essay-upload-area-${idx}" onclick="triggerEssayImgInput(${idx})">
-                        <i class="fas fa-cloud-upload-alt text-amber-400 text-xl mb-1 block"></i>
-                        <span id="essay-upload-status-${idx}" class="text-xs text-gray-500 font-bold">
-                            ${q.image_url ? '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh' : 'Nhấn để chọn ảnh đề bài từ máy'}
-                        </span>
-                        <img id="essay-img-preview-${idx}" src="${q.image_url || ''}" style="display:${q.image_url ? 'block' : 'none'}; max-height:120px; border-radius:8px; margin:8px auto 0;">
-                    </div>
-                    ${q.image_url ? `<button type="button" onclick="removeEssayImg(${idx})" class="text-[10px] text-red-400 font-bold hover:text-red-600 mt-1"><i class="fas fa-times mr-1"></i>Xóa ảnh</button>` : ''}
-                    <textarea
-                        placeholder="Ghi chú thêm cho câu hỏi (tuỳ chọn)..."
-                        onchange="hwQuestions[${idx}].noi_dung = this.value"
-                        class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mt-3 bg-white"
-                        rows="2">${q.noi_dung || ''}</textarea>
-                ` : `
-                    <textarea
-                        placeholder="Nhập yêu cầu đề bài, có thể dùng LaTeX. Ví dụ: Giải phương trình \\$x^2 - 3x + 2 = 0\\$"
-                        oninput="hwQuestions[${idx}].noi_dung = this.value; renderMathPreview(${idx})"
-                        class="w-full p-2.5 rounded-xl border border-amber-200 outline-none text-sm resize-none focus:ring-2 focus:ring-amber-400 mb-2 bg-white"
-                        rows="3">${q.noi_dung || ''}</textarea>
-                    <div class="math-preview" id="essay-preview-${idx}"></div>
-                `}
-            ` : ''}
+            ${body}
         </div>`;
     }).join('');
 
-    // Render live LaTeX preview cho các câu tự luận đang ở chế độ văn bản
-    hwQuestions.forEach((q, idx) => {
-        if (q.type === 'essay' && q.input_mode !== 'image') renderMathPreview(idx);
-    });
-}
-
-function removeQuestionImg(idx) {
-    hwQuestions[idx].image_url = null;
-    renderQuestions();
-}
-
-// =====================
-// TỰ LUẬN: CHUYỂN CHẾ ĐỘ NHẬP (VĂN BẢN/LATEX <-> ẢNH)
-// =====================
-function setEssayInputMode(idx, mode) {
-    hwQuestions[idx].input_mode = mode;
-    renderQuestions();
+    hwQuestions.forEach((q, idx) => { if (q.type === 'essay' && q.input_mode !== 'image') renderMathPreview(idx); });
 }
 
 function renderMathPreview(idx) {
-    const el = document.getElementById(`essay-preview-${idx}`);
+    const el = $(`essay-preview-${idx}`);
     if (!el) return;
-    const raw = (hwQuestions[idx] && hwQuestions[idx].noi_dung) || '';
-    // Escape HTML để tránh injection, MathJax sẽ tự nhận diện $...$ hoặc $$...$$
-    const div = document.createElement('div');
-    div.innerText = raw;
-    el.innerHTML = div.innerHTML;
-    if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([el]).catch(err => console.error('MathJax lỗi:', err));
-    }
+    el.textContent = hwQuestions[idx]?.noi_dung || '';
+    window.MathJax?.typesetPromise?.([el]).catch(err => console.error('MathJax lỗi:', err));
 }
 
-// =====================
-// TỰ LUẬN: UPLOAD ẢNH MINH HỌA (BUCKET: homework)
-// =====================
+// ===================== UPLOAD ẢNH =====================
+async function uploadToBucket(bucket, path, file, options) {
+    const { error } = await sb.storage.from(bucket).upload(path, file, options);
+    if (error) throw error;
+    return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+// Ảnh đề tự luận -> bucket "homework", đường dẫn bắt buộc nằm trong thư mục UID (theo Policy)
 async function uploadHomeworkImage(file) {
-    if (!file) return { ok: false, url: null };
-
-    const { data: authData, error: authErr } = await supabaseClient.auth.getUser();
+    const { data: authData, error: authErr } = await sb.auth.getUser();
     if (authErr || !authData?.user) {
-        await Swal.fire({
-            icon: 'error',
-            title: 'Phiên đăng nhập Supabase đã hết hạn!',
-            html: `Không xác thực được tài khoản qua Supabase Auth.<br><br>
-                   <span class="text-xs text-gray-500">Vui lòng đăng xuất, đăng nhập lại ở trang <b>login.html</b> rồi thử tải ảnh lần nữa.</span>`
-        });
-        return { ok: false, url: null };
+        await Swal.fire({ icon: 'error', title: 'Phiên đăng nhập Supabase đã hết hạn!', html: 'Vui lòng đăng xuất, đăng nhập lại ở trang <b>login.html</b> rồi thử lại.' });
+        return null;
     }
-
-    const uid = authData.user.id;
-    const fileName = `${uid}/${Date.now()}-${slugify(file.name)}`;
-    const { error: upErr } = await supabaseClient.storage.from('homework').upload(fileName, file);
-    if (upErr) {
-        console.error('Upload homework image error:', upErr);
-        await Swal.fire({
-            icon: 'error',
-            title: 'Tải ảnh thất bại!',
-            html: `Không thể tải ảnh lên bucket <b>homework</b>.<br><br>
-                   <span class="text-xs text-gray-500">Chi tiết lỗi: ${upErr.message}</span><br><br>
-                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: Policy trên bucket <b>homework</b> yêu cầu đường dẫn file phải nằm trong thư mục đúng UID của người upload. Vào Supabase → Storage → homework → Policies để kiểm tra.</span>`
-        });
-        return { ok: false, url: null };
+    try {
+        return await uploadToBucket('homework', `${authData.user.id}/${Date.now()}-${slugify(file.name)}`, file);
+    } catch (err) {
+        console.error('Upload homework image error:', err);
+        await Swal.fire({ icon: 'error', title: 'Tải ảnh thất bại!', html: `Chi tiết: ${esc(err.message)}<br><span class="text-xs text-gray-500">Kiểm tra Policy của bucket <b>homework</b> (đường dẫn file phải nằm trong thư mục đúng UID).</span>` });
+        return null;
     }
-    const { data: urlData } = supabaseClient.storage.from('homework').getPublicUrl(fileName);
-    return { ok: true, url: urlData.publicUrl };
-}
-
-function triggerEssayImgInput(idx) {
-    document.getElementById(`essay-img-input-${idx}`)?.click();
 }
 
 async function handleEssayImgSelect(idx, event) {
     const file = event.target.files[0];
     if (!file) return;
-
-    const statusEl = document.getElementById(`essay-upload-status-${idx}`);
-    const areaEl = document.getElementById(`essay-upload-area-${idx}`);
-    if (statusEl) statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải ảnh lên...';
-
-    const result = await uploadHomeworkImage(file);
-    if (!result.ok) {
-        if (statusEl) statusEl.innerHTML = 'Nhấn để chọn ảnh đề bài từ máy';
-        return;
-    }
-
-    hwQuestions[idx].image_url = result.url;
-    if (areaEl) areaEl.classList.add('done');
-    if (statusEl) statusEl.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã có ảnh — nhấn để đổi ảnh';
-    const previewEl = document.getElementById(`essay-img-preview-${idx}`);
-    if (previewEl) { previewEl.src = result.url; previewEl.style.display = 'block'; }
-
+    const status = $(`essay-upload-status-${idx}`);
+    if (status) status.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải ảnh lên...';
+    const url = await uploadHomeworkImage(file);
+    if (url) hwQuestions[idx].image_url = url;
     renderQuestions();
 }
 
-function removeEssayImg(idx) {
-    hwQuestions[idx].image_url = null;
-    renderQuestions();
-}
-
-
+// ===================== AI IMPORT (PDF / WORD) =====================
 function resetAiProgress() {
-    const wrap = document.getElementById('ai-progress-wrap');
-    const log = document.getElementById('ai-progress-log');
-    if (wrap) wrap.classList.add('hidden');
-    if (log) log.innerHTML = '';
+    $('ai-progress-wrap')?.classList.add('hidden');
+    if ($('ai-progress-log')) $('ai-progress-log').innerHTML = '';
 }
-
 function aiLog(msg, isError) {
-    const wrap = document.getElementById('ai-progress-wrap');
-    const log = document.getElementById('ai-progress-log');
-    if (!wrap || !log) return;
-    wrap.classList.remove('hidden');
+    $('ai-progress-wrap').classList.remove('hidden');
+    const log = $('ai-progress-log');
     const line = document.createElement('div');
     line.style.color = isError ? '#fca5a5' : '#a5f3fc';
     line.innerText = '› ' + msg;
     log.appendChild(line);
     log.scrollTop = log.scrollHeight;
 }
-
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
+const fileToBase64 = file => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+});
+function base64ToBlob(base64, contentType) {
+    const bin = atob(base64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: contentType || 'image/png' });
 }
+const normalizeText = raw => (raw || '').replace(/\s+/g, ' ').trim();
 
-function fileToArrayBuffer(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-function normalizeQuestionText(raw) {
-    if (!raw) return '';
-    return raw.replace(/\s+/g, ' ').trim();
-}
-
-function isDocxFile(file) {
-    const nameLower = (file.name || '').toLowerCase();
-    return nameLower.endsWith('.docx') ||
-        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-}
-
-async function handleAiFileSelect(event) {
+function handleAiFileSelect(event) {
     const file = event.target.files[0];
-    event.target.value = ''; // cho phép chọn lại cùng 1 file lần sau
+    event.target.value = '';
     if (!file) return;
-
-    const isPdf = file.type === 'application/pdf' || (file.name || '').toLowerCase().endsWith('.pdf');
-    const isDocx = isDocxFile(file);
-
-    if (!isPdf && !isDocx) {
-        Swal.fire('Sai định dạng!', 'Vui lòng chọn file .pdf hoặc .docx (Word)', 'warning');
-        return;
-    }
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('XXXXXXXX')) {
-        Swal.fire('Chưa cấu hình!', 'Thầy cần deploy Google Apps Script (file Code.gs đi kèm) và điền URL vào biến APPS_SCRIPT_URL trong file HTML này.', 'warning');
-        return;
-    }
-
-    if (isDocx) {
-        await importFromDocxAI(file);
-    } else {
-        await importFromPdfAI(file);
-    }
+    const name = (file.name || '').toLowerCase();
+    const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
+    const isDocx = name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (!isPdf && !isDocx) { Swal.fire('Sai định dạng!', 'Vui lòng chọn file .pdf hoặc .docx (Word)', 'warning'); return; }
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('XXXXXXXX')) { Swal.fire('Chưa cấu hình!', 'Thầy cần deploy Google Apps Script (Code.gs) và điền URL vào biến APPS_SCRIPT_URL.', 'warning'); return; }
+    runAiImport(file, isDocx ? prepareDocx : preparePdf);
 }
 
-// ---------------------------------------------------------------------
-// LUỒNG 1: IMPORT TỪ PDF (gửi nguyên file PDF cho Gemini đọc bằng vision)
-// ---------------------------------------------------------------------
-async function importFromPdfAI(file) {
+// Mỗi prepare trả về { body, imageFor(q) }:
+//  - body: dữ liệu gửi Apps Script
+//  - imageFor(q): trả { blob, type } nếu câu q có ảnh minh họa, ngược lại null
+async function preparePdf(file) {
+    aiLog(`Đang đọc file "${file.name}"...`);
+    const [base64, buf] = await Promise.all([fileToBase64(file), file.arrayBuffer()]);
+    aiLog('Đang gửi PDF sang Apps Script → Gemini để phân tích (có thể mất 30-90 giây)...');
+    let pdfDoc = null;
+    return {
+        body: { mode: 'pdf', pdfBase64: base64, fileName: file.name },
+        async imageFor(q) {
+            if (!(q.has_image && q.image_page && q.image_bbox)) return null;
+            if (!pdfDoc) {
+                if (!window.pdfjsLib) throw new Error('Thư viện pdf.js chưa tải được, không thể cắt ảnh.');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+            }
+            aiLog(`Đang cắt ảnh minh họa (trang ${q.image_page})...`);
+            return { blob: await renderPdfPageCrop(pdfDoc, q.image_page, q.image_bbox), type: 'image/png' };
+        }
+    };
+}
+
+async function prepareDocx(file) {
+    if (!window.mammoth) throw new Error('Thư viện mammoth.js chưa tải được. Thầy kiểm tra kết nối mạng rồi thử lại.');
+    aiLog(`Đang đọc file Word "${file.name}"...`);
+    const arrayBuffer = await file.arrayBuffer();
+    const images = [];
+    const { value: html } = await mammoth.convertToHtml({ arrayBuffer }, {
+        convertImage: mammoth.images.imgElement(async image => {
+            images.push({ base64: await image.read('base64'), contentType: image.contentType || 'image/png' });
+            return { src: `[[IMG_${images.length - 1}]]` };
+        })
+    });
+
+    // DOMParser không tải ảnh. Đổi <img> thành chữ [[IMG_n]] và thêm xuống dòng cho từng khối,
+    // để AI biết ảnh nằm ở câu nào và nhìn thấy ranh giới giữa các câu.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('img').forEach(img => img.replaceWith(` ${img.getAttribute('src')} `));
+    doc.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+    doc.querySelectorAll('p,li,tr,h1,h2,h3,h4,h5,h6').forEach(el => el.append('\n'));
+    const docText = (doc.body.textContent || '').trim();
+    if (!docText) throw new Error('Không đọc được nội dung văn bản từ file Word này.');
+
+    aiLog(`Đã trích xuất văn bản (${docText.length} ký tự) và ${images.length} ảnh. Đang gửi văn bản (KHÔNG gửi file gốc) sang Apps Script → Gemini...`);
+    return {
+        body: { mode: 'docx_text', docText, fileName: file.name },
+        async imageFor(q) {
+            if (!(q.has_image && typeof q.image_index === 'number' && images[q.image_index])) return null;
+            const img = images[q.image_index];
+            return { blob: base64ToBlob(img.base64, img.contentType), type: img.contentType };
+        }
+    };
+}
+
+async function runAiImport(file, prepare) {
     resetAiProgress();
-    const btn = document.getElementById('btn-ai-import');
-    btn.disabled = true;
-    btn.classList.add('opacity-50');
-
+    const btn = $('btn-ai-import');
+    btn.disabled = true; btn.classList.add('opacity-50');
     try {
-        aiLog(`Đang đọc file "${file.name}"...`);
-        const [base64, arrayBuffer] = await Promise.all([
-            fileToBase64(file),
-            file.arrayBuffer()
-        ]);
-
-        aiLog('Đang gửi PDF sang Apps Script → Gemini để phân tích (có thể mất 30-90 giây)...');
+        const prep = await prepare(file);
         const resp = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // tránh CORS preflight với Apps Script
-            body: JSON.stringify({ mode: 'pdf', pdfBase64: base64, fileName: file.name })
+            body: JSON.stringify(prep.body)
         });
-
         if (!resp.ok) throw new Error('Apps Script trả về lỗi HTTP ' + resp.status);
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Apps Script/Gemini báo lỗi không xác định.');
-
         const questions = Array.isArray(data.questions) ? data.questions : [];
-        if (questions.length === 0) throw new Error('AI không tách được câu hỏi nào từ file này. Thầy kiểm tra lại file PDF (có thể là ảnh scan mờ hoặc quá dài).');
+        if (!questions.length) throw new Error('AI không tách được câu hỏi nào từ file này. Thầy kiểm tra lại nội dung file.');
 
         aiLog(`AI đã tách được ${questions.length} câu hỏi. Đang xử lý ảnh minh họa (nếu có)...`);
-
-        const hasImages = questions.some(q => q.has_image);
-        let pdfDoc = null;
-        if (hasImages) {
-            if (!window.pdfjsLib) throw new Error('Thư viện pdf.js chưa tải được, không thể cắt ảnh. Thầy kiểm tra kết nối mạng rồi thử lại.');
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        }
-
-        let addedCount = 0, imgOkCount = 0, imgFailCount = 0;
+        let imgOk = 0, imgFail = 0;
         for (const q of questions) {
             const entry = buildEntryFromAiQuestion(q);
-
-            if (q.has_image && pdfDoc && q.image_page && q.image_bbox) {
-                try {
-                    aiLog(`Đang cắt ảnh minh họa cho câu (trang ${q.image_page})...`);
-                    const blob = await renderPdfPageCrop(pdfDoc, q.image_page, q.image_bbox);
-                    const url = await uploadCroppedImage(blob, hwQuestions.length + addedCount);
-                    entry.image_url = url;
+            try {
+                const img = await prep.imageFor(q);
+                if (img) {
+                    const ext = img.type.includes('jpeg') ? 'jpg' : 'png';
+                    entry.image_url = await uploadToBucket('documents', `auto-cut/${Date.now()}-cau${hwQuestions.length + 1}.${ext}`, img.blob, { contentType: img.type });
                     if (entry.type === 'essay') entry.input_mode = 'image';
-                    imgOkCount++;
-                } catch (imgErr) {
-                    console.error('Lỗi cắt/upload ảnh:', imgErr);
-                    imgFailCount++;
-                    aiLog('Cắt ảnh thất bại cho 1 câu, thầy có thể tự upload lại thủ công sau. Lỗi: ' + imgErr.message, true);
+                    imgOk++;
                 }
+            } catch (imgErr) {
+                console.error('Lỗi xử lý ảnh:', imgErr);
+                imgFail++;
+                aiLog('Xử lý ảnh thất bại cho 1 câu, thầy có thể tự upload lại sau. Lỗi: ' + imgErr.message, true);
             }
-
             hwQuestions.push(entry);
-            addedCount++;
         }
-
         hwQuestions.forEach((qq, i) => qq.so_cau = i + 1);
         renderQuestions();
-
-        aiLog(`Hoàn tất: thêm ${addedCount} câu (${imgOkCount} ảnh cắt thành công${imgFailCount ? ', ' + imgFailCount + ' ảnh lỗi' : ''}).`);
-
+        aiLog(`Hoàn tất: thêm ${questions.length} câu (${imgOk} ảnh thành công${imgFail ? ', ' + imgFail + ' ảnh lỗi' : ''}).`);
         await Swal.fire({
-            icon: 'success',
-            title: `Đã import ${addedCount} câu hỏi từ AI!`,
-            html: `⚠️ Độ chính xác AI khoảng 90-95%. Vui lòng <b>kiểm tra kỹ lại</b> nội dung, công thức LaTeX, đáp án đúng và ảnh minh họa trước khi bấm "Lưu cấu hình".`,
+            icon: 'success', title: `Đã import ${questions.length} câu hỏi từ AI!`,
+            html: '⚠️ Độ chính xác AI khoảng 90-95%. Vui lòng <b>kiểm tra kỹ lại</b> nội dung, công thức LaTeX, đáp án đúng và ảnh minh họa trước khi bấm "Lưu cấu hình".',
             confirmButtonText: 'Đã hiểu, để tôi soát lại'
         });
-
     } catch (err) {
         console.error(err);
         aiLog('LỖI: ' + err.message, true);
         Swal.fire('Import AI thất bại!', err.message, 'error');
     } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50');
+        btn.disabled = false; btn.classList.remove('opacity-50');
     }
 }
 
-async function importFromDocxAI(file) {
-    resetAiProgress();
-    const btn = document.getElementById('btn-ai-import');
-    btn.disabled = true;
-    btn.classList.add('opacity-50');
-
-    try {
-        if (!window.mammoth) throw new Error('Thư viện mammoth.js chưa tải được. Thầy kiểm tra kết nối mạng rồi thử lại.');
-
-        aiLog(`Đang đọc file Word "${file.name}"...`);
-        const arrayBuffer = await fileToArrayBuffer(file);
-
-        // Trích xuất ảnh nhúng trong file .docx (theo đúng thứ tự xuất hiện trong văn bản)
-        const extractedImages = [];
-        const mammothResult = await mammoth.convertToHtml({ arrayBuffer }, {
-            convertImage: mammoth.images.imgElement(async (image) => {
-                const base64 = await image.read('base64');
-                extractedImages.push({ base64, contentType: image.contentType || 'image/png' });
-                // Đánh dấu vị trí ảnh trong text bằng 1 placeholder duy nhất để AI biết ảnh nằm ở câu nào
-                return { src: `[[IMG_${extractedImages.length - 1}]]` };
-            })
-        });
-
-        // Lấy text thuần từ HTML (đã có placeholder [[IMG_n]] chèn đúng vị trí ảnh)
-        const tmpDiv = document.createElement('div');
-        tmpDiv.innerHTML = mammothResult.value;
-        const docText = tmpDiv.innerText || tmpDiv.textContent || '';
-
-        if (!docText.trim()) throw new Error('Không đọc được nội dung văn bản từ file Word này.');
-
-        aiLog(`Đã trích xuất văn bản (${docText.length} ký tự) và ${extractedImages.length} ảnh minh họa. Đang gửi văn bản (KHÔNG gửi file gốc) sang Apps Script → Gemini...`);
-
-        const resp = await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ mode: 'docx_text', docText, fileName: file.name })
-        });
-
-        if (!resp.ok) throw new Error('Apps Script trả về lỗi HTTP ' + resp.status);
-        const data = await resp.json();
-        if (!data.success) throw new Error(data.error || 'Apps Script/Gemini báo lỗi không xác định.');
-
-        const questions = Array.isArray(data.questions) ? data.questions : [];
-        if (questions.length === 0) throw new Error('AI không tách được câu hỏi nào từ file này. Thầy kiểm tra lại nội dung file Word.');
-
-        aiLog(`AI đã tách được ${questions.length} câu hỏi. Đang gắn ảnh minh họa (nếu có)...`);
-
-        let addedCount = 0, imgOkCount = 0, imgFailCount = 0;
-        for (const q of questions) {
-            const entry = buildEntryFromAiQuestion(q);
-
-            // Với docx, AI trả về "image_index" trỏ vào mảng extractedImages (thay vì page/bbox như PDF)
-            if (q.has_image && typeof q.image_index === 'number' && extractedImages[q.image_index]) {
-                try {
-                    const img = extractedImages[q.image_index];
-                    const blob = base64ToBlob(img.base64, img.contentType);
-                    const url = await uploadCroppedImage(blob, hwQuestions.length + addedCount, img.contentType);
-                    entry.image_url = url;
-                    if (entry.type === 'essay') entry.input_mode = 'image';
-                    imgOkCount++;
-                } catch (imgErr) {
-                    console.error('Lỗi upload ảnh từ Word:', imgErr);
-                    imgFailCount++;
-                    aiLog('Upload ảnh thất bại cho 1 câu, thầy có thể tự upload lại thủ công sau. Lỗi: ' + imgErr.message, true);
-                }
-            }
-
-            hwQuestions.push(entry);
-            addedCount++;
-        }
-
-        hwQuestions.forEach((qq, i) => qq.so_cau = i + 1);
-        renderQuestions();
-
-        aiLog(`Hoàn tất: thêm ${addedCount} câu (${imgOkCount} ảnh gắn thành công${imgFailCount ? ', ' + imgFailCount + ' ảnh lỗi' : ''}).`);
-
-        await Swal.fire({
-            icon: 'success',
-            title: `Đã import ${addedCount} câu hỏi từ file Word!`,
-            html: `⚠️ Độ chính xác AI khoảng 90-95%. Vui lòng <b>kiểm tra kỹ lại</b> nội dung, công thức LaTeX, đáp án đúng và ảnh minh họa trước khi bấm "Lưu cấu hình".`,
-            confirmButtonText: 'Đã hiểu, để tôi soát lại'
-        });
-
-    } catch (err) {
-        console.error(err);
-        aiLog('LỖI: ' + err.message, true);
-        Swal.fire('Import AI thất bại!', err.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50');
-    }
-}
-
-// Chuyển 1 câu hỏi trả về từ AI (định dạng chung cho cả 2 luồng PDF/Word) thành entry cho hwQuestions
-// Lưu ý: hiện AI luôn trả câu "true_false" (nếu có) dưới dạng 1 phát biểu 2 lựa chọn — được gộp chung
-// vào nhóm Trắc nghiệm (choice) ở đây, KHÁC với dạng "Đúng/Sai 4 ý a,b,c,d" thêm thủ công bên dưới.
-// Nếu cần đúng định dạng 4 ý, thầy dùng nút "Đúng/Sai" để thêm tay.
+// AI chỉ trả câu trắc nghiệm / tự luận; câu "true_false" của AI được gộp vào nhóm Trắc nghiệm
 function buildEntryFromAiQuestion(q) {
-    if (q.type === 'true_false' || q.type === 'mcq' || q.type === 'choice') {
+    const noi_dung = normalizeText(q.question_text);
+    if (['true_false', 'mcq', 'choice'].includes(q.type)) {
         const lua_chon = { A: '', B: '', C: '', D: '' };
         let dap_an_dung = '';
-        const rawOptions = q.options || q.sub_questions || [];
-        rawOptions.forEach((opt, i) => {
-            const label = (opt.label || String.fromCharCode(65 + i)).toUpperCase().slice(0,1);
-            if (['A','B','C','D'].includes(label)) {
-                lua_chon[label] = opt.text || '';
-                if (opt.is_correct) dap_an_dung = label;
-            }
+        (q.options || q.sub_questions || []).forEach((opt, i) => {
+            const label = String(opt.label || String.fromCharCode(65 + i)).toUpperCase().slice(0, 1);
+            if (label in lua_chon) { lua_chon[label] = opt.text || ''; if (opt.is_correct) dap_an_dung = label; }
         });
-        return { so_cau: 0, type: 'choice', noi_dung: normalizeQuestionText(q.question_text), image_url: null, lua_chon, dap_an_dung };
+        return { so_cau: 0, type: 'choice', noi_dung, image_url: null, lua_chon, dap_an_dung };
     }
-    return { so_cau: 0, type: 'essay', noi_dung: normalizeQuestionText(q.question_text), image_url: null, input_mode: 'text' };
+    return { so_cau: 0, type: 'essay', noi_dung, image_url: null, input_mode: 'text' };
 }
 
-function base64ToBlob(base64, contentType) {
-    const byteChars = atob(base64);
-    const byteNumbers = new Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-    return new Blob([new Uint8Array(byteNumbers)], { type: contentType || 'image/png' });
-}
-async function renderPdfPageCrop(pdfDoc, pageNum, bboxPercent, scale = 3) {
+async function renderPdfPageCrop(pdfDoc, pageNum, bbox, scale = 3) {
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale });
-
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = viewport.width;
-    pageCanvas.height = viewport.height;
-    const ctx = pageCanvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    pageCanvas.width = viewport.width; pageCanvas.height = viewport.height;
+    await page.render({ canvasContext: pageCanvas.getContext('2d'), viewport }).promise;
 
-    const cropX = Math.max(0, (bboxPercent.x / 100) * pageCanvas.width);
-    const cropY = Math.max(0, (bboxPercent.y / 100) * pageCanvas.height);
-    const cropW = Math.min(pageCanvas.width - cropX, (bboxPercent.width / 100) * pageCanvas.width);
-    const cropH = Math.min(pageCanvas.height - cropY, (bboxPercent.height / 100) * pageCanvas.height);
+    const x = Math.max(0, (bbox.x / 100) * pageCanvas.width);
+    const y = Math.max(0, (bbox.y / 100) * pageCanvas.height);
+    const w = Math.min(pageCanvas.width - x, (bbox.width / 100) * pageCanvas.width);
+    const h = Math.min(pageCanvas.height - y, (bbox.height / 100) * pageCanvas.height);
 
-    const cropCanvas = document.createElement('canvas');
-    cropCanvas.width = Math.max(1, Math.round(cropW));
-    cropCanvas.height = Math.max(1, Math.round(cropH));
-    cropCanvas.getContext('2d').drawImage(
-        pageCanvas, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height
-    );
-
-    return new Promise((resolve, reject) => {
-        cropCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Không tạo được ảnh từ canvas')), 'image/png', 1.0);
-    });
+    const crop = document.createElement('canvas');
+    crop.width = Math.max(1, Math.round(w)); crop.height = Math.max(1, Math.round(h));
+    crop.getContext('2d').drawImage(pageCanvas, x, y, w, h, 0, 0, crop.width, crop.height);
+    return new Promise((resolve, reject) => crop.toBlob(b => b ? resolve(b) : reject(new Error('Không tạo được ảnh từ canvas')), 'image/png', 1.0));
 }
 
-// Upload ảnh (đã cắt từ PDF, hoặc trích từ Word) lên bucket 'documents'
-async function uploadCroppedImage(blob, idx, contentType) {
-    const ext = (contentType && contentType.includes('jpeg')) ? 'jpg' : 'png';
-    const fileName = `auto-cut/${Date.now()}-cau${idx + 1}.${ext}`;
-    const { error } = await supabaseClient.storage.from('documents').upload(fileName, blob, { contentType: contentType || 'image/png' });
-    if (error) throw new Error(error.message);
-    const { data } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-    return data.publicUrl;
+// ===================== LƯU CẤU HÌNH BTVN =====================
+function validateHomework() {
+    const names = list => list.map(q => `Câu ${q.so_cau}`).join(', ');
+    const noAns = hwQuestions.filter(q => q.type === 'choice' && !q.dap_an_dung);
+    if (noAns.length) return ['Chưa chọn đáp án!', `${names(noAns)} chưa thiết lập đáp án đúng.`];
+    const badTF = hwQuestions.filter(q => q.type === 'true_false' && (
+        !q.noi_dung?.trim() || (q.y_dung_sai || []).length < 4 || q.y_dung_sai.some(y => !y.text?.trim())));
+    if (badTF.length) return ['Thiếu nội dung Đúng/Sai!', `${names(badTF)} chưa nhập đủ câu dẫn hoặc nội dung cho cả 4 ý a, b, c, d.`];
+    const badEssay = hwQuestions.filter(q => q.type === 'essay' && !q.noi_dung?.trim() && !q.image_url);
+    if (badEssay.length) return ['Thiếu đề bài!', `${names(badEssay)} chưa có nội dung văn bản/LaTeX hoặc ảnh minh họa.`];
+    return null;
 }
 
 async function saveHomeworkConfig() {
-    const type = document.getElementById('hw-type').value;
-    const video = document.getElementById('hw-video').value.trim();
+    if (!hwQuestions.length) { Swal.fire('Thiếu dữ liệu!', 'Vui lòng khởi tạo ít nhất 1 câu hỏi.', 'warning'); return; }
+    const invalid = validateHomework();
+    if (invalid) { Swal.fire(invalid[0], invalid[1], 'warning'); return; }
 
-    if (hwQuestions.length === 0) {
-        Swal.fire('Thiếu dữ liệu!', 'Vui lòng khởi tạo ít nhất 1 câu hỏi.', 'warning');
-        return;
-    }
-
-    // Kiểm tra tính đầy đủ của đáp án trắc nghiệm trước khi ghi DB
-    const noAnsChoices = hwQuestions.filter(q => q.type === 'choice' && !q.dap_an_dung);
-    if (noAnsChoices.length > 0) {
-        const listErr = noAnsChoices.map(q => `Câu ${q.so_cau}`).join(', ');
-        Swal.fire('Chưa chọn đáp án!', `${listErr} chưa thiết lập đáp án đúng mẫu.`, 'warning');
-        return;
-    }
-
-    // Kiểm tra câu Đúng/Sai: câu dẫn + cả 4 ý đều phải có nội dung
-    const invalidTF = hwQuestions.filter(q => q.type === 'true_false' && (
-        !(q.noi_dung && q.noi_dung.trim()) ||
-        !Array.isArray(q.y_dung_sai) || q.y_dung_sai.length < 4 ||
-        q.y_dung_sai.some(y => !y.text || !y.text.trim())
-    ));
-    if (invalidTF.length > 0) {
-        const listErr = invalidTF.map(q => `Câu ${q.so_cau}`).join(', ');
-        Swal.fire('Thiếu nội dung Đúng/Sai!', `${listErr} chưa nhập đủ câu dẫn hoặc nội dung cho cả 4 ý a, b, c, d.`, 'warning');
-        return;
-    }
-
-    // Kiểm tra câu tự luận: phải có nội dung văn bản HOẶC ảnh đề bài
-    const emptyEssays = hwQuestions.filter(q => q.type === 'essay' && !(q.noi_dung && q.noi_dung.trim()) && !q.image_url);
-    if (emptyEssays.length > 0) {
-        const listErr = emptyEssays.map(q => `Câu ${q.so_cau}`).join(', ');
-        Swal.fire('Thiếu đề bài!', `${listErr} chưa có nội dung văn bản/LaTeX hoặc ảnh minh họa.`, 'warning');
-        return;
-    }
-
-    const { count: subCount } = await supabaseClient
-        .from('homework_submissions')
-        .select('id', { count: 'exact', head: true })
-        .eq('lesson_id', hwLessonId);
-    if (subCount > 0) {
-        Swal.fire('Không thể sửa đề', `Bài này đã có ${subCount} bài nộp của học sinh. Sửa đề lúc này sẽ làm lệch kết quả đã chấm.`, 'warning');
-        return;
-    }
+    const { count: subCount } = await sb.from('homework_submissions').select('id', { count: 'exact', head: true }).eq('lesson_id', hwLessonId);
+    if (subCount > 0) { Swal.fire('Không thể sửa đề', `Bài này đã có ${subCount} bài nộp của học sinh. Sửa đề lúc này sẽ làm lệch kết quả đã chấm.`, 'warning'); return; }
 
     Swal.fire({ title: 'Đang đồng bộ cơ sở dữ liệu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    const run = async p => { const { error } = await p; if (error) throw error; };
 
     try {
-        // Bước 1: Lưu/Cập nhật thông tin cấu hình cốt lõi của bài học
-        const { error: configErr } = await supabaseClient
-            .from('lesson_homework_config')
-            .upsert({
-                lesson_id: hwLessonId,
-                homework_type: type,
-                video_solution: video || null
-            }, { onConflict: 'lesson_id' });
+        await run(sb.from('lesson_homework_config').upsert({
+            lesson_id: hwLessonId, homework_type: $('hw-type').value, video_solution: $('hw-video').value.trim() || null
+        }, { onConflict: 'lesson_id' }));
 
-        if (configErr) throw configErr;
+        // Dọn câu hỏi + đáp án cũ (đáp án trước vì có khóa ngoại)
+        const { data: oldQs } = await sb.from('homework_questions').select('id').eq('lesson_id', hwLessonId);
+        if (oldQs?.length) await run(sb.from('homework_choices').delete().in('question_id', oldQs.map(q => q.id)));
+        await run(sb.from('homework_questions').delete().eq('lesson_id', hwLessonId));
 
-        // Bước 2: Tìm và dọn sạch các câu hỏi + đáp án cũ của bài học này để tránh xung đột dữ liệu cũ
-        const { data: oldQs } = await supabaseClient
-            .from('homework_questions')
-            .select('id')
-            .eq('lesson_id', hwLessonId);
-        
-        if (oldQs && oldQs.length > 0) {
-            const oldIds = oldQs.map(q => q.id);
-            // Xóa đáp án trước (Do có liên kết FK khóa ngoại)
-            const { error: delCErr } = await supabaseClient.from('homework_choices').delete().in('question_id', oldIds);
-            if (delCErr) throw delCErr;
-        }
-        // Xóa câu hỏi
-        const { error: delQErr } = await supabaseClient.from('homework_questions').delete().eq('lesson_id', hwLessonId);
-        if (delQErr) throw delQErr;
+        const { data: insertedQs, error: insQErr } = await sb.from('homework_questions').insert(hwQuestions.map(q => ({
+            lesson_id: hwLessonId, order_index: q.so_cau, question_type: q.type,
+            question: q.noi_dung || '', image_url: q.image_url || null, score: 1
+        }))).select();
+        if (insQErr) throw insQErr;
 
-        const questionsPayload = hwQuestions.map(q => ({
-            lesson_id: hwLessonId,
-            order_index: q.so_cau,
-            question_type: q.type,
-            question: q.noi_dung || '',
-            image_url: q.image_url || null,
-            score: 1
-        }));
-
-        if (questionsPayload.length > 0) {
-            const { data: insertedQs, error: insQErr } = await supabaseClient
-                .from('homework_questions')
-                .insert(questionsPayload)
-                .select(); // Trả về bản ghi kèm UUID mới sinh
-
-            if (insQErr) throw insQErr;
-
-            const choicesPayload = [];
-            insertedQs.forEach(insertedQ => {
-                const origQ = hwQuestions.find(q => q.so_cau === insertedQ.order_index);
-                if (origQ && origQ.type === 'choice') {
-                    ['A', 'B', 'C', 'D'].forEach(label => {
-                        choicesPayload.push({
-                            question_id: insertedQ.id,
-                            option_label: label,
-                            option_text: origQ.lua_chon[label] || '',
-                            is_correct: origQ.dap_an_dung === label
-                        });
-                    });
-                } else if (origQ && origQ.type === 'true_false') {
-                    (origQ.y_dung_sai || []).forEach(y => {
-                        choicesPayload.push({
-                            question_id: insertedQ.id,
-                            option_label: y.label,
-                            option_text: y.text || '',
-                            is_correct: !!y.is_correct
-                        });
-                    });
-                }
-            });
-
-            if (choicesPayload.length > 0) {
-                const { error: insCErr } = await supabaseClient.from('homework_choices').insert(choicesPayload);
-                if (insCErr) throw insCErr;
+        const choices = [];
+        insertedQs.forEach(iq => {
+            const q = hwQuestions.find(x => x.so_cau === iq.order_index);
+            if (q?.type === 'choice') {
+                ['A', 'B', 'C', 'D'].forEach(label => choices.push({ question_id: iq.id, option_label: label, option_text: q.lua_chon[label] || '', is_correct: q.dap_an_dung === label }));
+            } else if (q?.type === 'true_false') {
+                q.y_dung_sai.forEach(y => choices.push({ question_id: iq.id, option_label: y.label, option_text: y.text || '', is_correct: !!y.is_correct }));
             }
-        }
+        });
+        if (choices.length) await run(sb.from('homework_choices').insert(choices));
 
         Swal.fire({ icon: 'success', title: 'Lưu cấu hình thành công!', timer: 1200, showConfirmButton: false });
-        delete hwDraftMap[String(hwLessonId)]; // Đã lưu thành công -> xóa nháp, lần sau mở sẽ tải bản mới nhất từ DB
-        closeHwPanel();
+        delete hwDraftMap[String(hwLessonId)];
+        closeHwPanel(false); // không ghi lại nháp cũ sau khi đã lưu
         await fetchLessons();
-
     } catch (err) {
         console.error(err);
         Swal.fire('Lỗi đồng bộ!', err.message, 'error');
     }
 }
+
+// ===================== GIAO BTVN CHO LỚP =====================
 async function openAssignDialog() {
     const lessonId = hwLessonId;
     if (!lessonId) return;
+    if (!topicCourseId) { Swal.fire('Thiếu thông tin', 'Không xác định được khóa học của chuyên đề này. Hãy tải lại trang.', 'error'); return; }
+    if (!homeworkMap[String(lessonId)]?.total_questions) { Swal.fire('Chưa có BTVN', 'Hãy bấm "Lưu cấu hình" cho bài tập này trước khi giao cho lớp.', 'warning'); return; }
 
-    if (!topicCourseId) {
-        Swal.fire('Thiếu thông tin', 'Không xác định được khóa học của chuyên đề này. Hãy tải lại trang.', 'error');
-        return;
-    }
-
-    const hw = homeworkMap[String(lessonId)];
-    if (!hw || !hw.total_questions) {
-        Swal.fire('Chưa có BTVN', 'Hãy bấm "Lưu cấu hình" cho bài tập này trước khi giao cho lớp.', 'warning');
-        return;
-    }
-
-    // Lấy các Gen đang hoạt động của khóa học, rồi các lớp thuộc những Gen đó
-    const { data: gens, error: genErr } = await supabaseClient
-        .from('course_gens')
-        .select('id, gen_code, school_year')
-        .eq('course_id', topicCourseId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+    const { data: gens, error: genErr } = await sb.from('course_gens').select('id, gen_code, school_year')
+        .eq('course_id', topicCourseId).eq('status', 'active').order('created_at', { ascending: false });
     if (genErr) { Swal.fire('Lỗi tải Gen', genErr.message, 'error'); return; }
 
     let classes = [];
-    if (gens && gens.length) {
-        const { data, error } = await supabaseClient
-            .from('course_classes')
-            .select('id, class_name, gen_id')
-            .in('gen_id', gens.map(g => g.id))
-            .eq('status', 'active')
-            .order('class_name');
+    if (gens?.length) {
+        const { data, error } = await sb.from('course_classes').select('id, class_name, gen_id').in('gen_id', gens.map(g => g.id)).eq('status', 'active').order('class_name');
         if (error) { Swal.fire('Lỗi tải lớp', error.message, 'error'); return; }
         classes = data || [];
     }
 
-    // Các lớp đã được giao bài học này (bỏ qua đợt đã hủy)
-    const { data: existing } = await supabaseClient
-        .from('homework_assignments')
-        .select('class_id')
-        .eq('lesson_id', lessonId)
-        .neq('status', 'cancelled');
+    const { data: existing } = await sb.from('homework_assignments').select('class_id').eq('lesson_id', lessonId).neq('status', 'cancelled');
     const assigned = new Set((existing || []).map(a => a.class_id));
 
     const groups = (gens || []).map(g => {
@@ -1624,665 +1069,279 @@ async function openAssignDialog() {
             }).join('')}
         </div>`;
     }).join('');
+    if (!groups) { Swal.fire('Chưa có lớp', 'Khóa học này chưa có Gen/lớp đang hoạt động. Vào "Quản lý Gen & Lớp" để tạo trước.', 'info'); return; }
 
-    if (!groups) {
-        Swal.fire('Chưa có lớp', 'Khóa học này chưa có Gen/lớp đang hoạt động. Vào "Quản lý Gen & Lớp" để tạo trước.', 'info');
-        return;
-    }
-
-    const lessonTitle = currentLessons.find(l => String(l.id) === String(lessonId))?.title || '';
     const { value } = await Swal.fire({
         title: 'Giao BTVN cho lớp',
         html: `<div class="text-left space-y-3">
-            <div>
-                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tên đợt bài tập</label>
-                <input id="swal-as-title" class="w-full p-3 rounded-xl border border-gray-200 outline-none" value="${esc(lessonTitle)}">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Hạn nộp (không bắt buộc)</label>
-                <input id="swal-as-deadline" type="datetime-local" class="w-full p-3 rounded-xl border border-gray-200 outline-none">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chọn lớp</label>
-                <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-3">${groups}</div>
-            </div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tên đợt bài tập</label>
+                <input id="swal-as-title" class="w-full p-3 rounded-xl border border-gray-200 outline-none" value="${esc(findLesson(lessonId)?.title || '')}"></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Hạn nộp (không bắt buộc)</label>
+                <input id="swal-as-deadline" type="datetime-local" class="w-full p-3 rounded-xl border border-gray-200 outline-none"></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chọn lớp</label>
+                <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-3">${groups}</div></div>
         </div>`,
-        showCancelButton: true,
-        confirmButtonText: 'Giao bài',
-        cancelButtonText: 'Hủy',
-        confirmButtonColor: '#1e3a8a',
+        showCancelButton: true, confirmButtonText: 'Giao bài', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
         preConfirm: () => {
             const ids = [...document.querySelectorAll('.swal-class:checked')].map(i => i.value);
             if (!ids.length) { Swal.showValidationMessage('Chọn ít nhất 1 lớp'); return false; }
-            const dl = document.getElementById('swal-as-deadline').value;
-            return {
-                ids,
-                title: document.getElementById('swal-as-title').value.trim(),
-                deadline: dl ? new Date(dl).toISOString() : null
-            };
+            const dl = $('swal-as-deadline').value;
+            return { ids, title: $('swal-as-title').value.trim(), deadline: dl ? new Date(dl).toISOString() : null };
         }
     });
     if (!value) return;
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const rows = value.ids.map(class_id => ({
-        lesson_id: lessonId,
-        class_id,
-        title: value.title || null,
-        deadline: value.deadline,
-        created_by: user?.id || null,
-        status: 'active'
-    }));
-
-    const { error } = await supabaseClient.from('homework_assignments').insert(rows);
+    const { data: { user } } = await sb.auth.getUser();
+    const rows = value.ids.map(class_id => ({ lesson_id: lessonId, class_id, title: value.title || null, deadline: value.deadline, created_by: user?.id || null, status: 'active' }));
+    const { error } = await sb.from('homework_assignments').insert(rows);
     if (error) { Swal.fire('Lỗi giao bài', error.message, 'error'); return; }
-
     Swal.fire({ icon: 'success', title: `Đã giao cho ${rows.length} lớp`, timer: 1300, showConfirmButton: false });
     fetchLessons();
 }
 
-
-// =====================
-// QUẢN LÝ CÁC ĐỢT BTVN ĐÃ GIAO
-// =====================
-// Chức năng này bổ sung cho openAssignDialog():
-// - openAssignDialog() dùng khi TẠO đợt giao BTVN mới.
-// - manageHomeworkAssignments() dùng để XEM các đợt đã giao.
-// - editHomeworkDeadline() dùng để SỬA hạn nộp của đợt đã tồn tại.
-//
-// Không cần xóa/recreate BTVN. Chỉ cập nhật trực tiếp
-// homework_assignments.deadline.
-
-function formatDeadlineForDisplay(iso) {
+// ===================== QUẢN LÝ ĐỢT BTVN ĐÃ GIAO =====================
+function formatDeadline(iso) {
     if (!iso) return '<span class="text-gray-400 italic">Không đặt hạn</span>';
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '<span class="text-red-500">Ngày không hợp lệ</span>';
-
-    return d.toLocaleString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
-
 function toDatetimeLocalValue(iso) {
-    if (!iso) return '';
-
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-
-    const pad = n => String(n).padStart(2, '0');
-
-    // datetime-local không dùng timezone suffix.
-    // Dùng giờ local của trình duyệt để thầy sửa đúng giờ đang nhìn thấy.
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const d = iso ? new Date(iso) : null;
+    if (!d || Number.isNaN(d.getTime())) return '';
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 async function manageHomeworkAssignments() {
     const lessonId = hwLessonId;
-    if (!lessonId) {
-        Swal.fire('Thiếu thông tin', 'Không xác định được bài học đang mở.', 'error');
-        return;
-    }
+    if (!lessonId) { Swal.fire('Thiếu thông tin', 'Không xác định được bài học đang mở.', 'error'); return; }
 
-    // Lấy toàn bộ đợt BTVN đã giao của bài học này.
-    const { data: assignments, error: assignmentError } = await supabaseClient
-        .from('homework_assignments')
-        .select('id, class_id, title, deadline, status, created_at')
-        .eq('lesson_id', lessonId)
-        .neq('status', 'cancelled')
-        .order('created_at', { ascending: false });
+    const { data: assignments, error } = await sb.from('homework_assignments').select('id, class_id, title, deadline, status, created_at')
+        .eq('lesson_id', lessonId).neq('status', 'cancelled').order('created_at', { ascending: false });
+    if (error) { Swal.fire('Lỗi tải BTVN', error.message, 'error'); return; }
+    if (!assignments?.length) { Swal.fire({ icon: 'info', title: 'Chưa có đợt BTVN nào', text: 'Bài học này chưa được giao cho lớp nào.' }); return; }
 
-    if (assignmentError) {
-        Swal.fire('Lỗi tải BTVN', assignmentError.message, 'error');
-        return;
-    }
-
-    if (!assignments || assignments.length === 0) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Chưa có đợt BTVN nào',
-            text: 'Bài học này chưa được giao cho lớp nào.'
-        });
-        return;
-    }
-
-    // Lấy tên lớp tương ứng.
     const classIds = [...new Set(assignments.map(a => a.class_id).filter(Boolean))];
-    let classes = [];
-
-    if (classIds.length) {
-        const { data, error } = await supabaseClient
-            .from('course_classes')
-            .select('id, class_name')
-            .in('id', classIds);
-
-        if (error) {
-            Swal.fire('Lỗi tải lớp', error.message, 'error');
-            return;
-        }
-
-        classes = data || [];
-    }
-
-    const classMap = Object.fromEntries(
-        classes.map(c => [String(c.id), c.class_name])
-    );
+    const { data: classes, error: clsErr } = classIds.length
+        ? await sb.from('course_classes').select('id, class_name').in('id', classIds)
+        : { data: [] };
+    if (clsErr) { Swal.fire('Lỗi tải lớp', clsErr.message, 'error'); return; }
+    const classMap = Object.fromEntries((classes || []).map(c => [String(c.id), c.class_name]));
 
     const statusLabel = {
         active: '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-black">Đang giao</span>',
         closed: '<span class="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-black">Đã đóng</span>'
     };
-
-    const rowsHtml = assignments.map(a => `
+    const rows = assignments.map(a => `
         <div class="border border-gray-200 rounded-2xl p-4 bg-white hover:border-blue-200 transition-all">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <div class="font-black text-blue-900 text-sm">
-                        ${esc(a.title || 'BTVN')}
-                    </div>
-
+                    <div class="font-black text-blue-900 text-sm">${esc(a.title || 'BTVN')}</div>
                     <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px]">
-                        <div>
-                            <span class="text-gray-400 font-bold">Lớp:</span>
-                            <span class="font-bold text-gray-700">
-                                ${esc(classMap[String(a.class_id)] || 'Không xác định')}
-                            </span>
-                        </div>
-
-                        <div>
-                            <span class="text-gray-400 font-bold">Hạn nộp:</span>
-                            <span class="font-bold text-blue-700">
-                                ${formatDeadlineForDisplay(a.deadline)}
-                            </span>
-                        </div>
-
-                        <div>
-                            <span class="text-gray-400 font-bold">Trạng thái:</span>
-                            ${statusLabel[a.status] || esc(a.status || '---')}
-                        </div>
+                        <div><span class="text-gray-400 font-bold">Lớp:</span> <span class="font-bold text-gray-700">${esc(classMap[String(a.class_id)] || 'Không xác định')}</span></div>
+                        <div><span class="text-gray-400 font-bold">Hạn nộp:</span> <span class="font-bold text-blue-700">${formatDeadline(a.deadline)}</span></div>
+                        <div><span class="text-gray-400 font-bold">Trạng thái:</span> ${statusLabel[a.status] || esc(a.status || '---')}</div>
                     </div>
                 </div>
-
-                <button
-                    type="button"
-                    onclick="editHomeworkDeadline('${a.id}')"
-                    class="flex-shrink-0 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-black hover:bg-blue-100 transition-all"
-                    title="Sửa hạn nộp"
-                >
-                    <i class="fas fa-calendar-pen mr-1"></i> Sửa hạn
-                </button>
+                <button type="button" onclick="editHomeworkDeadline('${a.id}')" class="flex-shrink-0 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-black hover:bg-blue-100 transition-all" title="Sửa hạn nộp"><i class="fas fa-calendar-pen mr-1"></i> Sửa hạn</button>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('');
 
     await Swal.fire({
         title: 'Quản lý BTVN đã giao',
-        html: `
-            <div class="text-left">
-                <div class="mb-3 text-[11px] text-gray-500">
-                    Bài học: <b class="text-blue-900">${esc(
-                        currentLessons.find(l => String(l.id) === String(lessonId))?.title || '---'
-                    )}</b>
-                </div>
-
-                <div class="max-h-[55vh] overflow-y-auto space-y-3 pr-1">
-                    ${rowsHtml}
-                </div>
-            </div>
-        `,
-        width: 850,
-        showConfirmButton: false,
-        showCloseButton: true
+        html: `<div class="text-left">
+            <div class="mb-3 text-[11px] text-gray-500">Bài học: <b class="text-blue-900">${esc(findLesson(lessonId)?.title || '---')}</b></div>
+            <div class="max-h-[55vh] overflow-y-auto space-y-3 pr-1">${rows}</div></div>`,
+        width: 850, showConfirmButton: false, showCloseButton: true
     });
 }
 
 async function editHomeworkDeadline(assignmentId) {
     if (!assignmentId) return;
+    const { data: a, error } = await sb.from('homework_assignments').select('id, title, deadline, status, class_id').eq('id', assignmentId).single();
+    if (error || !a) { Swal.fire('Lỗi', error?.message || 'Không tìm thấy đợt BTVN.', 'error'); return; }
+    if (a.status === 'cancelled') { Swal.fire('Không thể sửa', 'Đợt BTVN này đã bị hủy.', 'warning'); return; }
 
-    const { data: assignment, error } = await supabaseClient
-        .from('homework_assignments')
-        .select('id, title, deadline, status, class_id')
-        .eq('id', assignmentId)
-        .single();
-
-    if (error || !assignment) {
-        Swal.fire('Lỗi', error?.message || 'Không tìm thấy đợt BTVN.', 'error');
-        return;
-    }
-
-    // Không cho sửa các đợt đã hủy.
-    if (assignment.status === 'cancelled') {
-        Swal.fire('Không thể sửa', 'Đợt BTVN này đã bị hủy.', 'warning');
-        return;
-    }
-
-    const classResult = await supabaseClient
-        .from('course_classes')
-        .select('class_name')
-        .eq('id', assignment.class_id)
-        .maybeSingle();
-
-    const className = classResult.data?.class_name || 'Không xác định';
+    const { data: cls } = await sb.from('course_classes').select('class_name').eq('id', a.class_id).maybeSingle();
 
     const { value } = await Swal.fire({
         title: 'Chỉnh sửa hạn nộp BTVN',
-        html: `
-            <div class="text-left space-y-3">
-                <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
-                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">Lớp</div>
-                    <div class="font-bold text-blue-900">${esc(className)}</div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">
-                        Tên đợt bài tập
-                    </label>
-                    <input
-                        id="edit-hw-title"
-                        type="text"
-                        class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
-                        value="${esc(assignment.title || '')}"
-                    >
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">
-                        Hạn nộp
-                    </label>
-                    <input
-                        id="edit-hw-deadline"
-                        type="datetime-local"
-                        class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
-                        value="${toDatetimeLocalValue(assignment.deadline)}"
-                    >
-                    <p class="text-[10px] text-gray-400 mt-1">
-                        Có thể để trống nếu không muốn đặt hạn nộp.
-                    </p>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Lưu thay đổi',
-        cancelButtonText: 'Hủy',
-        confirmButtonColor: '#1e3a8a',
+        html: `<div class="text-left space-y-3">
+            <div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-[10px] font-black text-blue-400 uppercase mb-1">Lớp</div><div class="font-bold text-blue-900">${esc(cls?.class_name || 'Không xác định')}</div></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Tên đợt bài tập</label>
+                <input id="edit-hw-title" type="text" class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500" value="${esc(a.title || '')}"></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Hạn nộp</label>
+                <input id="edit-hw-deadline" type="datetime-local" class="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500" value="${toDatetimeLocalValue(a.deadline)}">
+                <p class="text-[10px] text-gray-400 mt-1">Có thể để trống nếu không muốn đặt hạn nộp.</p></div>
+        </div>`,
+        showCancelButton: true, confirmButtonText: 'Lưu thay đổi', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
         preConfirm: () => {
-            const title = document.getElementById('edit-hw-title').value.trim();
-            const deadlineInput = document.getElementById('edit-hw-deadline').value;
-
+            const dl = $('edit-hw-deadline').value;
             let deadline = null;
-
-            if (deadlineInput) {
-                const d = new Date(deadlineInput);
-
-                if (Number.isNaN(d.getTime())) {
-                    Swal.showValidationMessage('Ngày giờ không hợp lệ.');
-                    return false;
-                }
-
+            if (dl) {
+                const d = new Date(dl);
+                if (Number.isNaN(d.getTime())) { Swal.showValidationMessage('Ngày giờ không hợp lệ.'); return false; }
                 deadline = d.toISOString();
             }
-
-            return {
-                title: title || null,
-                deadline
-            };
+            return { title: $('edit-hw-title').value.trim() || null, deadline };
         }
     });
-
     if (!value) return;
 
-    const { error: updateError } = await supabaseClient
-        .from('homework_assignments')
-        .update({
-            title: value.title,
-            deadline: value.deadline
-        })
-        .eq('id', assignmentId);
+    const { data: rows, error: upErr } = await sb.from('homework_assignments').update(value).eq('id', assignmentId).select('id');
+    if (upErr || !rows?.length) { Swal.fire('Lỗi cập nhật', upErr?.message || 'Không có dòng nào được cập nhật (có thể do quyền RLS).', 'error'); return; }
 
-    if (updateError) {
-        Swal.fire('Lỗi cập nhật', updateError.message, 'error');
-        return;
-    }
-
-    await Swal.fire({
-        icon: 'success',
-        title: 'Đã cập nhật BTVN',
-        text: 'Hạn nộp đã được thay đổi thành công.',
-        timer: 1200,
-        showConfirmButton: false
-    });
-
-    // Tải lại số lớp đã giao và dữ liệu liên quan.
+    await Swal.fire({ icon: 'success', title: 'Đã cập nhật BTVN', text: 'Hạn nộp đã được thay đổi thành công.', timer: 1200, showConfirmButton: false });
     await fetchLessons();
-
-    // Mở lại danh sách đợt giao để kiểm tra ngay kết quả.
     await manageHomeworkAssignments();
 }
 
-async function toggleLessonFree(lessonId, isChecked) {
-    const { error } = await supabaseClient.from('lessons').update({ is_free: isChecked }).eq('id', lessonId);
-    if (error) { alert('Lỗi: ' + error.message); fetchLessons(); return; }
-    const l = currentLessons.find(l => String(l.id) === String(lessonId));
-    if (l) l.is_free = isChecked;
-    renderLessonTable();
-}
-
-async function toggleLessonStatus(lessonId, isChecked) {
-    const newStatus = isChecked ? 'Active' : 'Inactive';
-    const { error } = await supabaseClient.from('lessons').update({ status: newStatus }).eq('id', lessonId);
-    if (error) { alert('Lỗi: ' + error.message); fetchLessons(); return; }
-    const l = currentLessons.find(l => String(l.id) === String(lessonId));
-    if (l) l.status = newStatus;
-    updateStats(currentLessons);
-    renderLessonTable();
-}
-
-async function toggleAll(status) {
-    const result = await Swal.fire({
-        title: status === 'Active' ? 'Mở tất cả?' : 'Khóa tất cả?',
-        text: `Thầy có chắc muốn ${status === 'Active' ? 'mở' : 'khóa'} toàn bộ bài học không?`,
-        icon: 'question', showCancelButton: true,
-        confirmButtonText: 'Xác nhận', cancelButtonText: 'Hủy',
-        confirmButtonColor: status === 'Active' ? '#16a34a' : '#1e3a8a',
-    });
-    if (!result.isConfirmed) return;
-    const ids = currentLessons.map(l => l.id);
-    const { error } = await supabaseClient.from('lessons').update({ status }).in('id', ids);
-    if (error) { Swal.fire('Lỗi', error.message, 'error'); return; }
-    fetchLessons();
-}
-
-function updateStats(lessons) {
-    document.getElementById('stat-total').innerText = lessons.length;
-    document.getElementById('stat-Active').innerText = lessons.filter(l => l.status === 'Active').length;
-    document.getElementById('stat-Inactive').innerText = lessons.filter(l => l.status !== 'Active').length;
-    document.getElementById('stat-hw').innerText = Object.keys(homeworkMap).length;
-}
-
-// =====================
-// UPLOAD TÀI LIỆU (ĐÃ SỬA: KHÔNG CÒN NUỐT LỖI ÂM THẦM)
-// =====================
-// Trả về mảng documents mới nếu upload OK, hoặc null nếu thất bại / không có file.
-// Nếu thất bại, hiển thị lỗi rõ ràng cho thầy thay vì lưu bài học mà thiếu file.
+// ===================== THÊM / SỬA / XÓA BÀI HỌC =====================
+// Upload PDF tài liệu. Trả { ok, doc }. Lỗi được báo rõ, không nuốt âm thầm.
 async function uploadLessonDocument(file) {
     if (!file) return { ok: true, doc: null };
-
-    const fileName = `${Date.now()}-${slugify(file.name)}`;
-    const { error: upErr } = await supabaseClient.storage.from('documents').upload(fileName, file);
-
-    if (upErr) {
-        console.error('Upload documents error:', upErr);
-        await Swal.fire({
-            icon: 'error',
-            title: 'Tải tài liệu PDF thất bại!',
-            html: `Không thể tải file lên bucket <b>documents</b>.<br><br>
-                   <span class="text-xs text-gray-500">Chi tiết lỗi: ${upErr.message}</span><br><br>
-                   <span class="text-xs text-gray-500">Nguyên nhân thường gặp: bucket <b>documents</b> chưa có Policy cho phép <b>INSERT</b> (upload) cho role anon/public. Vào Supabase → Storage → documents → Policies để kiểm tra.</span>`
-        });
+    try {
+        const url = await uploadToBucket('documents', `${Date.now()}-${slugify(file.name)}`, file);
+        return { ok: true, doc: { name: file.name, url } };
+    } catch (err) {
+        console.error('Upload documents error:', err);
+        await Swal.fire({ icon: 'error', title: 'Tải tài liệu PDF thất bại!', html: `Chi tiết lỗi: ${esc(err.message)}<br><span class="text-xs text-gray-500">Thường do bucket <b>documents</b> chưa có Policy cho phép INSERT.</span>` });
         return { ok: false, doc: null };
     }
+}
 
-    const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
-    return { ok: true, doc: { name: file.name, url: urlData.publicUrl } };
+function lessonFormHtml(l = null) {
+    const docs = l ? parseDocs(l.documents) : [];
+    const sel = (cond) => cond ? 'selected' : '';
+    const status = l ? l.status : 'Active';
+    return `<div class="text-left space-y-3">
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
+            <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập căn bậc hai" value="${esc(l?.title)}"></div>
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
+            <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=..." value="${esc(l?.video_url)}"></div>
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
+            <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Học sinh hay nhầm điều kiện xác định...">${esc(l?.insight)}</textarea></div>
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái</label>
+                <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                    <option value="Inactive" ${sel(status !== 'Active')}>🔒 Đang khóa</option>
+                    <option value="Active" ${sel(status === 'Active')}>✅ Mở</option>
+                </select></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
+                <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                    <option value="false" ${sel(!l?.is_free)}>💎 Trong khóa học</option>
+                    <option value="true" ${sel(l?.is_free)}>🔓 Miễn phí (Free)</option>
+                </select></div>
+        </div>
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">${l ? 'Cập nhật' : ''} Tài liệu PDF
+                ${l ? (docs.length ? `<span class="text-green-600 normal-case font-normal">(hiện có: ${docs.map(d => esc(d.name)).join(', ')})</span>` : '<span class="text-gray-400 normal-case font-normal">(chưa có tài liệu nào)</span>') : ''}</label>
+            <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
+            ${l ? '<p class="text-[10px] text-gray-400 italic mt-1">Chọn file mới sẽ thay thế tài liệu cũ. Để trống nếu không muốn đổi.</p>' : ''}</div>
+    </div>`;
+}
+function readLessonForm() {
+    const title = $('swal-title').value.trim();
+    if (!title) { Swal.showValidationMessage('Vui lòng điền tên bài học!'); return false; }
+    return {
+        title, video: $('swal-video').value.trim(), insight: $('swal-insight').value,
+        status: $('swal-status').value, isFree: $('swal-free').value === 'true', file: $('swal-file').files[0]
+    };
 }
 
 async function addNewLesson() {
-    const { value: formValues } = await Swal.fire({
+    const { value: f } = await Swal.fire({
         title: '<span class="text-blue-900 font-black uppercase">Thêm bài học mới</span>',
-        html: `
-            <div class="text-left space-y-3">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
-                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Bài 1 - Ôn tập căn bậc hai">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
-                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://www.youtube.com/watch?v=...">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
-                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20" placeholder="Học sinh hay nhầm điều kiện xác định..."></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái ban đầu</label>
-                        <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                            <option value="Inactive">🔒 Đang khóa</option>
-                            <option value="Active" selected>✅ Mở ngay</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
-                        <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                            <option value="false" selected>💎 Trong khóa học</option>
-                            <option value="true">🔓 Miễn phí (Free)</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tài liệu PDF</label>
-                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
-                </div>
-            </div>`,
-        showCancelButton: true, confirmButtonText: 'Lưu bài học', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
-        preConfirm: () => {
-            const title = document.getElementById('swal-title').value.trim();
-            if (!title) { Swal.showValidationMessage('Vui lòng điền tên bài học!'); return false; }
-            return {
-                title, video: document.getElementById('swal-video').value,
-                insight: document.getElementById('swal-insight').value,
-                status: document.getElementById('swal-status').value,
-                isFree: document.getElementById('swal-free').value === 'true',
-                file: document.getElementById('swal-file').files[0]
-            };
-        }
+        html: lessonFormHtml(), showCancelButton: true, confirmButtonText: 'Lưu bài học', cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1e3a8a', preConfirm: readLessonForm
     });
-    if (!formValues) return;
+    if (!f) return;
 
     Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    let finalDocs = [];
-    if (formValues.file) {
-        const uploadResult = await uploadLessonDocument(formValues.file);
-        if (!uploadResult.ok) {
-            // Đã hiển thị lỗi upload rõ ràng cho thầy trong uploadLessonDocument().
-            // Hỏi thầy có muốn tiếp tục lưu bài học mà KHÔNG có tài liệu hay hủy để thử lại.
-            const cont = await Swal.fire({
-                title: 'Vẫn lưu bài học (không kèm tài liệu)?',
-                text: 'Bài học sẽ được lưu nhưng chưa có file PDF đính kèm. Thầy có thể sửa lại sau khi khắc phục lỗi upload.',
-                icon: 'question', showCancelButton: true,
-                confirmButtonText: 'Vẫn lưu', cancelButtonText: 'Hủy, để tôi kiểm tra lại',
-                confirmButtonColor: '#1e3a8a'
-            });
+    const docs = [];
+    if (f.file) {
+        const up = await uploadLessonDocument(f.file);
+        if (up.doc) docs.push(up.doc);
+        else {
+            const cont = await Swal.fire({ title: 'Vẫn lưu bài học (không kèm tài liệu)?', text: 'Bài học sẽ được lưu nhưng chưa có file PDF. Thầy có thể sửa lại sau khi khắc phục lỗi upload.', icon: 'question', showCancelButton: true, confirmButtonText: 'Vẫn lưu', cancelButtonText: 'Hủy, để tôi kiểm tra lại', confirmButtonColor: '#1e3a8a' });
             if (!cont.isConfirmed) return;
-        } else if (uploadResult.doc) {
-            finalDocs.push(uploadResult.doc);
         }
     }
-    const maxOrder = currentLessons.reduce((max, l) => {
-        const v = (typeof l.order_index === 'number') ? l.order_index : -1;
-        return v > max ? v : max;
-    }, -1);
 
-    const { error } = await supabaseClient.from('lessons').insert([{
-        topic_id: topicId, title: formValues.title, video_url: formValues.video || null,
-        insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree,
-        documents: finalDocs, order_index: maxOrder + 1
+    const maxOrder = currentLessons.reduce((m, l) => Math.max(m, typeof l.order_index === 'number' ? l.order_index : -1), -1);
+    const { error } = await sb.from('lessons').insert([{
+        topic_id: topicId, title: f.title, video_url: f.video || null, insight: f.insight || null,
+        status: f.status, is_free: f.isFree, documents: docs, order_index: maxOrder + 1
     }]);
-
     if (error) Swal.fire('Lỗi!', error.message, 'error');
     else { Swal.fire({ icon: 'success', title: 'Đã thêm bài học!', timer: 1200, showConfirmButton: false }); fetchLessons(); }
 }
 
 async function editLesson(id) {
     Swal.fire({ title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-    const { data: lesson, error } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
+    const { data: lesson, error } = await sb.from('lessons').select('*').eq('id', id).single();
     if (error) { Swal.fire('Lỗi!', 'Không thể lấy thông tin bài học', 'error'); return; }
 
-    let existingDocs = [];
-    try { existingDocs = typeof lesson.documents === 'string' ? JSON.parse(lesson.documents) : (lesson.documents || []); } catch(e) { existingDocs = []; }
-
-    const { value: formValues } = await Swal.fire({
+    const { value: f } = await Swal.fire({
         title: '<span class="text-blue-900 font-black uppercase">Chỉnh sửa bài học</span>',
-        html: `
-            <div class="text-left space-y-3">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tiêu đề bài học *</label>
-                    <input id="swal-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.title || ''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Link YouTube</label>
-                    <input id="swal-video" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" value="${lesson.video_url || ''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Insight</label>
-                    <textarea id="swal-insight" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none h-20">${lesson.insight || ''}</textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Trạng thái</label>
-                        <select id="swal-status" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                            <option value="Inactive" ${lesson.status !== 'Active' ? 'selected' : ''}>🔒 Đang khóa</option>
-                            <option value="Active" ${lesson.status === 'Active' ? 'selected' : ''}>✅ Mở</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Chế độ xem thử</label>
-                        <select id="swal-free" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
-                            <option value="false" ${!lesson.is_free ? 'selected' : ''}>💎 Trong khóa học</option>
-                            <option value="true" ${lesson.is_free ? 'selected' : ''}>🔓 Miễn phí (Free)</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">
-                        Cập nhật tài liệu PDF
-                        ${existingDocs.length > 0 ? `<span class="text-green-600 normal-case font-normal">(hiện có: ${existingDocs.map(d => d.name).join(', ')})</span>` : `<span class="text-gray-400 normal-case font-normal">(chưa có tài liệu nào)</span>`}
-                    </label>
-                    <input id="swal-file" type="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" accept=".pdf">
-                    <p class="text-[10px] text-gray-400 italic mt-1">Chọn file mới sẽ thay thế tài liệu cũ. Để trống nếu không muốn đổi tài liệu.</p>
-                </div>
-            </div>`,
-        showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', confirmButtonColor: '#1e3a8a',
-        preConfirm: () => {
-            const title = document.getElementById('swal-title').value.trim();
-            if (!title) { Swal.showValidationMessage('Tên bài học không được để trống!'); return false; }
-            return {
-                title, video: document.getElementById('swal-video').value,
-                insight: document.getElementById('swal-insight').value,
-                status: document.getElementById('swal-status').value,
-                isFree: document.getElementById('swal-free').value === 'true',
-                file: document.getElementById('swal-file').files[0]
-            };
-        }
+        html: lessonFormHtml(lesson), showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1e3a8a', preConfirm: readLessonForm
     });
-    if (!formValues) return;
+    if (!f) return;
 
     Swal.fire({ title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    let updatedData = { title: formValues.title, video_url: formValues.video || null, insight: formValues.insight || null, status: formValues.status, is_free: formValues.isFree };
-
-    if (formValues.file) {
-        const uploadResult = await uploadLessonDocument(formValues.file);
-        if (!uploadResult.ok) {
-            const cont = await Swal.fire({
-                title: 'Vẫn cập nhật các thông tin khác?',
-                text: 'Tài liệu PDF sẽ giữ nguyên như cũ (chưa thay đổi được) do upload thất bại. Các thông tin khác (tiêu đề, video, insight...) vẫn sẽ được lưu.',
-                icon: 'question', showCancelButton: true,
-                confirmButtonText: 'Vẫn cập nhật', cancelButtonText: 'Hủy, để tôi kiểm tra lại',
-                confirmButtonColor: '#1e3a8a'
-            });
+    const patch = { title: f.title, video_url: f.video || null, insight: f.insight || null, status: f.status, is_free: f.isFree };
+    if (f.file) {
+        const up = await uploadLessonDocument(f.file);
+        if (up.doc) patch.documents = [up.doc];
+        else {
+            const cont = await Swal.fire({ title: 'Vẫn cập nhật các thông tin khác?', text: 'Tài liệu PDF giữ nguyên như cũ do upload thất bại. Các thông tin khác vẫn sẽ được lưu.', icon: 'question', showCancelButton: true, confirmButtonText: 'Vẫn cập nhật', cancelButtonText: 'Hủy, để tôi kiểm tra lại', confirmButtonColor: '#1e3a8a' });
             if (!cont.isConfirmed) return;
-            // Không gán updatedData.documents -> giữ nguyên tài liệu cũ trong DB
-        } else if (uploadResult.doc) {
-            updatedData.documents = [uploadResult.doc];
         }
     }
 
-    const { data: updatedRows, error: updateError } = await supabaseClient
-        .from('lessons')
-        .update(updatedData)
-        .eq('id', id)
-        .select();
-
-    if (updateError) {
-        Swal.fire('Lỗi!', updateError.message, 'error');
-    } else if (!updatedRows || updatedRows.length === 0) {
-        // Không có dòng nào bị ảnh hưởng -> nhiều khả năng do RLS chặn UPDATE trên bảng lessons
-        Swal.fire('Cảnh báo!', 'Không có thay đổi nào được ghi nhận trong cơ sở dữ liệu. Có thể do quyền (RLS) trên bảng "lessons" đang chặn cập nhật. Vui lòng kiểm tra Policy UPDATE trong Supabase.', 'warning');
-    } else {
+    try {
+        await updateLesson(id, patch);
         Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1000, showConfirmButton: false });
-        fetchLessons();
-    }
+    } catch (err) { Swal.fire('Lỗi!', err.message, 'error'); }
+    fetchLessons();
 }
 
 async function deleteLesson(id) {
     const res = await Swal.fire({
-        title: 'Xóa bài học này?',
-        text: 'Toàn bộ BTVN, bài làm học sinh liên quan cũng sẽ bị xóa. Không thể hoàn tác!',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa', cancelButtonText: 'Hủy'
+        title: 'Xóa bài học này?', text: 'Toàn bộ BTVN, bài làm học sinh liên quan cũng sẽ bị xóa. Không thể hoàn tác!',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa', cancelButtonText: 'Hủy'
     });
     if (!res.isConfirmed) return;
+    const run = async p => { const { error } = await p; if (error) throw error; };
     try {
-        const run = async (p) => { const { error } = await p; if (error) throw error; };
-
-        // 1. Bài nộp của học sinh (và file/đáp án con của chúng)
-        const { data: subs } = await supabaseClient.from('homework_submissions').select('id').eq('lesson_id', id);
+        // 1. Bài nộp của học sinh (và file/đáp án con)
+        const { data: subs } = await sb.from('homework_submissions').select('id').eq('lesson_id', id);
         const subIds = (subs || []).map(s => s.id);
         if (subIds.length) {
-            const { data: ans } = await supabaseClient.from('submission_answers').select('id').in('submission_id', subIds);
+            const { data: ans } = await sb.from('submission_answers').select('id').in('submission_id', subIds);
             const ansIds = (ans || []).map(a => a.id);
-            if (ansIds.length) await run(supabaseClient.from('submission_files').delete().in('answer_id', ansIds));
-            await run(supabaseClient.from('submission_answers').delete().in('submission_id', subIds));
-            await run(supabaseClient.from('homework_submissions').delete().in('id', subIds));
+            if (ansIds.length) await run(sb.from('submission_files').delete().in('answer_id', ansIds));
+            await run(sb.from('submission_answers').delete().in('submission_id', subIds));
+            await run(sb.from('homework_submissions').delete().in('id', subIds));
         }
-
         // 2. Các đợt giao bài cho lớp
-        await run(supabaseClient.from('homework_assignments').delete().eq('lesson_id', id));
-
+        await run(sb.from('homework_assignments').delete().eq('lesson_id', id));
         // 3. Đề bài: đáp án -> câu hỏi -> cấu hình
-        const { data: qs } = await supabaseClient.from('homework_questions').select('id').eq('lesson_id', id);
-        if (qs && qs.length) await run(supabaseClient.from('homework_choices').delete().in('question_id', qs.map(q => q.id)));
-        await run(supabaseClient.from('homework_questions').delete().eq('lesson_id', id));
-        await run(supabaseClient.from('lesson_homework_config').delete().eq('lesson_id', id));
-
+        const { data: qs } = await sb.from('homework_questions').select('id').eq('lesson_id', id);
+        if (qs?.length) await run(sb.from('homework_choices').delete().in('question_id', qs.map(q => q.id)));
+        await run(sb.from('homework_questions').delete().eq('lesson_id', id));
+        await run(sb.from('lesson_homework_config').delete().eq('lesson_id', id));
         // 4. Thông báo, lượt xem, và cuối cùng là bài học
-        await run(supabaseClient.from('notifications').delete().eq('lesson_id', id));
-        await run(supabaseClient.from('lesson_views').delete().eq('lesson_id', id));
-        await run(supabaseClient.from('lessons').delete().eq('id', id));
-
+        await run(sb.from('notifications').delete().eq('lesson_id', id));
+        await run(sb.from('lesson_views').delete().eq('lesson_id', id));
+        await run(sb.from('lessons').delete().eq('id', id));
+        delete hwDraftMap[String(id)];
         Swal.fire('Đã xóa!', '', 'success');
         fetchLessons();
-    } catch(e) {
-        Swal.fire('Lỗi', e.message, 'error');
-    }
-}
-
-function slugify(name) {
-    const map = {'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ắ':'a','ặ':'a','ằ':'a','ẳ':'a','ẵ':'a','â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a','đ':'d','è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e','ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i','ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o','ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o','ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u','ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y'};
-    return name.toLowerCase().split('').map(c => map[c] || c).join('').replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-}
-
-function toggleSubmenu(id, element) {
-    document.getElementById(id).classList.toggle('show');
-    element.querySelector('.arrow-icon')?.classList.toggle('rotate-180');
-}
-async function discardDraftAndReload() {
-    const res = await Swal.fire({
-        title: 'Bỏ bản nháp?',
-        text: 'Toàn bộ thay đổi chưa lưu sẽ mất, hệ thống sẽ tải lại dữ liệu gốc.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonText: 'Bỏ nháp', cancelButtonText: 'Không'
-    });
-    if (!res.isConfirmed) return;
-    const lessonId = hwLessonId;
-    delete hwDraftMap[String(lessonId)];
-    closeHwPanel(); // đã xóa draft nên sẽ không lưu lại nháp cũ
-    openHwPanel(lessonId);
+    } catch (e) { Swal.fire('Lỗi', e.message, 'error'); }
 }
 
 init();
