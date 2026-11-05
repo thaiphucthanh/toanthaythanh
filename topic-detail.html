@@ -101,6 +101,16 @@
 
         .ai-import-box { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1.5px dashed #818cf8; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
         .ai-progress-log { background: #0f172a; color: #a5f3fc; font-family: monospace; font-size: 11px; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
+        /* Sửa lỗi Tailwind + MathJax: công thức $...$ bị xuống dòng */
+        mjx-container[jax="SVG"] > svg { display: inline-block !important; }
+
+        /* Công thức $$...$$ vẫn là khối riêng, quá rộng thì cuộn ngang */
+        mjx-container[jax="SVG"][display="true"] {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
