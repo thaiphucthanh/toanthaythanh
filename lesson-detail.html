@@ -101,7 +101,8 @@
     /* ── Video + control riêng ── */
     #video-wrap { position: relative; user-select: none; }
     #video-wrap iframe { pointer-events: none; }
-    #video-wrap.pseudo-fs { position: fixed !important; inset: 0; z-index: 4000; border: 0 !important; border-radius: 0 !important; aspect-ratio: auto !important; }
+    #video-wrap.pseudo-fs { position: fixed !important; inset: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 4000; border: 0 !important; border-radius: 0 !important; aspect-ratio: auto !important; }
+    #video-wrap.pseudo-fs #custom-controls { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
     #click-catcher { position: absolute; inset: 0; z-index: 20; cursor: pointer; background: transparent; }
     #shield-endscreen { position: absolute; inset: 0; z-index: 50; display: none; background: rgba(17,24,39,0.55); cursor: pointer; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: white; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
     #shield-endscreen.show { display: flex; }
@@ -154,7 +155,7 @@
 
     #doc-viewer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.75); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 16px; }
     #doc-viewer-overlay.show { display: flex; }
-    #doc-viewer-box { background: white; border-radius: 20px; overflow: hidden; width: 100%; max-width: 1000px; height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+    #doc-viewer-box { background: white; border-radius: 20px; overflow: hidden; width: 100%; max-width: 1000px; height: 90vh; height: 90dvh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
     #doc-viewer-header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background:#f8fafc; flex: none; }
     #doc-viewer-body { flex: 1; position: relative; overflow: auto; background: #e5e7eb; }
     #doc-viewer-body iframe { position:absolute; inset:0; width: 100%; height: 100%; border: 0; display: block; background:#fff; }
@@ -167,6 +168,11 @@
       #doc-viewer-overlay { padding: 0; }
       #doc-viewer-box { height: 100%; border-radius: 0; max-width: none; }
     }
+
+    /* ── PDF (iPad / điện thoại): vẽ từng trang bằng pdf.js ── */
+    .pdf-scroll { position: absolute; inset: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding: 8px; background: #e5e7eb; }
+    .pdf-page { position: relative; width: 100%; max-width: 900px; margin: 0 auto 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .pdf-page canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
     /* ── Chế độ tập trung ── */
     #focus-modal-overlay { position: fixed; inset: 0; z-index: 5000; background: rgba(15,23,42,0.75); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -188,15 +194,16 @@
     #focus-status-time { font-variant-numeric: tabular-nums; }
     #focus-status-violation { background: rgba(239,68,68,0.2); color: #fca5a5; padding: 3px 8px; border-radius: 8px; font-size: 10px; }
     #focus-status-violation.hidden { display: none; }
+
     /* Sửa lỗi Tailwind + MathJax: công thức $...$ bị xuống dòng */
     mjx-container[jax="SVG"] > svg { display: inline-block !important; }
 
     /* Công thức $$...$$ vẫn là khối riêng, quá rộng thì cuộn ngang */
     mjx-container[jax="SVG"][display="true"] {
-    display: block;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
   </style>
 </head>
@@ -751,21 +758,37 @@
       }
     } catch (e) {}
   }
-  // Khi đang ở chế độ tập trung: dùng "toàn màn hình giả" để KHÔNG bị tính nhầm là vi phạm
+
+  // ── Toàn màn hình video ──
+  // iPhone không hỗ trợ requestFullscreen cho phần tử bất kỳ -> dùng "phóng to giả" (pseudo-fs) phủ kín màn hình.
+  function setFsIcon(on) { const i = document.getElementById('cc-fs-icon'); if (i) i.className = on ? 'fas fa-compress' : 'fas fa-expand'; }
+  function enterPseudoFs() {
+    document.getElementById('video-wrap')?.classList.add('pseudo-fs'); setFsIcon(true);
+    try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch (e) {}
+  }
+  function exitPseudoFs() {
+    const w = document.getElementById('video-wrap');
+    if (w?.classList.contains('pseudo-fs')) {
+      w.classList.remove('pseudo-fs'); setFsIcon(false);
+      try { screen.orientation?.unlock?.(); } catch (e) {}
+    }
+  }
   function ccToggleFullscreen() {
     const wrap = document.getElementById('video-wrap'); if (!wrap) return;
-    if (focusModeActive) {
-      const on = wrap.classList.toggle('pseudo-fs');
-      const icon = document.getElementById('cc-fs-icon'); if (icon) icon.className = on ? 'fas fa-compress' : 'fas fa-expand';
+    if (wrap.classList.contains('pseudo-fs')) { exitPseudoFs(); return; }
+    if (focusModeActive) { enterPseudoFs(); return; }  // chế độ tập trung: không dùng fullscreen thật để khỏi tính vi phạm
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen)?.call(document);
       return;
     }
-    if (!document.fullscreenElement) (wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.msRequestFullscreen)?.call(wrap);
-    else (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen)?.call(document);
+    const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.msRequestFullscreen;
+    if (!req) { enterPseudoFs(); return; }            // iPhone: không hỗ trợ -> phóng to giả
+    try { const p = req.call(wrap); if (p && p.catch) p.catch(() => enterPseudoFs()); }
+    catch (e) { enterPseudoFs(); }
   }
-  document.addEventListener('fullscreenchange', () => {
-    const icon = document.getElementById('cc-fs-icon');
-    if (icon && !focusModeActive) icon.className = document.fullscreenElement ? 'fas fa-compress' : 'fas fa-expand';
-  });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => {
+    if (!focusModeActive) setFsIcon(!!(document.fullscreenElement || document.webkitFullscreenElement));
+  }));
   function ccReplay() {
     hideEndscreenShield();
     try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
@@ -1182,7 +1205,9 @@
     if (ext && !name.toLowerCase().endsWith('.' + ext)) name += '.' + ext;
     return name;
   }
-  const isMobileDevice = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+  // iPadOS 13+ giả danh là Mac (platform "MacIntel") nên phải nhận diện thêm bằng số điểm chạm
+  const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isMobileDevice = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isIOS() || window.innerWidth < 768;
 
   function renderDocs(docs) {
     const el = document.getElementById('document-container');
@@ -1273,11 +1298,87 @@
       </div>`;
   }
 
+  // ── PDF cho iPad/điện thoại: vẽ từng trang bằng pdf.js ──
+  // (Safari iOS/iPadOS chỉ vẽ trang đầu của PDF khi nhúng trong iframe)
+  let pdfJsPromise = null, pdfDocRef = null, pdfObserver = null;
+  function loadPdfJs() {
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      return Promise.resolve(window.pdfjsLib);
+    }
+    if (!pdfJsPromise) pdfJsPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = () => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve(pdfjsLib);
+      };
+      s.onerror = () => { pdfJsPromise = null; reject(new Error('Không tải được pdf.js')); };
+      document.head.appendChild(s);
+    });
+    return pdfJsPromise;
+  }
+  function destroyPdfViewer() {
+    if (pdfObserver) { pdfObserver.disconnect(); pdfObserver = null; }
+    if (pdfDocRef) { try { pdfDocRef.destroy(); } catch (e) {} pdfDocRef = null; }
+  }
+  async function openPdfWithPdfJs(url, index) {
+    const lib = await loadPdfJs();
+    const pdf = await lib.getDocument({ url }).promise;
+    if (docViewerIndex !== index) { try { pdf.destroy(); } catch (e) {} return; }
+    destroyPdfViewer();
+    pdfDocRef = pdf;
+
+    const body = document.getElementById('doc-viewer-body');
+    body.innerHTML = '<div class="pdf-scroll" id="pdf-scroll"></div>';
+    const scroll = document.getElementById('pdf-scroll');
+
+    const first = await pdf.getPage(1);
+    const vp = first.getViewport({ scale: 1 });
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const renderPage = async (div) => {
+      if (div._busy || div._canvas) return;
+      div._busy = true;
+      try {
+        const page = await pdf.getPage(+div.dataset.page);
+        const base = page.getViewport({ scale: 1 });
+        const scale = ((div.clientWidth || 600) / base.width) * dpr;
+        const v = page.getViewport({ scale });
+        div.style.aspectRatio = `${base.width} / ${base.height}`;
+        const c = document.createElement('canvas');
+        c.width = Math.floor(v.width); c.height = Math.floor(v.height);
+        await page.render({ canvasContext: c.getContext('2d'), viewport: v }).promise;
+        if (!div.isConnected || !div._visible) { c.width = c.height = 0; return; }
+        div.appendChild(c); div._canvas = c;
+      } catch (e) { console.warn('render page:', e); }
+      finally { div._busy = false; }
+    };
+
+    pdfObserver = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        const div = en.target;
+        div._visible = en.isIntersecting;
+        if (en.isIntersecting) renderPage(div);
+        else if (div._canvas) { div._canvas.width = div._canvas.height = 0; div._canvas.remove(); div._canvas = null; } // giải phóng RAM
+      });
+    }, { root: scroll, rootMargin: '800px 0px' });
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const div = document.createElement('div');
+      div.className = 'pdf-page'; div.dataset.page = i;
+      div.style.aspectRatio = `${vp.width} / ${vp.height}`;
+      scroll.appendChild(div);
+      pdfObserver.observe(div);
+    }
+    setViewerHint(pdf.numPages + ' trang — cuộn xuống để xem tiếp.');
+  }
+
   async function openDocViewer(index) {
     const doc = currentDocsList[index];
     if (!doc || !doc.url) return;
     docViewerIndex = index;
-    revokeDocBlob(); clearTimeout(docLoadTimer); setViewerHint('');
+    revokeDocBlob(); clearTimeout(docLoadTimer); setViewerHint(''); destroyPdfViewer();
 
     const ext = getDocExt(doc), t = getDocType(ext);
     document.getElementById('doc-viewer-title').textContent = doc.name || 'Tài liệu';
@@ -1305,8 +1406,14 @@
 
     // PDF (hoặc không rõ đuôi)
     if (isMobileDevice()) {
-      // Điện thoại: trình duyệt không nhúng PDF trong iframe được (hay tự tải về) -> dùng Google Docs Viewer
-      mountViewerFrame('https://docs.google.com/viewer?url=' + encodeURIComponent(doc.url) + '&embedded=true');
+      // iPad / điện thoại: vẽ từng trang bằng pdf.js; nếu lỗi thì dùng Google Docs Viewer
+      body.innerHTML = `<div id="doc-viewer-loading"><i class="fas fa-spinner animate-spin text-2xl text-blue-900"></i><span>Đang mở tài liệu...</span></div>`;
+      try { await openPdfWithPdfJs(doc.url, index); }
+      catch (err) {
+        console.warn('pdf.js fallback:', err);
+        if (docViewerIndex !== index) return;
+        mountViewerFrame('https://docs.google.com/viewer?url=' + encodeURIComponent(doc.url) + '&embedded=true');
+      }
       return;
     }
     // Máy tính: lấy file về RAM rồi ép kiểu application/pdf -> dùng trình xem PDF có sẵn của trình duyệt.
@@ -1328,7 +1435,7 @@
   }
   function closeDocViewer(e) {
     if (e && e.target !== e.currentTarget) return;
-    clearTimeout(docLoadTimer);
+    clearTimeout(docLoadTimer); destroyPdfViewer();
     document.getElementById('doc-viewer-overlay').classList.remove('show');
     document.getElementById('doc-viewer-body').innerHTML = '';
     revokeDocBlob(); docViewerIndex = -1;
@@ -1337,7 +1444,7 @@
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeDocViewer();
-      document.getElementById('video-wrap')?.classList.remove('pseudo-fs');
+      exitPseudoFs();
     }
   });
 
